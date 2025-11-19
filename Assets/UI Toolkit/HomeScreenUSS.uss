@@ -1,0 +1,32 @@
+.Buttons {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    margin-left: auto;
+    margin-right: auto;
+    height: 100px;
+    width: 23%;
+    background-image: url("project://database/Assets/Input/9lz0B.png?fileID=1785647555&guid=9b2ee6132809aab47a10ad8bf3ab992b&type=3#9lz0B_0");
+    color: rgb(255, 255, 255);
+    letter-spacing: 0;
+    word-spacing: 8px;
+    -unity-paragraph-spacing: -11px;
+}
+
+.Buttons:hover {
+    margin-top: 15px;
+    background-color: rgb(156, 39, 0);
+    color: rgb(255, 255, 255);
+    scale: 1.2 1.2 1.2;
+    translate: 1px 1px 1px;
+    cursor: url("project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=-4521532143779581420&guid=8f418ce37853196429b832efa64dbbec&type=3#arrow-right");
+    margin-bottom: 15px;
+    -unity-background-image-tint-color: rgb(246, 255, 26);
+}
+
+.Buttons:active {
+    cursor: url("project://database/Assets/UI%20Toolkit/UnityThemes/UnityDefaultRuntimeTheme.tss?fileID=-1304905567622442630&guid=8f418ce37853196429b832efa64dbbec&type=3#arrow-down@2x");
+    margin-top: 15px;
+    margin-bottom: 15px;
+    background-color: rgb(0, 0, 0);
+    -unity-background-image-tint-color: rgb(62, 123, 189);
+}
