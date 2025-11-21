@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4453913329268082}
   - component: {fileID: 33899540581287652}
   - component: {fileID: 23399547592334920}
-  - component: {fileID: 64364699476110354}
+  - component: {fileID: 7397872509001861502}
   m_Layer: 0
   m_Name: Pine_stump_LOD2
   m_TagString: Untagged
@@ -90,7 +90,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &64364699476110354
+--- !u!64 &7397872509001861502
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -109,9 +109,9 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300006, guid: 83ae6d480d8ae8d49aa9ca1927b51ca0, type: 3}
+  m_Mesh: {fileID: 4300004, guid: 83ae6d480d8ae8d49aa9ca1927b51ca0, type: 3}
 --- !u!1 &1669590483184396
 GameObject:
   m_ObjectHideFlags: 0
@@ -123,7 +123,7 @@ GameObject:
   - component: {fileID: 4359537256891212}
   - component: {fileID: 33982936521725798}
   - component: {fileID: 23876799658532602}
-  - component: {fileID: 64868862035026558}
+  - component: {fileID: 7122648098432882637}
   m_Layer: 0
   m_Name: Pine_stump_LOD1
   m_TagString: Untagged
@@ -202,7 +202,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &64868862035026558
+--- !u!64 &7122648098432882637
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -221,7 +221,7 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 4300004, guid: 83ae6d480d8ae8d49aa9ca1927b51ca0, type: 3}
 --- !u!1 &1844832195497820
@@ -297,8 +297,7 @@ GameObject:
   - component: {fileID: 4794796225172530}
   - component: {fileID: 33289089162541324}
   - component: {fileID: 23962926859762264}
-  - component: {fileID: 64019143479277562}
-  - component: {fileID: 136151598196397500}
+  - component: {fileID: 3265564755158899553}
   m_Layer: 0
   m_Name: Pine_stump_LOD0
   m_TagString: Untagged
@@ -377,7 +376,7 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &64019143479277562
+--- !u!64 &3265564755158899553
 MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -396,29 +395,6 @@ MeshCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 5
-  m_Convex: 0
+  m_Convex: 1
   m_CookingOptions: 30
-  m_Mesh: {fileID: 4300002, guid: 83ae6d480d8ae8d49aa9ca1927b51ca0, type: 3}
---- !u!136 &136151598196397500
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1848476735672012}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 1.21
-  m_Height: 2.56
-  m_Direction: 1
-  m_Center: {x: 0.0138988495, y: 0.12, z: -0.01}
+  m_Mesh: {fileID: 4300004, guid: 83ae6d480d8ae8d49aa9ca1927b51ca0, type: 3}

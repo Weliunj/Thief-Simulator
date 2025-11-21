@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4825776652149178}
   - component: {fileID: 33472751121273016}
   - component: {fileID: 23801016073420546}
+  - component: {fileID: 5125010048895897008}
   m_Layer: 0
   m_Name: Stone2_LOD2
   m_TagString: Untagged
@@ -89,6 +90,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &5125010048895897008
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1333517667403478}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.877205, y: 2.3021545, z: 4.023329}
+  m_Center: {x: -0.12378311, y: 0.9803772, z: -0.16002303}
 --- !u!1 &1487808167126180
 GameObject:
   m_ObjectHideFlags: 0
@@ -100,6 +122,7 @@ GameObject:
   - component: {fileID: 4075847017343968}
   - component: {fileID: 33355670103224308}
   - component: {fileID: 23079859797261438}
+  - component: {fileID: 5505338201087178212}
   m_Layer: 0
   m_Name: Stone2_LOD1
   m_TagString: Untagged
@@ -178,6 +201,27 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &5505338201087178212
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1487808167126180}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.88348, y: 2.3496857, z: 4.023329}
+  m_Center: {x: -0.12691689, y: 1.0041428, z: -0.16002303}
 --- !u!1 &1600038145722832
 GameObject:
   m_ObjectHideFlags: 0
@@ -251,7 +295,7 @@ GameObject:
   - component: {fileID: 4075841060156274}
   - component: {fileID: 33368679549828166}
   - component: {fileID: 23755085105363068}
-  - component: {fileID: 64962984734855722}
+  - component: {fileID: 6029761667301624150}
   m_Layer: 0
   m_Name: Stone2_LOD0
   m_TagString: Untagged
@@ -330,8 +374,8 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &64962984734855722
-MeshCollider:
+--- !u!65 &6029761667301624150
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -348,7 +392,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 1
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300002, guid: 193d92fc48f3f1e40b415f21fc05d5a4, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 3.9219322, y: 2.3803635, z: 4.023329}
+  m_Center: {x: -0.10769081, y: 1.0194817, z: -0.16002303}

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4023013654594124}
   - component: {fileID: 33865554645656158}
   - component: {fileID: 23744825324263174}
-  - component: {fileID: 64241846850705604}
+  - component: {fileID: 6627332074785464955}
   m_Layer: 0
   m_Name: Rock2
   m_TagString: Untagged
@@ -90,8 +90,8 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &64241846850705604
-MeshCollider:
+--- !u!65 &6627332074785464955
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -108,7 +108,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300000, guid: d31a07947aca7184f872810cd19f8da3, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 12.3612585, y: 5.282593, z: 7.650195}
+  m_Center: {x: -0.74644613, y: 2.261078, z: -0.7631117}
