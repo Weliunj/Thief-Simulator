@@ -5,7 +5,6 @@ using UnityEngine.InputSystem;
 
 /* Note: animations are called via the controller for both the character and capsule using animator null checks
  */
-
 namespace StarterAssets
 {
     [RequireComponent(typeof(CharacterController))]
@@ -20,6 +19,13 @@ namespace StarterAssets
 
         [Tooltip("Sprint speed of the character in m/s")]
         public float SprintSpeed = 5.335f;
+
+        [Space(10)]
+        [Tooltip("Crouch speed of the character in m/s")]
+        public float CrouchSpeed = 1.5f; // <--- New parameter
+
+        [Tooltip("Height of the character controller when crouched")]
+        public float CrouchedHeight = 1.0f; // <--- New parameter
 
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
@@ -91,6 +97,11 @@ namespace StarterAssets
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
 
+        // crouch variables
+        private float _originalControllerHeight; // <--- New variable
+        private Vector3 _originalControllerCenter; // <--- New variable
+        private float _targetControllerHeight; // <--- New variable
+
         // animation IDs
         private int _animIDSpeed;
         private int _animIDGrounded;
@@ -138,6 +149,9 @@ namespace StarterAssets
             
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
+
+
+
             _input = GetComponent<StarterAssetsInputs>();
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
@@ -158,6 +172,7 @@ namespace StarterAssets
 
             JumpAndGravity();
             GroundedCheck();
+            CrouchLogic(); // <--- New call
             Move();
         }
 
@@ -173,6 +188,33 @@ namespace StarterAssets
             _animIDJump = Animator.StringToHash("Jump");
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+        }
+        private void CrouchLogic()
+        {
+            if (_input.crouch)
+            {
+                // Set target height and center for crouching
+                _targetControllerHeight = CrouchedHeight;
+
+                // You may want to prevent jumping while crouching
+                _input.jump = false;
+            }
+            else
+            {
+                // Check for obstacles before standing up
+                if (!Physics.Raycast(transform.position, Vector3.up, _originalControllerHeight - CrouchedHeight, GroundLayers))
+                {
+                    _targetControllerHeight = _originalControllerHeight;
+                }
+            }
+
+            // Smoothly change the CharacterController's height and center
+            float heightAdjustRate = Time.deltaTime * 10f; // Speed of height change
+            _controller.height = Mathf.Lerp(_controller.height, _targetControllerHeight, heightAdjustRate);
+
+            // Adjust the center so the base of the capsule stays on the ground
+            float halfHeightDifference = (_originalControllerHeight - _controller.height) / 2f;
+            _controller.center = _originalControllerCenter - Vector3.up * halfHeightDifference;
         }
 
         private void GroundedCheck()
@@ -214,7 +256,14 @@ namespace StarterAssets
         private void Move()
         {
             // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            if (_input.crouch) // <--- Check for crouching first
+            {
+                targetSpeed = CrouchSpeed;
+            }
+            else
+            {
+                targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            }
 
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 

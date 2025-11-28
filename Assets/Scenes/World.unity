@@ -20897,6 +20897,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8950763657228535169, guid: 429bdd475b1be2a40918205aa77f56e7, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -21237,5 +21241,5 @@ SceneRoots:
   - {fileID: 688602387}
   - {fileID: 126614220}
   - {fileID: 1569666333}
-  - {fileID: 2114562890}
   - {fileID: 571020278}
+  - {fileID: 2114562890}
