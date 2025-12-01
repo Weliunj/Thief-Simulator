@@ -1,10 +1,12 @@
-﻿ using UnityEngine;
+﻿using UnityEditor.Rendering;
+using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 #endif
 
 /* Note: animations are called via the controller for both the character and capsule using animator null checks
  */
+
 namespace StarterAssets
 {
     [RequireComponent(typeof(CharacterController))]
@@ -19,13 +21,6 @@ namespace StarterAssets
 
         [Tooltip("Sprint speed of the character in m/s")]
         public float SprintSpeed = 5.335f;
-
-        [Space(10)]
-        [Tooltip("Crouch speed of the character in m/s")]
-        public float CrouchSpeed = 1.5f; // <--- New parameter
-
-        [Tooltip("Height of the character controller when crouched")]
-        public float CrouchedHeight = 1.0f; // <--- New parameter
 
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
@@ -86,6 +81,7 @@ namespace StarterAssets
         private float _cinemachineTargetPitch;
 
         // player
+        public float targetSpeed = 0;
         private float _speed;
         private float _animationBlend;
         private float _targetRotation = 0.0f;
@@ -96,11 +92,6 @@ namespace StarterAssets
         // timeout deltatime
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
-
-        // crouch variables
-        private float _originalControllerHeight; // <--- New variable
-        private Vector3 _originalControllerCenter; // <--- New variable
-        private float _targetControllerHeight; // <--- New variable
 
         // animation IDs
         private int _animIDSpeed;
@@ -149,9 +140,6 @@ namespace StarterAssets
             
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
-
-
-
             _input = GetComponent<StarterAssetsInputs>();
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
@@ -172,8 +160,35 @@ namespace StarterAssets
 
             JumpAndGravity();
             GroundedCheck();
-            CrouchLogic(); // <--- New call
             Move();
+            TakeItem();            
+        }
+
+        float takeDuration = 0.5f;
+        float takeTimer = 0;
+        bool isTaking = false;
+
+        public void TakeItem()
+        {
+            // Bấm E bắt đầu hành động nhặt
+            if (Input.GetMouseButtonDown(0) && !isTaking)
+            {
+                isTaking = true;
+                takeTimer = takeDuration;
+                _animator.SetTrigger("Take");
+            }
+
+            // Nếu đang nhặt thì giảm tốc độ & đếm thời gian
+            if (isTaking)
+            {
+                targetSpeed = 0.3f; // tốc độ giảm khi nhặt item
+
+                takeTimer -= Time.deltaTime;
+                if (takeTimer <= 0)
+                {
+                    isTaking = false; // kết thúc nhặt
+                }
+            }
         }
 
         private void LateUpdate()
@@ -188,33 +203,6 @@ namespace StarterAssets
             _animIDJump = Animator.StringToHash("Jump");
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
-        }
-        private void CrouchLogic()
-        {
-            if (_input.crouch)
-            {
-                // Set target height and center for crouching
-                _targetControllerHeight = CrouchedHeight;
-
-                // You may want to prevent jumping while crouching
-                _input.jump = false;
-            }
-            else
-            {
-                // Check for obstacles before standing up
-                if (!Physics.Raycast(transform.position, Vector3.up, _originalControllerHeight - CrouchedHeight, GroundLayers))
-                {
-                    _targetControllerHeight = _originalControllerHeight;
-                }
-            }
-
-            // Smoothly change the CharacterController's height and center
-            float heightAdjustRate = Time.deltaTime * 10f; // Speed of height change
-            _controller.height = Mathf.Lerp(_controller.height, _targetControllerHeight, heightAdjustRate);
-
-            // Adjust the center so the base of the capsule stays on the ground
-            float halfHeightDifference = (_originalControllerHeight - _controller.height) / 2f;
-            _controller.center = _originalControllerCenter - Vector3.up * halfHeightDifference;
         }
 
         private void GroundedCheck()
@@ -253,24 +241,52 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f);
         }
 
+        public bool Crouching = false;
         private void Move()
         {
-            // set target speed based on move speed, sprint speed and if sprint is pressed
-            if (_input.crouch) // <--- Check for crouching first
+            
+            // 1. Cập nhật trạng thái Crouching
+            bool isCrouchInput = Input.GetKey(KeyCode.LeftControl);
+            if (isCrouchInput && Grounded)
             {
-                targetSpeed = CrouchSpeed;
+                // Kích hoạt Crouch
+                Crouching = true;
             }
             else
             {
+                Crouching = false;
+                // set target speed based on move speed, sprint speed and if sprint is pressed
                 targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
             }
 
+            if (Crouching)
+            {
+                _animator.SetBool("Crouch", true); // Dùng SetBool thay vì SetTrigger
+                targetSpeed = (_input.move == Vector2.zero) ? 0.0f : MoveSpeed / 1.5f; // Tốc độ di chuyển khi cúi
+                if(targetSpeed < 0.1f)
+                {
+                    _animator.SetBool("IsCrouching", false);
+                }
+                else
+                {
+                     _animator.SetBool("IsCrouching", true);
+                }
+            }
+            else
+            {
+                _animator.SetBool("IsCrouching", false);
+                _animator.SetBool("Crouch", false); // Dùng SetBool thay vì ResetTrigger
+                targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            }
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
             if (_input.move == Vector2.zero) targetSpeed = 0.0f;
-
+            if (isTaking)
+            {            
+                targetSpeed = 0.3f; // bị ép chậm nhưng animation blend vẫn mượt
+            }
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
 
@@ -330,6 +346,14 @@ namespace StarterAssets
 
         private void JumpAndGravity()
         {
+            // NGĂN NHẢY KHI ĐANG CÚI
+            if (Crouching) 
+            {
+                _input.jump = false;
+                _animator.SetBool(_animIDFreeFall, false);
+                return; 
+            }
+
             if (Grounded)
             {
                 // reset the fall timeout timer
@@ -349,7 +373,7 @@ namespace StarterAssets
                 }
 
                 // Jump
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+                if (_input.jump && _jumpTimeoutDelta <= 0.0f && !Crouching)
                 {
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
