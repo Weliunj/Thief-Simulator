@@ -75,7 +75,7 @@ namespace StarterAssets
 
         [Tooltip("For locking the camera position on all axis")]
         public bool LockCameraPosition = false;
-
+        
         // cinemachine
         private float _cinemachineTargetYaw;
         private float _cinemachineTargetPitch;
@@ -103,7 +103,7 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
 #endif
-        private Animator _animator;
+        [HideInInspector]public Animator _animator;
         private CharacterController _controller;
         private StarterAssetsInputs _input;
         private GameObject _mainCamera;
@@ -158,6 +158,9 @@ namespace StarterAssets
         {
             _hasAnimator = TryGetComponent(out _animator);
 
+            
+            LadderClimb();
+            if(isClimbingLadder){return;}
             JumpAndGravity();
             GroundedCheck();
             Move();
@@ -190,12 +193,25 @@ namespace StarterAssets
                 }
             }
         }
+        public bool isClimbingLadder = false;
+        public void LadderClimb()
+        {
+            if(isClimbingLadder)
+            {
+                _animator.SetBool("Climb", true);
+            }
+            else
+            {
+                isClimbingLadder = false;
+                _animator.SetBool("Climb", false);
+            }
+            
 
+        }
         private void LateUpdate()
         {
             CameraRotation();
         }
-
         private void AssignAnimationIDs()
         {
             _animIDSpeed = Animator.StringToHash("Speed");
@@ -204,7 +220,6 @@ namespace StarterAssets
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
         }
-
         private void GroundedCheck()
         {
             // set sphere position, with offset
@@ -241,7 +256,7 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f);
         }
 
-        public bool Crouching = false;
+        [HideInInspector] public bool Crouching = false;
         private void Move()
         {
             
