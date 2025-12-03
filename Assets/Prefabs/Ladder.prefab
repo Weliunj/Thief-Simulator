@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 769701899922371669}
   serializedVersion: 2
   m_LocalRotation: {x: -0.0000000037686756, y: 0.99995404, z: 0.0095905075, w: 0.00000008963769}
-  m_LocalPosition: {x: 519.41, y: 9.36, z: 314.64}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2.8975124, y: 2.0673451, z: 2.070323}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -78,7 +78,7 @@ Transform:
   m_GameObject: {fileID: 2168518688205529361}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 519.41, y: 11.61, z: 314.36}
+  m_LocalPosition: {x: 0, y: 2.3, z: -0.35}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -112,7 +112,7 @@ Transform:
   m_GameObject: {fileID: 2958275626336226564}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.9914449, z: -0.13052616, w: 0}
-  m_LocalPosition: {x: 519.41, y: 9.36, z: 314.64}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 2.897513, y: 2.067099, z: 2.070569}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -317,7 +317,7 @@ Transform:
   m_GameObject: {fileID: 3816376110806622302}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 519.41, y: 6.428, z: 314.13}
+  m_LocalPosition: {x: 0, y: -2.52, z: -0.42}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -366,7 +366,7 @@ Transform:
   m_GameObject: {fileID: 4298172987789137067}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 2.26}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -390,3 +390,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Ladder
   B: {fileID: 2168518688205529361}
   A: {fileID: 3816376110806622302}
+  isClimbingLadder: 0

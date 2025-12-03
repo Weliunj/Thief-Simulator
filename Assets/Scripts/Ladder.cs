@@ -39,7 +39,7 @@ public class Ladder : MonoBehaviour
 
             // Quay player theo hướng của B
             Vector3 directionToB = (B.transform.position - thirdPersonController.transform.position).normalized;
-            directionToB.y = 0;
+            directionToB.y = 0; // Giữ y không đổi để tránh nghiêng người lên/xuống
             thirdPersonController.transform.rotation = Quaternion.LookRotation(directionToB);
         }
 
