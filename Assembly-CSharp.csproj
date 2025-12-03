@@ -48,8 +48,8 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.2.10f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Models\Animals\Scripts\MovePlayerInput.cs" />
     <Compile Include="Assets\Scripts\AI_Move.cs" />
-    <Compile Include="Assets\Models\ithappy\Animals_FREE\Scripts\ThirdPersonCamera.cs" />
     <Compile Include="Assets\Scripts\Flashlight.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
     <Compile Include="Assets\UI Toolkit\HomeScreen.cs" />
@@ -58,29 +58,33 @@
     <Compile Include="Assets\Models\Pov3\ThirdPersonController\Scripts\ThirdPersonController.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
     <Compile Include="Assets\Scripts\Range_Interaction.cs" />
-    <Compile Include="Assets\Models\ithappy\Animals_FREE\Scripts\CreatureMover.cs" />
-    <Compile Include="Assets\Models\ithappy\Animals_FREE\Scripts\MovePlayerInput.cs" />
+    <Compile Include="Assets\Models\Animals\Scripts\PlayerCamera.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
+    <Compile Include="Assets\Models\LowPolyDungeon\Demo Scenes\PlayerMovement.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
-    <Compile Include="Assets\Models\DavidJalbert\LowPolyPeople\Example\Scripts\AnimationController.cs" />
     <Compile Include="Assets\Models\Pov1\InputSystem\StarterAssetsInputs.cs" />
+    <Compile Include="Assets\Models\LowPolyPeople\Example\Scripts\AnimationController.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
-    <Compile Include="Assets\Models\ithappy\Animals_FREE\Scripts\PlayerCamera.cs" />
+    <Compile Include="Assets\Scripts\NavMeshHelper.cs" />
+    <Compile Include="Assets\Models\Animals\Scripts\ThirdPersonCamera.cs" />
+    <Compile Include="Assets\Models\Animals\Scripts\CreatureMover.cs" />
+    <Compile Include="Assets\Models\LowPolyDungeon\Demo Scenes\MouseCamLook.cs" />
     <Compile Include="Assets\Models\Pov1\FirstPersonController\Scripts\FirstPersonController.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\CanvasInputs\UICanvasControllerInput.cs" />
     <Compile Include="Assets\Models\Pov1\FirstPersonController\Scripts\BasicRigidBodyPush.cs" />
+    <Compile Include="Assets\Models\LowPolyDungeon\Demo Scenes\ScreenshotMaker.cs" />
     <Compile Include="Assets\Scripts\Ladder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Models\Forest bt\StandardNoCulling.shader" />
     <None Include="Assets\Input\Stack_Sans_Notch\OFL.txt" />
     <None Include="Assets\UI Toolkit\HomeScreen.uxml" />
-    <None Include="Assets\Models\DavidJalbert\LowPolyPeople\readme.txt" />
+    <None Include="Assets\Models\LowPolyPeople\readme.txt" />
     <None Include="Assets\Models\Pov1\license.txt" />
     <None Include="Assets\UI Toolkit\HomeScreenUSS.uss" />
-    <None Include="Assets\Models\SimpleLowPolyNature\Readme.txt" />
-    <None Include="Assets\Models\SimpleLowPolyNature\Shaders\SimpleWater.shader" />
-    <None Include="Assets\Models\ithappy\Animals_FREE\Render_Pipeline_Convert\Documentation.txt" />
+    <None Include="Assets\Models\LowPolyNature\Readme.txt" />
+    <None Include="Assets\Models\LowPolyNature\Shaders\SimpleWater.shader" />
+    <None Include="Assets\Models\Animals\Render_Pipeline_Convert\Documentation.txt" />
     <None Include="Assets\Input\Stack_Sans_Notch\README.txt" />
   </ItemGroup>
   <ItemGroup>
