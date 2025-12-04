@@ -100,6 +100,9 @@ namespace StarterAssets
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
 
+        [Header("Setting")]
+        public bool isDead = false;
+
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
 #endif
@@ -153,12 +156,11 @@ namespace StarterAssets
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
         }
-
+        private bool die = false;
         private void Update()
-        {
+        {   
+            if(isDead){if(!die){_animator.SetTrigger("Die"); die = true;} return;}
             _hasAnimator = TryGetComponent(out _animator);
-
-            
             LadderClimb();
             if(isClimbingLadder){return;}
             JumpAndGravity();
