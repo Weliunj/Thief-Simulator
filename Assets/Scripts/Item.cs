@@ -10,6 +10,11 @@ public class Item : MonoBehaviour
 
     void Update()
     {
+        if(ROI.InRange && Input.GetKeyDown(KeyCode.E))
+        {
+            Debug.Log("Picked up " + gameObject.name);
+            gameObject.SetActive(false);
+        }
         
     }
 }

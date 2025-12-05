@@ -1,4 +1,6 @@
-﻿using UnityEditor.Rendering;
+﻿using System.Collections.Generic;
+using UnityEditor;
+using UnityEditor.Rendering;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
@@ -102,6 +104,12 @@ namespace StarterAssets
 
         [Header("Setting")]
         public bool isDead = false;
+        public float rangeInteract = 2f;
+        private List<GameObject> heldItem = new List<GameObject>();
+
+        private CharacterController characterController;
+        private Vector3 StartCenter;
+        private float StartHeight;
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -140,7 +148,11 @@ namespace StarterAssets
         private void Start()
         {
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
+            characterController = GetComponent<CharacterController>();
+            StartCenter = characterController.center;
+            StartHeight = characterController.height;
             
+
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
@@ -160,6 +172,7 @@ namespace StarterAssets
         private void Update()
         {   
             if(isDead){if(!die){_animator.SetTrigger("Die"); die = true;} return;}
+
             _hasAnimator = TryGetComponent(out _animator);
             LadderClimb();
             if(isClimbingLadder){return;}
@@ -175,13 +188,48 @@ namespace StarterAssets
 
         public void TakeItem()
         {
-            // Bấm E bắt đầu hành động nhặt
-            if (Input.GetMouseButtonDown(0) && !isTaking)
+            
+            //Nhat item
+            if (Input.GetKeyDown(KeyCode.E) && !isTaking)
             {
-                isTaking = true;
-                takeTimer = takeDuration;
-                _animator.SetTrigger("Take");
+                Collider[] hitColliders = Physics.OverlapSphere(transform.position, rangeInteract);
+                
+                foreach (var hitCollider in hitColliders)
+                {
+                    if(hitCollider.CompareTag("item"))
+                    {
+                        heldItem.Add(hitCollider.gameObject);
+
+                        isTaking = true;
+                        takeTimer = takeDuration;
+                        _animator.SetTrigger("Take");
+                        Debug.Log("Picked up " + hitCollider.gameObject.name);
+                        break; // Chỉ nhặt một item mỗi lần nhấn E
+                    }
+                }
             }
+
+            foreach (var item in heldItem)
+            {
+                if(item != null)
+                {
+                    item.SetActive(false);
+                }
+            }
+            //Drop Item
+            if (Input.GetKeyDown(KeyCode.Q) && heldItem .Count > 0 && !isTaking)
+            { 
+                // Lấy item để drop (chọn item cuối cùng trong list)
+                GameObject itemToDrop = heldItem[heldItem.Count - 1];
+                if(itemToDrop != null)
+                {
+                    itemToDrop.transform.position = transform.position + transform.forward * 1f;
+                    itemToDrop.transform.rotation = Quaternion.identity;
+                    itemToDrop.SetActive(true);
+                    heldItem.RemoveAt(heldItem.Count - 1);
+                }
+            }
+
 
             // Nếu đang nhặt thì giảm tốc độ & đếm thời gian
             if (isTaking)
@@ -194,6 +242,7 @@ namespace StarterAssets
                     isTaking = false; // kết thúc nhặt
                 }
             }
+            
         }
         public bool isClimbingLadder = false;
         public void LadderClimb()
@@ -278,6 +327,9 @@ namespace StarterAssets
 
             if (Crouching)
             {
+                characterController.center = new Vector3(StartCenter.x, 0.77f, StartCenter.z);
+                characterController.height = 1.46f;
+
                 _animator.SetBool("Crouch", true); // Dùng SetBool thay vì SetTrigger
                 targetSpeed = (_input.move == Vector2.zero) ? 0.0f : MoveSpeed / 1.5f; // Tốc độ di chuyển khi cúi
                 if(targetSpeed < 0.1f)
@@ -291,6 +343,8 @@ namespace StarterAssets
             }
             else
             {
+                characterController.center = new Vector3(StartCenter.x, StartCenter.y, StartCenter.z);
+                characterController.height = StartHeight;
                 _animator.SetBool("IsCrouching", false);
                 _animator.SetBool("Crouch", false); // Dùng SetBool thay vì ResetTrigger
                 targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
@@ -457,6 +511,10 @@ namespace StarterAssets
             Gizmos.DrawSphere(
                 new Vector3(transform.position.x, transform.position.y - GroundedOffset, transform.position.z),
                 GroundedRadius);
+
+            // Vẽ gizmos phạm vi tương tác
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(transform.position, rangeInteract);
         }
 
         private void OnFootstep(AnimationEvent animationEvent)

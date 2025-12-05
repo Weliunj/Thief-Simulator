@@ -4,11 +4,11 @@
 - Active scene:
   - Name: Lv1
   - Tags:
-    - Untagged, Respawn, Finish, EditorOnly, MainCamera, Player, GameController, CinemachineTarget, kid, adult
+    - Untagged, Respawn, Finish, EditorOnly, MainCamera, Player, GameController, CinemachineTarget, kid, adult, item
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground
 - Active game object:
-  - Name: Center
-  - Tag: Untagged
-  - Layer: Default
+  - Name: PlayerArmature
+  - Tag: Player
+  - Layer: Player
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

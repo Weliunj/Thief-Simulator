@@ -9,17 +9,18 @@ public class Range_Interaction : MonoBehaviour
     public float Radius;
     public bool InRange;
 
-    //Lock
-    private GameObject Cam_LockOn;
-    public GameObject InteractableObject;
+    [Header("Lock")]
+    public GameObject Center;
+    private GameObject target;
+    public GameObject E_icon;
 
     //Third Person Controller Reference
     private ThirdPersonController thirdPersonController;
     void Start()
     {
-        InteractableObject.SetActive(false);
+        E_icon.SetActive(false);
         thirdPersonController = GameObject.FindGameObjectWithTag("Player").GetComponent<ThirdPersonController>();
-        Cam_LockOn = GameObject.FindGameObjectWithTag("MainCamera");
+        target = GameObject.FindGameObjectWithTag("MainCamera");
         if(thirdPersonController == null)
         {
             Debug.LogError("ThirdPersonController not found on Player");
@@ -41,20 +42,20 @@ public class Range_Interaction : MonoBehaviour
         }
         else
         {
-            InteractableObject.SetActive(false);
+            E_icon.SetActive(false);
             
         }
     }
 
     public void E_Interact()
     {
-        InteractableObject.SetActive(true);
+        E_icon.SetActive(true);
         
     }
     public void LookAtObject()
     {
-        Vector3 direc = Cam_LockOn.transform.position - thirdPersonController.transform.position;
-        InteractableObject.transform.rotation = Quaternion.LookRotation(direc);
+        Vector3 direc = target.transform.position - Center.transform.position;
+        Center.transform.rotation = Quaternion.LookRotation(direc);
     }
     private void OnDrawGizmos()
     {
