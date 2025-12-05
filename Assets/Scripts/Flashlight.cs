@@ -1,7 +1,10 @@
+using StarterAssets;
 using UnityEngine;
 
 public class Flashlight : MonoBehaviour
 {
+    private ThirdPersonController player;
+    private
     Light flashlight;
     private bool toggleF;
     public AudioSource[] audioSources;
@@ -11,6 +14,7 @@ public class Flashlight : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        player = FindAnyObjectByType<ThirdPersonController>();
         flashlight = GetComponent<Light>();
         toggleF = false;
         flashlight.range = range;
@@ -19,6 +23,12 @@ public class Flashlight : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (player.isDead)
+        {
+            flashlight.intensity = 0;
+            return;
+        }
+
         flashlight.range = range;
         if (Input.GetKeyDown(KeyCode.F))
         {

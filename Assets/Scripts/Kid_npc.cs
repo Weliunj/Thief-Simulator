@@ -3,7 +3,7 @@ using StarterAssets;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class AI_Move_NavMesh : MonoBehaviour
+public class Kid : MonoBehaviour
 {
     // Các Component cần thiết
     private Animator animator;
@@ -25,10 +25,11 @@ public class AI_Move_NavMesh : MonoBehaviour
     private float raycastRange = 15f;
 
     public float raycastAngle = 30f; // Góc raycast để phát hiện mục tiêu
-     [HideInInspector] public bool targetDetected = false;
+    private bool targetDetected = false;
 
-    public Vector2 chaseDurationPublic = new Vector2(5f, 10f); // Thời gian theo đuổi mục tiêu
-    [HideInInspector]public float chaseDuration = 0f;  
+    public Vector2 callDurationPublic = new Vector2(5f, 10f); // Thời gian theo đuổi mục tiêu
+    private float callDuration = 0f;  
+    public float callRanger = 20f;
 
     void Start()
     {
@@ -36,7 +37,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         player = FindAnyObjectByType<ThirdPersonController>();
-
         // Kiểm tra xem các component có tồn tại không
         if (agent == null)
         {
@@ -122,7 +122,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             if(hit.collider.CompareTag("Player"))
             {
                 targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
+                callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
             }
         }
         else
@@ -135,7 +135,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             if(hitLeft.collider.CompareTag("Player"))
             {
                 targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y)  ; // Reset thời gian theo đuổi
+                callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y)  ; // Reset thời gian theo đuổi
             }
         }
         else
@@ -148,7 +148,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             if(hitRight.collider.CompareTag("Player"))
             {
                 targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
+                callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
             }
         }
         else
@@ -161,7 +161,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             if(hitUp.collider.CompareTag("Player"))
             {
                 targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
+                callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
             }
         }
         else
@@ -174,40 +174,48 @@ public class AI_Move_NavMesh : MonoBehaviour
             if(hitDown.collider.CompareTag("Player"))
             {
                 targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
+                callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
             }
         }
         else
         {
             Debug.DrawLine(rayStart, rayStart + downDirection * raycastRange, Color.green);
         }
-        Chase();
+        Call();
     }
-    public void Chase()
+    public void Call()
     {
-        if(chaseDuration > 0f)
+        if(callDuration > 0f)
         {
-            chaseDuration -= Time.deltaTime;
+            callDuration -= Time.deltaTime;
         }
 
-        if(targetDetected && chaseDuration > 0f)
+        if(targetDetected && callDuration > 0f)
         {
-            
             agent.speed = runSpeed;
-            if(Vector3.Distance(transform.position, player.transform.position) > 1f)
+            SetAnimation("run");
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold )
             {
-                SetAnimation("run");
-                agent.SetDestination(player.transform.position);
+                SetRandomDestination();
             }
-            else
-            {
-                player.isDead = true;
-                SetAnimation("idle");
-                agent.SetDestination(transform.position); // Giữ vị trí hiện tại khi đứng yên
-            }
+            Collider[] colliders = Physics.OverlapSphere(transform.position, callRanger);
+                foreach (var collider in colliders)
+                {
+                    if(collider.CompareTag("adult"))
+                    {
+                        AI_Move_NavMesh adultNpc = collider.GetComponent<AI_Move_NavMesh>();
+                        if(adultNpc != null)
+                        {
+                            adultNpc.targetDetected = true;
+                            adultNpc.chaseDuration = Random.Range(
+                                adultNpc.chaseDurationPublic.x, 
+                                adultNpc.chaseDurationPublic.y);
+                        }
+                    }
+                }
             
         }
-        else if(chaseDuration <= 0f)
+        else if(callDuration <= 0f)
         {
             targetDetected = false;     //idle 2 giay sau do lai di nhu npc
         }
@@ -256,6 +264,14 @@ public class AI_Move_NavMesh : MonoBehaviour
 
         result = Vector3.zero;
         return false;
+    }
+
+    public void OnDrawGizmos()
+    {
+        if(targetDetected && callDuration > 0f)
+        {
+            Gizmos.DrawWireSphere(transform.position, callRanger);
+        }
     }
 }
     
