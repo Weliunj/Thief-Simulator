@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
+    public float Price = 0f;
+    public int kg = 0;
     private Range_Interaction ROI;
     void Start()
     {
@@ -10,11 +12,6 @@ public class Item : MonoBehaviour
 
     void Update()
     {
-        if(ROI.InRange && Input.GetKeyDown(KeyCode.E))
-        {
-            Debug.Log("Picked up " + gameObject.name);
-            gameObject.SetActive(false);
-        }
         
     }
 }

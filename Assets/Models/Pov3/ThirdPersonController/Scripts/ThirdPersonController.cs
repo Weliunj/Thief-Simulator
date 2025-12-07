@@ -17,12 +17,7 @@ namespace StarterAssets
 #endif
     public class ThirdPersonController : MonoBehaviour
     {
-        [Header("Player")]
-        [Tooltip("Move speed of the character in m/s")]
-        public float MoveSpeed = 2.0f;
-
-        [Tooltip("Sprint speed of the character in m/s")]
-        public float SprintSpeed = 5.335f;
+        public PlayerManager player;
 
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
@@ -152,6 +147,9 @@ namespace StarterAssets
             StartCenter = characterController.center;
             StartHeight = characterController.height;
             
+            player.currweight = 0;
+            player._MoveSpeed = player.MoveSpeed;
+            player._SprintSpeed = player.SprintSpeed;
 
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
@@ -171,24 +169,71 @@ namespace StarterAssets
         private bool die = false;
         private void Update()
         {   
-            if(isDead){if(!die){_animator.SetTrigger("Die"); die = true;} return;}
+            if(isDead)
+            {
+                if(!die)
+                {
+                    _animator.SetTrigger("Die"); 
+                    foreach(var cau in heldItem)
+                    {
+                        cau.transform.position = transform.position + Vector3.up * 1f;
+                        cau.SetActive(true);
+                    }
+                    player.currweight = 0;
+                    heldItem.RemoveRange(0, heldItem.Count - 1);
+                    die = true;
+                    } 
+                return;
+            }
 
             _hasAnimator = TryGetComponent(out _animator);
-            LadderClimb();
-            if(isClimbingLadder){return;}
+
+
+            LadderClimb();  if(isClimbingLadder){return;}
             JumpAndGravity();
             GroundedCheck();
             Move();
             TakeItem();            
         }
 
+        public void WeightCacul()
+        {
+            // Tính tỉ lệ trọng lượng đã mang (weight ratio)
+            float weightRatio = (float)player.currweight / (float)player.Maxweight;
+            float minMoveSpeed = player.MoveSpeed/4f;
+            float minSprintSpeed = player.SprintSpeed/4f;
+
+            weightRatio = Mathf.Clamp01(weightRatio);
+
+            // Dùng Mathf.Lerp để GIẢM tốc độ tuyến tính
+            // T = 0 (0% trọng lượng): MoveSpeed = player.MoveSpeed (2.0f)
+            // T = 1 (100% trọng lượng): MoveSpeed = minMoveSpeed (0.5f)
+            
+            player._MoveSpeed = Mathf.Lerp(player.MoveSpeed, minMoveSpeed, weightRatio);
+            player._SprintSpeed = Mathf.Lerp(player.SprintSpeed, minSprintSpeed, weightRatio);
+
+            /*
+                --------------------mathf.Lerp = a + (b - a) * t
+                vd: Lerp.(2.0f, 0.5f, 0.5) => 1.25f
+                {weightRatio} = 0.5$ (Mang 50%)
+            */
+        
+        }
         float takeDuration = 0.5f;
         float takeTimer = 0;
         bool isTaking = false;
 
         public void TakeItem()
         {
-            
+            // Cập nhật trạng thái item đang cầm: đặt tất cả item về trạng thái ẩn (false)
+            foreach (var item in heldItem)
+            {
+                if(item != null)
+                {
+                    item.SetActive(false);
+                }
+            }
+
             //Nhat item
             if (Input.GetKeyDown(KeyCode.E) && !isTaking)
             {
@@ -198,35 +243,55 @@ namespace StarterAssets
                 {
                     if(hitCollider.CompareTag("item"))
                     {
-                        heldItem.Add(hitCollider.gameObject);
+                        Item item = hitCollider.GetComponent<Item>();
 
-                        isTaking = true;
-                        takeTimer = takeDuration;
-                        _animator.SetTrigger("Take");
-                        Debug.Log("Picked up " + hitCollider.gameObject.name);
-                        break; // Chỉ nhặt một item mỗi lần nhấn E
+                        // KIỂM TRA TRỌNG LƯỢNG TỐI ĐA TRƯỚC KHI NHẶT
+                        if (player.currweight + item.kg <= player.Maxweight)
+                        {
+                            heldItem.Add(hitCollider.gameObject);
+                            player.currweight += item.kg;
+                        
+                            isTaking = true;
+                            takeTimer = takeDuration;
+                            _animator.SetTrigger("Take");
+                            Debug.Log("Picked up " + hitCollider.gameObject.name);
+                            Debug.Log($"weight: {player.currweight}/{player.Maxweight}");
+                            break; // Chỉ nhặt một item mỗi lần nhấn E
+                        }
+                        else
+                        {
+                            Debug.Log("Nang qua tha cho toi: " + item.gameObject.name);
+                        }
+                        
                     }
                 }
             }
 
-            foreach (var item in heldItem)
-            {
-                if(item != null)
-                {
-                    item.SetActive(false);
-                }
-            }
+            
             //Drop Item
             if (Input.GetKeyDown(KeyCode.Q) && heldItem .Count > 0 && !isTaking)
             { 
                 // Lấy item để drop (chọn item cuối cùng trong list)
-                GameObject itemToDrop = heldItem[heldItem.Count - 1];
+                int lastindex = heldItem.Count - 1;
+                GameObject itemToDrop = heldItem[lastindex];
                 if(itemToDrop != null)
                 {
-                    itemToDrop.transform.position = transform.position + transform.forward * 1f;
-                    itemToDrop.transform.rotation = Quaternion.identity;
-                    itemToDrop.SetActive(true);
-                    heldItem.RemoveAt(heldItem.Count - 1);
+                    Item item = itemToDrop.GetComponent<Item>();
+                    if(item != null)
+                    {
+                        player.currweight -= item.kg;
+                        player.currweight = Mathf.Max(0, player.currweight);
+                        
+                        itemToDrop.transform.position = transform.position + transform.forward * 1f;
+                        itemToDrop.transform.rotation = Quaternion.identity;
+                        itemToDrop.SetActive(true);
+                        heldItem.RemoveAt(heldItem.Count - 1);
+                        Debug.Log($"weight: {player.currweight}/{player.Maxweight}");
+                    }
+                }
+                else
+                {
+                    heldItem.RemoveAt(lastindex);
                 }
             }
 
@@ -322,7 +387,7 @@ namespace StarterAssets
             {
                 Crouching = false;
                 // set target speed based on move speed, sprint speed and if sprint is pressed
-                targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+                targetSpeed = _input.sprint ? player._SprintSpeed : player._MoveSpeed;
             }
 
             if (Crouching)
@@ -331,7 +396,7 @@ namespace StarterAssets
                 characterController.height = 1.46f;
 
                 _animator.SetBool("Crouch", true); // Dùng SetBool thay vì SetTrigger
-                targetSpeed = (_input.move == Vector2.zero) ? 0.0f : MoveSpeed / 1.5f; // Tốc độ di chuyển khi cúi
+                targetSpeed = (_input.move == Vector2.zero) ? 0.0f : player._MoveSpeed / 1.5f; // Tốc độ di chuyển khi cúi
                 if(targetSpeed < 0.1f)
                 {
                     _animator.SetBool("IsCrouching", false);
@@ -347,10 +412,11 @@ namespace StarterAssets
                 characterController.height = StartHeight;
                 _animator.SetBool("IsCrouching", false);
                 _animator.SetBool("Crouch", false); // Dùng SetBool thay vì ResetTrigger
-                targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+                targetSpeed = _input.sprint ? player._SprintSpeed : player._MoveSpeed;
             }
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
+            WeightCacul();
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
             if (_input.move == Vector2.zero) targetSpeed = 0.0f;

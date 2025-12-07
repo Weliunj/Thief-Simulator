@@ -5,9 +5,11 @@ using UnityEngine;
 public class Pov_mode : MonoBehaviour
 {
     ThirdPersonController player;
-    public GameObject Pov1;
     public GameObject Pov3;
+    public GameObject Pov1;
     public GameObject Geometry;
+    public GameObject Flashlight1;
+    public GameObject Flashlight3;
     private float cd = 3f;
     public bool Swap;
     void Start()
@@ -39,18 +41,25 @@ public class Pov_mode : MonoBehaviour
 
         if (Swap)
         {
-            Pov1.SetActive(false);
-            Pov3.SetActive(true);
+            //1
+            Pov1.SetActive(true);
+            Pov3.SetActive(false);
             if(cd <= 1f)
             {
                 Geometry.SetActive(false);
             }
+            Flashlight1.SetActive(true);
+            Flashlight3.SetActive(false);
         }
         else
-        {
-            Pov1.SetActive(true);
+        {   
+            //3
+            Pov1.SetActive(false);  
+            Pov3.SetActive(true);
             Geometry.SetActive(true);
-            Pov3.SetActive(false);
+            
+            Flashlight3.SetActive(true);
+            Flashlight1.SetActive(false);
         }
     }
 }

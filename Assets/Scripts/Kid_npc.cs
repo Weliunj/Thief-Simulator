@@ -192,6 +192,7 @@ public class Kid : MonoBehaviour
 
         if(targetDetected && callDuration > 0f)
         {
+            Debug.Log("true");
             agent.speed = runSpeed;
             SetAnimation("run");
             if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold )
