@@ -106,6 +106,10 @@ namespace StarterAssets
         private Vector3 StartCenter;
         private float StartHeight;
 
+        // Biến mới để xử lý Stamina Cooldown
+        private float _staminaRegenTimer;
+        private bool _canSprint = true;
+
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
 #endif
@@ -150,6 +154,11 @@ namespace StarterAssets
             player.currweight = 0;
             player._MoveSpeed = player.MoveSpeed;
             player._SprintSpeed = player.SprintSpeed;
+            // Khởi tạo Stamina
+            player._stamina = player.MaxStamina; 
+            _staminaRegenTimer = 0f; // Reset timer
+            player.currpoint = 0;
+            player.currpoint = 0;
 
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
@@ -178,9 +187,9 @@ namespace StarterAssets
                     {
                         cau.transform.position = transform.position + Vector3.up * 1f;
                         cau.SetActive(true);
+
                     }
                     player.currweight = 0;
-                    heldItem.RemoveRange(0, heldItem.Count - 1);
                     die = true;
                     } 
                 return;
@@ -189,6 +198,7 @@ namespace StarterAssets
             _hasAnimator = TryGetComponent(out _animator);
 
 
+            HandleStamina(); // Gọi hàm xử lý Stamina
             LadderClimb();  if(isClimbingLadder){return;}
             JumpAndGravity();
             GroundedCheck();
@@ -196,6 +206,44 @@ namespace StarterAssets
             TakeItem();            
         }
 
+        // --- HÀM XỬ LÝ STAMINA MỚI ---
+        private void HandleStamina()
+        {
+            // 1. Kiểm tra trạng thái có được chạy không
+            _canSprint = player._stamina > 0.01f;
+
+            // 2. Sprinting: Giảm Stamina
+            if (_input.sprint && _input.move.magnitude > 0 && !Crouching)
+            {
+                if (player._stamina > 0f)
+                {
+                    player._stamina -= player.StaminaDepletionRate * Time.deltaTime;
+                    _staminaRegenTimer = player.StaminaRegenCooldown; // Reset cooldown khi đang chạy
+                    
+                    // Giới hạn Stamina không xuống dưới 0
+                    player._stamina = Mathf.Max(0f, player._stamina); 
+                }
+            }
+            // 3. Regen (Hồi phục):
+            else
+            {
+                // a) Đếm ngược Cooldown
+                if (_staminaRegenTimer > 0f)
+                {
+                    _staminaRegenTimer -= Time.deltaTime;
+                }
+                // b) Nếu Cooldown hết và Stamina chưa đầy, bắt đầu hồi phục
+                else if (player._stamina < player.MaxStamina)
+                {
+                    player._stamina += player.StaminaRegenRate * Time.deltaTime;
+                    
+                    // Giới hạn Stamina không vượt quá MaxStamina
+                    player._stamina = Mathf.Min(player.MaxStamina, player._stamina);
+                }
+            }
+            
+            // Debug.Log($"Stamina: {player._stamina:F2}, Cooldown: {_staminaRegenTimer:F2}, CanSprint: {_canSprint}");
+        }
         public void WeightCacul()
         {
             // Tính tỉ lệ trọng lượng đã mang (weight ratio)
@@ -387,7 +435,9 @@ namespace StarterAssets
             {
                 Crouching = false;
                 // set target speed based on move speed, sprint speed and if sprint is pressed
-                targetSpeed = _input.sprint ? player._SprintSpeed : player._MoveSpeed;
+                
+                bool isSprintingAllowed = _input.sprint && _canSprint;
+                targetSpeed = isSprintingAllowed ? player._SprintSpeed : player._MoveSpeed;
             }
 
             if (Crouching)
@@ -412,7 +462,9 @@ namespace StarterAssets
                 characterController.height = StartHeight;
                 _animator.SetBool("IsCrouching", false);
                 _animator.SetBool("Crouch", false); // Dùng SetBool thay vì ResetTrigger
-                targetSpeed = _input.sprint ? player._SprintSpeed : player._MoveSpeed;
+
+                bool isSprintingAllowed = _input.sprint && _canSprint;
+                targetSpeed = isSprintingAllowed ? player._SprintSpeed : player._MoveSpeed;
             }
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 

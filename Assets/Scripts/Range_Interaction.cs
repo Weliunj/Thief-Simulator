@@ -1,6 +1,8 @@
 using StarterAssets;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Animations;
 
 public class Range_Interaction : MonoBehaviour
 {
@@ -10,15 +12,30 @@ public class Range_Interaction : MonoBehaviour
     public bool InRange;
 
     [Header("Lock")]
-    public GameObject Center;
     private GameObject target;
+    public GameObject Center;
     public GameObject E_icon;
+    public TextMeshPro Name;
+    public Color Colorname;
 
     //Third Person Controller Reference
     private ThirdPersonController thirdPersonController;
     void Start()
     {
         E_icon.SetActive(false);
+        if (Name != null)
+        {
+
+            Name.text = transform.parent.gameObject.name;            
+            // 3. Áp dụng gradient
+            Name.color = Colorname;
+        }
+        else
+        {
+            Debug.LogError("TextMeshPro component (Name) not found in children or not assigned.");
+        }
+
+
         thirdPersonController = GameObject.FindGameObjectWithTag("Player").GetComponent<ThirdPersonController>();
         target = GameObject.FindGameObjectWithTag("MainCamera");
         if(thirdPersonController == null)
@@ -43,14 +60,12 @@ public class Range_Interaction : MonoBehaviour
         else
         {
             E_icon.SetActive(false);
-            
         }
     }
 
     public void E_Interact()
     {
         E_icon.SetActive(true);
-        
     }
     public void LookAtObject()
     {
