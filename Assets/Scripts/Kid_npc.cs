@@ -31,12 +31,37 @@ public class Kid : MonoBehaviour
     private float callDuration = 0f;  
     public float callRanger = 20f;
 
+    [Header("🎨 Appearance Settings")] // Header mới để quản lý hình thức
+    public Material[] availableMaterials; // Mảng chứa các vật liệu bạn muốn chọn
+    private Renderer aiRenderer;         // Component Renderer của GameObject AI
+
     void Start()
     {
         // 1. Lấy Component
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         player = FindAnyObjectByType<ThirdPersonController>();
+
+        // LẤY RENDERER VÀ GÁN MATERIAL NGẪU NHIÊN
+        aiRenderer = GetComponentInChildren<Renderer>(); // Tìm Renderer trên GameObject hoặc con
+        if (aiRenderer == null)
+        {
+            Debug.LogWarning("Renderer component không được tìm thấy trên AI.");
+        }
+
+        if (availableMaterials.Length > 0 && aiRenderer != null)
+        {
+            // Chọn ngẫu nhiên một chỉ mục trong mảng
+            int randomIndex = Random.Range(0, availableMaterials.Length);
+            
+            // Gán material đã chọn cho Renderer
+            aiRenderer.material = availableMaterials[randomIndex];
+            Debug.Log($"Đã gán Material: {availableMaterials[randomIndex].name}");
+        }
+        else if (aiRenderer != null)
+        {
+            Debug.LogWarning("Mảng Materials rỗng! Không thể gán material ngẫu nhiên.");
+        }
         // Kiểm tra xem các component có tồn tại không
         if (agent == null)
         {

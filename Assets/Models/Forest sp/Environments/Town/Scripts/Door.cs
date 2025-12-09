@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,13 +10,13 @@ public class Door : MonoBehaviour {
 		anim = GetComponent<Animator> ();
 	}
 
-	void OnTriggerEnter (Collider other) {
+	void OnTriggerEnter (Collider collider) {
 		anim.SetBool ("DoorOpen", true);
 		anim.SetBool ("DoorClose", false);
 
 	}
 
-	void OnTriggerExit (Collider other) {
+	void OnTriggerExit (Collider collider) {
 		anim.SetBool ("DoorOpen", false);
 		anim.SetBool ("DoorClose", true);
 

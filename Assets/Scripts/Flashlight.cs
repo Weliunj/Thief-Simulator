@@ -4,6 +4,8 @@ using UnityEngine;
 public class Flashlight : MonoBehaviour
 {
     private ThirdPersonController player;
+    public PlayerManager playerManager;
+
     private
     Light flashlight;
     private bool toggleF;
@@ -23,7 +25,7 @@ public class Flashlight : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (player.isDead)
+        if (playerManager.isDied)
         {
             flashlight.intensity = 0;
             return;

@@ -23,10 +23,10 @@ MonoBehaviour:
   m_RequireOpaqueTexture: 0
   m_OpaqueDownsampling: 1
   m_SupportsTerrainHoles: 1
-  m_SupportsHDR: 1
+  m_SupportsHDR: 0
   m_HDRColorBufferPrecision: 0
   m_MSAA: 1
-  m_RenderScale: 1
+  m_RenderScale: 0.7
   m_UpscalingFilter: 0
   m_FsrOverrideSharpness: 0
   m_FsrSharpness: 0.92
@@ -41,31 +41,32 @@ MonoBehaviour:
   m_SupportProbeVolumeScenarios: 0
   m_SupportProbeVolumeScenarioBlending: 0
   m_ProbeVolumeSHBands: 1
-  m_MainLightRenderingMode: 0
+  m_MainLightRenderingMode: 1
   m_MainLightShadowsSupported: 0
-  m_MainLightShadowmapResolution: 1024
+  m_MainLightShadowmapResolution: 256
   m_AdditionalLightsRenderingMode: 2
   m_AdditionalLightsPerObjectLimit: 4
   m_AdditionalLightShadowsSupported: 0
-  m_AdditionalLightsShadowmapResolution: 1024
-  m_AdditionalLightsShadowResolutionTierLow: 256
-  m_AdditionalLightsShadowResolutionTierMedium: 512
-  m_AdditionalLightsShadowResolutionTierHigh: 1024
+  m_AdditionalLightsShadowmapResolution: 256
+  m_AdditionalLightsShadowResolutionTierLow: 128
+  m_AdditionalLightsShadowResolutionTierMedium: 128
+  m_AdditionalLightsShadowResolutionTierHigh: 256
   m_ReflectionProbeBlending: 1
   m_ReflectionProbeBoxProjection: 1
-  m_ShadowDistance: 15
-  m_ShadowCascadeCount: 1
+  m_ReflectionProbeAtlas: 1
+  m_ShadowDistance: 50
+  m_ShadowCascadeCount: 4
   m_Cascade2Split: 0.33333334
   m_Cascade3Split: {x: 0.1, y: 0.3}
-  m_Cascade4Split: {x: 0.06666667, y: 0.2, z: 0.46666667}
-  m_CascadeBorder: 0.2
+  m_Cascade4Split: {x: 0.12, y: 0.28, z: 0.52}
+  m_CascadeBorder: 0.083333336
   m_ShadowDepthBias: 1
-  m_ShadowNormalBias: 1
+  m_ShadowNormalBias: 0.5
   m_AnyShadowsSupported: 1
-  m_SoftShadowsSupported: 0
+  m_SoftShadowsSupported: 1
   m_ConservativeEnclosingSphere: 0
   m_NumIterationsEnclosingSphere: 64
-  m_SoftShadowQuality: 2
+  m_SoftShadowQuality: 1
   m_AdditionalLightsCookieResolution: 2048
   m_AdditionalLightsCookieFormat: 3
   m_UseSRPBatcher: 1
@@ -91,7 +92,7 @@ MonoBehaviour:
   m_MaxPixelLights: 0
   m_ShadowAtlasResolution: 256
   m_VolumeFrameworkUpdateMode: 0
-  m_VolumeProfile: {fileID: 0}
+  m_VolumeProfile: {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
   apvScenesData:
     obsoleteSceneBounds:
       m_Keys: []
@@ -129,6 +130,10 @@ MonoBehaviour:
   m_PrefilterScreenCoord: 0
   m_PrefilterNativeRenderPass: 0
   m_PrefilterUseLegacyLightmaps: 0
+  m_PrefilterBicubicLightmapSampling: 0
+  m_PrefilterReflectionProbeBlending: 0
+  m_PrefilterReflectionProbeBoxProjection: 0
+  m_PrefilterReflectionProbeAtlas: 0
   m_ShaderVariantLogLevel: 0
   m_ShadowCascades: 0
   m_Textures:

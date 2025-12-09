@@ -3,6 +3,7 @@ using UnityEngine.Rendering;
 [CreateAssetMenu(fileName = "PlayerManager", menuName = "ScriptableObjects/PlayerManager", order = 1)]
 public class PlayerManager : ScriptableObject
 {
+    public bool isDied = false;
     public float MoveSpeed = 2f;
     public float SprintSpeed = 7f;
     public float MaxStamina = 10f;

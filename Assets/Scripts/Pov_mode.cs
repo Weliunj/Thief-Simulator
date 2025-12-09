@@ -5,6 +5,8 @@ using UnityEngine;
 public class Pov_mode : MonoBehaviour
 {
     ThirdPersonController player;
+    public PlayerManager playerManager;
+
     public GameObject Pov3;
     public GameObject Pov1;
     public GameObject Geometry;
@@ -34,7 +36,7 @@ public class Pov_mode : MonoBehaviour
             }
         }
 
-        if (player.isDead)
+        if (playerManager.isDied)
         {
             Swap = false;
         }

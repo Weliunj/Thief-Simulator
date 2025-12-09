@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using UnityEditor;
-using UnityEditor.Rendering;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
@@ -98,7 +96,6 @@ namespace StarterAssets
         private int _animIDMotionSpeed;
 
         [Header("Setting")]
-        public bool isDead = false;
         public float rangeInteract = 2f;
         private List<GameObject> heldItem = new List<GameObject>();
 
@@ -151,6 +148,7 @@ namespace StarterAssets
             StartCenter = characterController.center;
             StartHeight = characterController.height;
             
+            player.isDied = false;
             player.currweight = 0;
             player._MoveSpeed = player.MoveSpeed;
             player._SprintSpeed = player.SprintSpeed;
@@ -178,7 +176,7 @@ namespace StarterAssets
         private bool die = false;
         private void Update()
         {   
-            if(isDead)
+            if(player.isDied)
             {
                 if(!die)
                 {

@@ -206,10 +206,20 @@ MonoBehaviour:
   targetRadius: 40
   stoppingDistanceThreshold: 0.5
   minMaxIdleTime: {x: 2, y: 5}
-  raycastRangePublic: 10
-  raycastAngle: 30
+  raycastRangePublic: 15
+  raycastAngle: 20
   callDurationPublic: {x: 15, y: 25}
   callRanger: 8
+  availableMaterials:
+  - {fileID: 2100000, guid: b5196b4ed11c46f4eadd08cb98b4aba3, type: 2}
+  - {fileID: 2100000, guid: 0fba143db0f355241ab2d08e01431d8c, type: 2}
+  - {fileID: 2100000, guid: 49e897dae1818784ca3a53274beef6d3, type: 2}
+  - {fileID: 2100000, guid: 64aa29e5478aa4645b59bf62f2c55b3c, type: 2}
+  - {fileID: 2100000, guid: f56a89ba069e28e4abf51cd9baa9ea4f, type: 2}
+  - {fileID: 2100000, guid: 88aedb11cda552c4daa6d3c81a6f1421, type: 2}
+  - {fileID: 2100000, guid: f050b687c59d0c0499bdd4231def29e9, type: 2}
+  - {fileID: 2100000, guid: deb63c3b802fe6840b1674dcf1704536, type: 2}
+  - {fileID: 2100000, guid: 63cc073c21d50c8478f795b34d842527, type: 2}
 --- !u!195 &6560039935702648229
 NavMeshAgent:
   m_ObjectHideFlags: 0

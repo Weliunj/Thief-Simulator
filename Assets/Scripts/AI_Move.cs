@@ -5,249 +5,298 @@ using UnityEngine.AI;
 
 public class AI_Move_NavMesh : MonoBehaviour
 {
-    // Các Component cần thiết
+    // Enum mới để quản lý các kiểu di chuyển của AI
+    public enum MovementState
+    {
+        RandomMove,  // Di chuyển ngẫu nhiên
+        Stationary,  // Đứng im
+        Patrol       // Tuần tra giữa các điểm
+    }
+
+    // =========================================================================
+    [Header("🤖 AI Core Components")]
     private Animator animator;
     private string currAnimState;
     private NavMeshAgent agent;
-    private ThirdPersonController player;
+    private ThirdPersonController player; 
+    public PlayerManager playerManager;
 
-    public float walkSpeed = 1.5f; // Tốc độ đi bộ
-    public float runSpeed = 3f;  // Tốc độ chạy
+    [Header("🏃 Movement Settings")]
+    public float walkSpeed = 1.5f;   
+    public float runSpeed = 3f;      
+    public float stoppingDistanceThreshold = 0.5f; 
 
-    // Biến để quản lý trạng thái
-    public float targetRadius = 20f; // Bán kính tìm kiếm điểm đến ngẫu nhiên
-    public float stoppingDistanceThreshold = 0.5f; // Ngưỡng dừng để chuyển hoạt ảnh từ đi sang đứng
-    
-    private float IdleTime = 0f;
-    public Vector2 minMaxIdleTime = new Vector2(2f, 5f); // Thời gian đứng yên ngẫu nhiên (Min/Max)
-
-    public float raycastRangePublic = 15f; // Khoảng cách raycast để phát hiện mục tiêu
+    [Header("👀 Detection & Chase")]
+    public float raycastRangePublic = 15f; 
     private float raycastRange = 15f;
+    public float raycastAngle = 30f;     
+    public Vector2 chaseDurationPublic = new Vector2(5f, 10f); 
+    [HideInInspector] public bool targetDetected = false;
+    [HideInInspector] public float chaseDuration = 0f;
 
-    public float raycastAngle = 30f; // Góc raycast để phát hiện mục tiêu
-     [HideInInspector] public bool targetDetected = false;
+    [Header("🚶 Normal Movement States")]
+    public MovementState currentMovementState = MovementState.RandomMove; 
+    public float targetRadius = 20f; 
+    public Vector2 minMaxIdleTime = new Vector2(2f, 5f); 
+    private float IdleTime = 0f;
+    
+    [Header("🔎 Stationary Scan")]
+    public float scanDuration = 1f; // Thời gian duy trì góc nhìn khi quét
+    private float scanTimer = 0f;
+    private Quaternion targetScanRotation; // Góc quay mục tiêu khi đang quét
+    
+    [Header("📍 Patrol Points (Chỉ dùng cho chế độ Patrol)")]
+    public Transform[] patrolPoints; 
+    private int currentPatrolIndex = 0; 
 
-    public Vector2 chaseDurationPublic = new Vector2(5f, 10f); // Thời gian theo đuổi mục tiêu
-    [HideInInspector]public float chaseDuration = 0f;  
+    [Header("🏡 AI Stay Area")]
+    public float maxChaseRadius = 30f;  
+    public float returnSpeed = 2f;      
+    private Vector3 initialPosition;     
+    private Quaternion initialRotation;  
+    private bool isReturningToStayArea = false; 
+
+    [Header("🎨 Appearance Settings")] // Header mới để quản lý hình thức
+    public Material[] availableMaterials; // Mảng chứa các vật liệu bạn muốn chọn
+    private Renderer aiRenderer;         // Component Renderer của GameObject AI
+    // =========================================================================
 
     void Start()
     {
         // 1. Lấy Component
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-        player = FindAnyObjectByType<ThirdPersonController>();
+        player = FindAnyObjectByType<ThirdPersonController>(); 
 
-        // Kiểm tra xem các component có tồn tại không
+        // LẤY RENDERER VÀ GÁN MATERIAL NGẪU NHIÊN
+        aiRenderer = GetComponentInChildren<Renderer>(); // Tìm Renderer trên GameObject hoặc con
+        if (aiRenderer == null)
+        {
+            Debug.LogWarning("Renderer component không được tìm thấy trên AI.");
+        }
+
+        if (availableMaterials.Length > 0 && aiRenderer != null)
+        {
+            // Chọn ngẫu nhiên một chỉ mục trong mảng
+            int randomIndex = Random.Range(0, availableMaterials.Length);
+            
+            // Gán material đã chọn cho Renderer
+            aiRenderer.material = availableMaterials[randomIndex];
+            Debug.Log($"Đã gán Material: {availableMaterials[randomIndex].name}");
+        }
+        else if (aiRenderer != null)
+        {
+            Debug.LogWarning("Mảng Materials rỗng! Không thể gán material ngẫu nhiên.");
+        }
+
+
         if (agent == null)
         {
-            Debug.LogError("NavMeshAgent component không được tìm thấy trên GameObject này.");
-            enabled = false; // Tắt script nếu thiếu
+            Debug.LogError("NavMeshAgent component không được tìm thấy.");
+            enabled = false;
             return;
         }
 
-        if (animator == null)
+        if (player == null)
         {
-            Debug.LogWarning("Animator component không được tìm thấy.");
+             Debug.LogWarning("Không tìm thấy ThirdPersonController (Player). AI sẽ không thể Chase.");
         }
-
-        // Tắt tính năng tự động xoay của NavMeshAgent để Animator có thể kiểm soát hướng
-        // (Tùy chọn, nếu bạn muốn Animator xoay nhân vật)
-        // agent.updateRotation = false; 
-
-        // Bắt đầu di chuyển ngay lập tức
-        SetRandomDestination();
-        IdleTime = Random.Range(2f, 5f);
+        
+        // Thiết lập ban đầu
+        agent.speed = walkSpeed;
+        
+        // LƯU VỊ TRÍ & GÓC QUAY BAN ĐẦU
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
+        
+        InitializeMovementState();
     }
+
+    // =========================================================================
 
     void Update()
     {
         if (agent == null || !agent.enabled) return;
 
-        // 2. Kiểm tra trạng thái NavMeshAgent
-        // Agent.hasPath là true nếu nó đang tính toán hoặc di chuyển đến đích
-        
+        // 1. Luôn kiểm tra mục tiêu (Player)
         RayCastHitTarget();
-        if(targetDetected)  { return; }
-        // Kiểm tra xem AI đã gần đến đích chưa (dựa trên stoppingDistance đã được thiết lập)
+
+        // 2. Xử lý trạng thái CHASE / QUAY VỀ (Ưu tiên cao nhất)
+        if (targetDetected)
+        {
+            // Nếu phát hiện Player, ngắt trạng thái quay về (nếu đang ở đó)
+            isReturningToStayArea = false; 
+            Chase();
+            return; 
+        }
+        
+        if (isReturningToStayArea)
+        {
+            ReturnToStayArea();
+            return;
+        }
+
+        // 3. Xử lý trạng thái di chuyển thông thường 
+        switch (currentMovementState)
+        {
+            case MovementState.RandomMove:
+                HandleRandomMove();
+                break;
+            case MovementState.Stationary:
+                HandleStationary();
+                break;
+            case MovementState.Patrol:
+                HandlePatrol();
+                break;
+        }
+
+        // Cập nhật Animation cho việc di chuyển thông thường (walk/idle)
+        UpdateNormalMoveAnimation();
+    }
+
+    // =========================================================================
+    //                            CÁC HÀM XỬ LÝ TRẠNG THÁI
+    // =========================================================================
+
+    private void InitializeMovementState()
+    {
+        IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y);
+        agent.speed = walkSpeed;
+
+        if (currentMovementState == MovementState.RandomMove)
+        {
+            SetRandomDestination();
+        }
+        else if (currentMovementState == MovementState.Patrol)
+        {
+             if (patrolPoints != null && patrolPoints.Length > 0)
+            {
+                agent.SetDestination(patrolPoints[currentPatrolIndex].position);
+            }
+        }
+        else if (currentMovementState == MovementState.Stationary)
+        {
+            targetScanRotation = initialRotation; // Bắt đầu bằng góc ban đầu
+            SetRandomScanRotation();
+        }
+    }
+    
+    // --- Hàm thiết lập Góc Quét Ngẫu nhiên ---
+    private void SetRandomScanRotation()
+    {
+        scanTimer = scanDuration; // Reset thời gian quét
+
+        // Chọn ngẫu nhiên 1 trong 3 góc: Trái (-45), Giữa (0), Phải (+45) so với góc ban đầu (initialRotation)
+        float[] angles = { -45f, 0f, 45f };
+        float randomAngle = angles[Random.Range(0, angles.Length)];
+
+        // Tính toán góc quay mới dựa trên góc quay ban đầu (chỉ sử dụng trục Y)
+        Quaternion initialYRotation = Quaternion.Euler(0, initialRotation.eulerAngles.y, 0);
+        targetScanRotation = initialYRotation * Quaternion.Euler(0, randomAngle, 0);
+    }
+
+
+    // --- Xử lý Trạng thái Di chuyển Ngẫu nhiên ---
+    private void HandleRandomMove()
+    {
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold )
         {
-            // Đã đến đích hoặc gần đến đích
-            // Chuyển sang hoạt ảnh Đứng (Set IsWalking = false)
-            SetAnimation("idle");
-            
             if(IdleTime > 0f)
             {
                 IdleTime -= Time.deltaTime;
-                return; // Chờ cho đến khi hết thời gian đứng yên
+                return; 
             }
             else
             {
-                // 3. Hết thời gian chờ -> Thiết lập mục tiêu mới
                 IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y);
+                SetRandomDestination();
             }
-
-            // Đặt mục tiêu mới sau một khoảng thời gian (có thể dùng Invoke hoặc Coroutine để trễ)
-            // Hiện tại, code này đặt mục tiêu mới ngay lập tức
-            SetRandomDestination();
         }
-        else
+    }
+
+    // --- Xử lý Trạng thái Đứng Im (VÀ QUÉT) ---
+    private void HandleStationary()
+    {
+        // Đảm bảo agent đã dừng
+        if (agent.hasPath)
         {
-            // Đang trên đường đi
-            // Chuyển sang hoạt ảnh Đi (Set IsWalking = true)
-            agent.speed = walkSpeed;
+            agent.SetDestination(transform.position);
+        }
+
+        SetAnimation("idle");
+        
+        // Chỉ quét khi không đang đuổi và không đang quay về
+        if (!targetDetected && !isReturningToStayArea)
+        {
+            // Quay AI về góc quay mục tiêu (targetScanRotation)
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetScanRotation, Time.deltaTime * 3f);
+            
+            // Cập nhật Scan Timer
+            scanTimer -= Time.deltaTime;
+
+            if (scanTimer <= 0f)
+            {
+                // Hết thời gian scan -> Thiết lập góc quét mới
+                SetRandomScanRotation();
+            }
+        }
+    }
+
+    // --- Xử lý Trạng thái Tuần tra ---
+    private void HandlePatrol()
+    {
+        if (patrolPoints == null || patrolPoints.Length == 0)
+        {
+            currentMovementState = MovementState.Stationary;
+            return;
+        }
+
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
+        {
+            if (IdleTime > 0f)
+            {
+                IdleTime -= Time.deltaTime;
+                return;
+            }
+            else
+            {
+                IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y);
+                currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
+                agent.SetDestination(patrolPoints[currentPatrolIndex].position);
+            }
+        }
+    }
+    
+    // --- Cập nhật Animation Di chuyển Thường ---
+    private void UpdateNormalMoveAnimation()
+    {
+        if (agent.hasPath && !agent.pathPending && agent.remainingDistance > agent.stoppingDistance + stoppingDistanceThreshold)
+        {
             SetAnimation("walk");
         }
-    }
-    public void RayCastHitTarget()
-    {
-        if(player.Crouching) { raycastRange = raycastRangePublic / 2f; }
-        else { raycastRange = raycastRangePublic; }
-
-        Vector3 rayStart = transform.position + Vector3.up;
-        var center = Physics.Raycast(rayStart, transform.forward, out RaycastHit hit, raycastRange);
-        
-        Vector3 leftDirection = Quaternion.AngleAxis(-raycastAngle, Vector3.up) * transform.forward;
-        var left = Physics.Raycast(rayStart, leftDirection, out RaycastHit hitLeft, raycastRange);
-        Vector3 rightDirection = Quaternion.AngleAxis(raycastAngle, Vector3.up) * transform.forward;
-        var right = Physics.Raycast(rayStart, rightDirection, out RaycastHit hitRight, raycastRange);
-
-        Vector3 upDirection = Quaternion.AngleAxis(raycastAngle, Vector3.right) * transform.forward;
-        var up = Physics.Raycast(rayStart, upDirection, out RaycastHit hitUp, raycastRange);
-        Vector3 downDirection = Quaternion.AngleAxis(-raycastAngle, Vector3.right) * transform.forward;
-        var down = Physics.Raycast(rayStart, downDirection, out RaycastHit hitDown, raycastRange);
-
-        if(center)
-        {
-            Debug.DrawLine(rayStart, hit.point, Color.red);
-            if(hit.collider.CompareTag("Player"))
-            {
-                targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
-            }
-        }
         else
         {
-            Debug.DrawLine(rayStart, rayStart + transform.forward * raycastRange, Color.green);
-        }
-        if(left)
-        {
-            Debug.DrawLine(rayStart, hitLeft.point, Color.red);
-            if(hitLeft.collider.CompareTag("Player"))
-            {
-                targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y)  ; // Reset thời gian theo đuổi
-            }
-        }
-        else
-        {
-            Debug.DrawLine(rayStart, rayStart + leftDirection * raycastRange, Color.green);
-        }
-        if(right)
-        {
-            Debug.DrawLine(rayStart, hitRight.point, Color.red);
-            if(hitRight.collider.CompareTag("Player"))
-            {
-                targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
-            }
-        }
-        else
-        {
-            Debug.DrawLine(rayStart, rayStart + rightDirection * raycastRange, Color.green);
-        }
-        if(up)
-        {
-            Debug.DrawLine(rayStart, hitUp.point, Color.red);
-            if(hitUp.collider.CompareTag("Player"))
-            {
-                targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
-            }
-        }
-        else
-        {
-            Debug.DrawLine(rayStart, rayStart + upDirection * raycastRange, Color.green);
-        }
-        if(down)
-        {
-            Debug.DrawLine(rayStart, hitDown.point, Color.red);
-            if(hitDown.collider.CompareTag("Player"))
-            {
-                targetDetected = true;
-                chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y); // Reset thời gian theo đuổi
-            }
-        }
-        else
-        {
-            Debug.DrawLine(rayStart, rayStart + downDirection * raycastRange, Color.green);
-        }
-        Chase();
-    }
-    public void Chase()
-    {
-        if(chaseDuration > 0f)
-        {
-            chaseDuration -= Time.deltaTime;
-        }
-
-        if(targetDetected && chaseDuration > 0f)
-        {
-            
-            agent.speed = runSpeed;
-            if(Vector3.Distance(transform.position, player.transform.position) > 1f)
-            {
-                SetAnimation("run");
-                agent.SetDestination(player.transform.position);
-            }
-            else
-            {
-                player.isDead = true;
-                SetAnimation("idle");
-                agent.SetDestination(transform.position); // Giữ vị trí hiện tại khi đứng yên
-            }
-            
-        }
-        else if(chaseDuration <= 0f)
-        {
-            targetDetected = false;     //idle 2 giay sau do lai di nhu npc
+            SetAnimation("idle");
         }
     }
-    private void SetAnimation(string name)
-    {
-        if (currAnimState == name)
-        {
-            return; // Tránh gọi lại nếu trạng thái không thay đổi
-        }
-        animator.SetTrigger(name);
-        currAnimState = name;
-    }
 
-    // Hàm tìm và thiết lập điểm đến ngẫu nhiên
+    // --- Hàm tìm và thiết lập điểm đến ngẫu nhiên ---
     private void SetRandomDestination()
     {
         Vector3 randomPoint;
-        
-        // Sử dụng hàm tiện ích để tìm điểm ngẫu nhiên trên NavMesh
         if (GetRandomPoint(transform.position, targetRadius, out randomPoint))
         {
-            // Thiết lập đích đến cho NavMeshAgent
             agent.SetDestination(randomPoint);
-            Debug.Log($"AI đang di chuyển đến vị trí ngẫu nhiên: {randomPoint}");
-        }
-        else
-        {
-            Debug.LogWarning("Không thể tìm thấy vị trí ngẫu nhiên hợp lệ trên NavMesh.");
         }
     }
 
-    // Hàm hỗ trợ tìm kiếm điểm ngẫu nhiên trên NavMesh (Tương tự như giải thích trước)
+    // --- Hàm hỗ trợ tìm kiếm điểm ngẫu nhiên trên NavMesh ---
     private bool GetRandomPoint(Vector3 center, float range, out Vector3 result)
     {
         Vector3 randomDirection = Random.insideUnitSphere * range;
         randomDirection += center;
         
         NavMeshHit hit;
-        // Kiểm tra xem điểm ngẫu nhiên có nằm trên NavMesh không
         if (NavMesh.SamplePosition(randomDirection, out hit, range, NavMesh.AllAreas))
         {
             result = hit.position;
@@ -257,7 +306,277 @@ public class AI_Move_NavMesh : MonoBehaviour
         result = Vector3.zero;
         return false;
     }
-}
-    
 
-    
+    // --- Hàm thiết lập Animation ---
+    private void SetAnimation(string name)
+    {
+        if (animator == null || currAnimState == name)
+        {
+            return;
+        }
+        animator.SetTrigger(name);
+        currAnimState = name;
+    }
+
+    // =========================================================================
+    //                            PHÁT HIỆN, CHASE & QUAY VỀ
+    // =========================================================================
+
+    public void RayCastHitTarget()
+    {
+        if (player == null) return; 
+        
+        // Giảm tầm nhìn nếu Player đang Crouch
+        raycastRange = (player != null && player.Crouching) ? raycastRangePublic / 2f : raycastRangePublic;
+
+        Vector3 rayStart = transform.position + Vector3.up;
+        Vector3 forward = transform.forward;
+
+        // Các hướng raycast
+        Vector3[] directions = new Vector3[]
+        {
+            forward,
+            Quaternion.AngleAxis(-raycastAngle, Vector3.up) * forward,
+            Quaternion.AngleAxis(raycastAngle, Vector3.up) * forward,
+            Quaternion.AngleAxis(raycastAngle, transform.right) * forward,
+            Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
+        };
+
+
+        foreach (Vector3 dir in directions)
+        {
+            if (Physics.Raycast(rayStart, dir, out RaycastHit hit, raycastRange))
+            {
+                Debug.DrawLine(rayStart, hit.point, Color.red);
+                if (hit.collider.CompareTag("Player"))
+                {
+                    if (!targetDetected)
+                    {
+                        chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y);
+                        targetDetected = true;
+                    }
+                    break;
+                }
+            }
+            else
+            {
+                Debug.DrawLine(rayStart, rayStart + dir * raycastRange, Color.green);
+            }
+        }
+        
+        // Kiểm tra điều kiện mất dấu và hết thời gian Chase
+        if (targetDetected  && chaseDuration <= 0f)
+        {
+            targetDetected = false;
+            isReturningToStayArea = true;
+            agent.SetDestination(initialPosition);
+            agent.speed = returnSpeed;
+        }
+    }
+
+    public void Chase()
+    {
+        if (player == null) return;
+        
+        // 1. Kiểm tra thời gian Chase & Bán kính tối đa
+        if(chaseDuration > 0f)
+        {
+            chaseDuration -= Time.deltaTime;
+        }
+        
+        float distanceToInitial = Vector3.Distance(transform.position, initialPosition);
+        
+        if (distanceToInitial > maxChaseRadius || chaseDuration <= 0f)
+        {
+            // Hết thời gian Chase HOẶC ra khỏi bán kính cho phép -> Bắt đầu quay về
+            targetDetected = false;
+            isReturningToStayArea = true;
+            agent.SetDestination(initialPosition);
+            agent.speed = returnSpeed;
+            SetAnimation("walk"); 
+            return;
+        }
+
+        // 2. Thực hiện Chase
+        agent.speed = runSpeed;
+        float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+
+        if(distanceToPlayer > 1f) 
+        {
+            SetAnimation("run");
+            agent.SetDestination(player.transform.position);
+        }
+        else // Đã chạm tới/rất gần Player
+        {
+            // LOGIC ĐÁNH BẠI PLAYER
+            if (playerManager.isDied == false)
+            {
+                playerManager.isDied = true; 
+            }
+
+            // Dừng AI và bắt đầu quá trình quay về
+            targetDetected = false; 
+            isReturningToStayArea = true;
+            agent.SetDestination(initialPosition);
+            agent.speed = returnSpeed;
+            SetAnimation("idle");
+        }
+    }
+
+    // --- Xử lý Trạng thái Quay về Khu vực Stay ---
+    public void ReturnToStayArea()
+    {
+        agent.speed = returnSpeed;
+        SetAnimation("walk");
+
+        // Nếu đã đến gần vị trí ban đầu
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
+        {
+            // Khôi phục góc quay ban đầu mượt mà
+            transform.rotation = Quaternion.Slerp(transform.rotation, initialRotation, Time.deltaTime * 5f);
+            
+            // Kiểm tra xem đã quay gần đúng góc quay ban đầu chưa (ngưỡng 5 độ)
+            if (Quaternion.Angle(transform.rotation, initialRotation) < 5f)
+            {
+                isReturningToStayArea = false;
+                agent.SetDestination(transform.position); // Dừng hẳn
+                IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y); // Bắt đầu thời gian idle
+                
+                // Kích hoạt quét nếu trạng thái là Stationary
+                if (currentMovementState == MovementState.Stationary)
+                {
+                    SetRandomScanRotation();
+                }
+                
+                // Khởi tạo lại trạng thái di chuyển thông thường ban đầu
+                InitializeMovementState(); 
+            }
+        }
+    }
+
+    // =========================================================================
+    //                                   GIZMOS
+    // =========================================================================
+
+    private void OnDrawGizmosSelected()
+    {
+        // Lấy vị trí hiện tại của AI
+        Vector3 position = transform.position;
+
+        // 1. VẼ VÙNG HOẠT ĐỘNG TỐI ĐA (MAX CHASE RADIUS)
+        Gizmos.color = Color.yellow * 0.5f; 
+        
+        Vector3 centerPosition = (Application.isPlaying && initialPosition != Vector3.zero) ? initialPosition : position;
+        Gizmos.DrawWireSphere(centerPosition, maxChaseRadius);
+        
+        // Đánh dấu Vị trí Quay về Ban đầu (Initial Position)
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawSphere(centerPosition, 0.2f);
+        
+        
+        // 2. VẼ TẦM NHÌN (RAYCAST RANGE)
+        Gizmos.color = Color.green;
+        Vector3 rayStart = position + Vector3.up;
+
+        Vector3 forward = transform.forward;
+        Vector3[] detectionDirections = new Vector3[]
+        {
+            forward,
+            Quaternion.AngleAxis(-raycastAngle, Vector3.up) * forward,
+            Quaternion.AngleAxis(raycastAngle, Vector3.up) * forward,
+            Quaternion.AngleAxis(raycastAngle, transform.right) * forward, 
+            Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
+        };
+        
+        float currentRange = Application.isPlaying ? raycastRange : raycastRangePublic;
+
+        foreach (Vector3 dir in detectionDirections)
+        {
+            Gizmos.DrawRay(rayStart, dir * currentRange);
+        }
+        
+        // 3. VẼ LOGIC THEO TỪNG ENUM/TRẠNG THÁI ƯU TIÊN
+        
+        if (targetDetected && player != null)
+        {
+            // Màu Đỏ: Đang Chase Player
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(position, player.transform.position);
+            Gizmos.DrawWireSphere(player.transform.position, 0.5f);
+            return;
+        }
+        
+        if (isReturningToStayArea)
+        {
+            // Màu Cam: Đang quay về vùng Stay
+            Gizmos.color = Color.Lerp(Color.red, Color.yellow, 0.5f); 
+            Gizmos.DrawLine(position, centerPosition);
+            Gizmos.DrawWireSphere(centerPosition, 0.5f);
+            return;
+        }
+        
+        // VẼ CHO CÁC TRẠNG THÁI DI CHUYỂN THÔNG THƯỜNG
+        switch (currentMovementState)
+        {
+            case MovementState.RandomMove:
+                // Màu Xanh dương: Vùng tìm kiếm điểm ngẫu nhiên
+                Gizmos.color = Color.blue;
+                Gizmos.DrawWireSphere(position, targetRadius); 
+                
+                // Vẽ đường đến điểm đích (nếu đang di chuyển)
+                if (agent != null && agent.hasPath)
+                {
+                    Gizmos.color = Color.cyan;
+                    Gizmos.DrawLine(position, agent.destination);
+                    Gizmos.DrawSphere(agent.destination, 0.3f);
+                }
+                break;
+
+            case MovementState.Stationary:
+                // Màu Trắng: Đang đứng yên
+                Gizmos.color = Color.white;
+                Gizmos.DrawWireSphere(position, 0.5f); 
+
+                // Mới: Vẽ góc quét mục tiêu
+                Gizmos.color = Color.magenta;
+                // Chỉ vẽ nếu targetScanRotation đã được khởi tạo
+                if (Application.isPlaying && targetScanRotation != Quaternion.identity) 
+                {
+                    Vector3 scanDirection = targetScanRotation * Vector3.forward;
+                    Gizmos.DrawRay(rayStart, scanDirection * 3f); 
+                }
+                break;
+
+            case MovementState.Patrol:
+                // Màu Tím: Đường tuần tra
+                Gizmos.color = Color.magenta;
+                if (patrolPoints != null && patrolPoints.Length > 0)
+                {
+                    for (int i = 0; i < patrolPoints.Length; i++)
+                    {
+                        Transform currentPoint = patrolPoints[i];
+                        if (currentPoint == null) continue;
+
+                        Gizmos.DrawWireSphere(currentPoint.position, 0.4f);
+                        
+                        if (patrolPoints.Length > 1)
+                        {
+                            Transform nextPoint = patrolPoints[(i + 1) % patrolPoints.Length];
+                            if (nextPoint != null)
+                            {
+                                Gizmos.DrawLine(currentPoint.position, nextPoint.position);
+                            }
+                        }
+                    }
+                    
+                    if (agent != null && agent.hasPath && currentPatrolIndex >= 0 && currentPatrolIndex < patrolPoints.Length)
+                    {
+                        Gizmos.color = Color.cyan;
+                        Gizmos.DrawLine(position, agent.destination);
+                        Gizmos.DrawSphere(agent.destination, 0.3f);
+                    }
+                }
+                break;
+        }
+    }
+}
