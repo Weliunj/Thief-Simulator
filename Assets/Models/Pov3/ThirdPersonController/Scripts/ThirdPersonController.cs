@@ -107,6 +107,9 @@ namespace StarterAssets
         private float _staminaRegenTimer;
         private bool _canSprint = true;
 
+        public GameObject lightD;
+        public GameObject[] audioSource;
+
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
 #endif
@@ -148,10 +151,12 @@ namespace StarterAssets
             StartCenter = characterController.center;
             StartHeight = characterController.height;
             
+            lightD.SetActive(false);
             player.isDied = false;
             player.currweight = 0;
             player._MoveSpeed = player.MoveSpeed;
             player._SprintSpeed = player.SprintSpeed;
+
             // Khởi tạo Stamina
             player._stamina = player.MaxStamina; 
             _staminaRegenTimer = 0f; // Reset timer
@@ -188,6 +193,8 @@ namespace StarterAssets
 
                     }
                     player.currweight = 0;
+                    audioSource[0].SetActive(true);
+                    lightD.SetActive(true);
                     die = true;
                     } 
                 return;

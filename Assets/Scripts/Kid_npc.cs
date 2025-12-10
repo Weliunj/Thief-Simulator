@@ -1,5 +1,6 @@
 ﻿using ithappy.Animals_FREE;
 using StarterAssets;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -232,6 +233,7 @@ public class Kid : MonoBehaviour
                         AI_Move_NavMesh adultNpc = collider.GetComponent<AI_Move_NavMesh>();
                         if(adultNpc != null)
                         {
+
                             adultNpc.targetDetected = true;
                             adultNpc.chaseDuration = Random.Range(
                                 adultNpc.chaseDurationPublic.x, 

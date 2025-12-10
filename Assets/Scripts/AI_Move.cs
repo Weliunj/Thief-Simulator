@@ -14,14 +14,24 @@ public class AI_Move_NavMesh : MonoBehaviour
     }
 
     // =========================================================================
+    // BIẾN STATIC TOÀN CỤC CHO NHẠC CHASE (QUAN TRỌNG: Đảm bảo chỉ 1 AudioSource phát)
+    public static bool isChaseMusicPlaying = false; 
+    // =========================================================================
+
     [Header("🤖 AI Core Components")]
     private Animator animator;
-    private string currAnimState;
+    private string currAnimState; 
     private NavMeshAgent agent;
     private ThirdPersonController player; 
     public PlayerManager playerManager;
+    
+    // BIẾN THEO DÕI NỘI BỘ: Xác định NPC nào đang kiểm soát việc phát nhạc
+    private bool isResponsibleForMusic = false; 
 
     [Header("🏃 Movement Settings")]
+    // audioSources[0]: Bước chân, audioSources[1]: Phát hiện (ngắn), audioSources[2]: Chase Music
+    public AudioSource[] audioSources; 
+    private bool isWalkSoundPlaying = false; 
     public float walkSpeed = 1.5f;   
     public float runSpeed = 3f;      
     public float stoppingDistanceThreshold = 0.5f; 
@@ -50,10 +60,10 @@ public class AI_Move_NavMesh : MonoBehaviour
     private int currentPatrolIndex = 0; 
 
     [Header("🏡 AI Stay Area")]
-    public float maxChaseRadius = 30f;  
-    public float returnSpeed = 2f;      
-    private Vector3 initialPosition;     
-    private Quaternion initialRotation;  
+    public float maxChaseRadius = 30f;   
+    public float returnSpeed = 2f;       
+    private Vector3 initialPosition;      
+    private Quaternion initialRotation;    
     private bool isReturningToStayArea = false; 
 
     [Header("🎨 Appearance Settings")] // Header mới để quản lý hình thức
@@ -69,7 +79,7 @@ public class AI_Move_NavMesh : MonoBehaviour
         player = FindAnyObjectByType<ThirdPersonController>(); 
 
         // LẤY RENDERER VÀ GÁN MATERIAL NGẪU NHIÊN
-        aiRenderer = GetComponentInChildren<Renderer>(); // Tìm Renderer trên GameObject hoặc con
+        aiRenderer = GetComponentInChildren<Renderer>(); 
         if (aiRenderer == null)
         {
             Debug.LogWarning("Renderer component không được tìm thấy trên AI.");
@@ -77,10 +87,7 @@ public class AI_Move_NavMesh : MonoBehaviour
 
         if (availableMaterials.Length > 0 && aiRenderer != null)
         {
-            // Chọn ngẫu nhiên một chỉ mục trong mảng
             int randomIndex = Random.Range(0, availableMaterials.Length);
-            
-            // Gán material đã chọn cho Renderer
             aiRenderer.material = availableMaterials[randomIndex];
             Debug.Log($"Đã gán Material: {availableMaterials[randomIndex].name}");
         }
@@ -88,7 +95,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         {
             Debug.LogWarning("Mảng Materials rỗng! Không thể gán material ngẫu nhiên.");
         }
-
 
         if (agent == null)
         {
@@ -124,7 +130,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         // 2. Xử lý trạng thái CHASE / QUAY VỀ (Ưu tiên cao nhất)
         if (targetDetected)
         {
-            // Nếu phát hiện Player, ngắt trạng thái quay về (nếu đang ở đó)
             isReturningToStayArea = false; 
             Chase();
             return; 
@@ -186,11 +191,9 @@ public class AI_Move_NavMesh : MonoBehaviour
     {
         scanTimer = scanDuration; // Reset thời gian quét
 
-        // Chọn ngẫu nhiên 1 trong 3 góc: Trái (-45), Giữa (0), Phải (+45) so với góc ban đầu (initialRotation)
         float[] angles = { -45f, 0f, 45f };
         float randomAngle = angles[Random.Range(0, angles.Length)];
 
-        // Tính toán góc quay mới dựa trên góc quay ban đầu (chỉ sử dụng trục Y)
         Quaternion initialYRotation = Quaternion.Euler(0, initialRotation.eulerAngles.y, 0);
         targetScanRotation = initialYRotation * Quaternion.Euler(0, randomAngle, 0);
     }
@@ -236,7 +239,6 @@ public class AI_Move_NavMesh : MonoBehaviour
 
             if (scanTimer <= 0f)
             {
-                // Hết thời gian scan -> Thiết lập góc quét mới
                 SetRandomScanRotation();
             }
         }
@@ -270,6 +272,9 @@ public class AI_Move_NavMesh : MonoBehaviour
     // --- Cập nhật Animation Di chuyển Thường ---
     private void UpdateNormalMoveAnimation()
     {
+        // Chỉ xử lý nếu không đang trong trạng thái Stationary (vì Stationary có logic riêng)
+        if (currentMovementState == MovementState.Stationary) return; 
+
         if (agent.hasPath && !agent.pathPending && agent.remainingDistance > agent.stoppingDistance + stoppingDistanceThreshold)
         {
             SetAnimation("walk");
@@ -307,7 +312,7 @@ public class AI_Move_NavMesh : MonoBehaviour
         return false;
     }
 
-    // --- Hàm thiết lập Animation ---
+    // --- Hàm thiết lập Animation (SỬ DỤNG LẠI SETTRIGGER VÀ CÓ THÊM ÂM THANH) ---
     private void SetAnimation(string name)
     {
         if (animator == null || currAnimState == name)
@@ -316,11 +321,84 @@ public class AI_Move_NavMesh : MonoBehaviour
         }
         animator.SetTrigger(name);
         currAnimState = name;
+        
+        // LOGIC XỬ LÝ ÂM THANH BƯỚC CHÂN
+        if (name == "walk")
+        {
+            HandleWalkSound(true);
+        }
+        else // idle, run, hoặc các trạng thái khác
+        {
+            HandleWalkSound(false);
+        }
     }
+
+    // --- Xử lý Âm thanh Bước chân (chỉ áp dụng cho 'walk') ---
+    private void HandleWalkSound(bool shouldPlay)
+    {
+        // Chỉ phát âm thanh bước chân (audioSources[0])
+        if (audioSources.Length == 0 || audioSources[0] == null) return;
+
+        if (shouldPlay && !isWalkSoundPlaying)
+        {
+            audioSources[0].loop = true;
+            audioSources[0].Play();
+            isWalkSoundPlaying = true;
+        }
+        else if (!shouldPlay && isWalkSoundPlaying)
+        {
+            audioSources[0].Stop();
+            isWalkSoundPlaying = false;
+        }
+    }
+
 
     // =========================================================================
     //                            PHÁT HIỆN, CHASE & QUAY VỀ
     // =========================================================================
+
+    // --- Hàm Phát âm thanh Phát hiện (audioSources[1]) ---
+    public void PlayDetectionSound()
+    {
+        // Kiểm tra xem audioSources[1] có tồn tại không
+        if (audioSources.Length > 1 && audioSources[1] != null)
+        {
+            audioSources[1].loop = false; 
+            audioSources[1].Play();
+        }
+    }
+
+    // --- Hàm Xử lý nhạc Chase Music (audioSources[2]) ---
+    public void HandleChaseMusic(bool shouldPlay)
+    {
+        // Yêu cầu: Đảm bảo AudioSource[2] tồn tại
+        if (audioSources.Length < 3 || audioSources[2] == null) return;
+
+        if (shouldPlay)
+        {
+            // CHỈ PHÁT NHẠC NỀN NẾU CHƯA CÓ NPC NÀO PHÁT (Sử dụng cờ static)
+            if (!isChaseMusicPlaying)
+            {
+                audioSources[2].loop = true;
+                audioSources[2].Play();
+                isChaseMusicPlaying = true; // Đặt cờ global
+                isResponsibleForMusic = true; // NPC này chịu trách nhiệm dừng nhạc
+                Debug.Log("Chase Music Started by: " + gameObject.name);
+            }
+        }
+        else 
+        {
+            // DỪNG NHẠC CHỈ KHI NPC NÀY LÀ NPC ĐANG KIỂM SOÁT NHẠC
+            if (isResponsibleForMusic)
+            {
+                 // Dừng nhạc
+                audioSources[2].Stop();
+                isChaseMusicPlaying = false; // Reset cờ global
+                isResponsibleForMusic = false; // NPC này không còn trách nhiệm
+                Debug.Log("Chase Music Stopped by: " + gameObject.name);
+            }
+        }
+    }
 
     public void RayCastHitTarget()
     {
@@ -342,6 +420,8 @@ public class AI_Move_NavMesh : MonoBehaviour
             Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
         };
 
+        // Biến kiểm tra xem Player có đang trong tầm nhìn Raycast không
+        bool playerInSight = false;
 
         foreach (Vector3 dir in directions)
         {
@@ -350,8 +430,13 @@ public class AI_Move_NavMesh : MonoBehaviour
                 Debug.DrawLine(rayStart, hit.point, Color.red);
                 if (hit.collider.CompareTag("Player"))
                 {
+                    playerInSight = true; // Player đang trong tầm nhìn
                     if (!targetDetected)
                     {
+                        // PHÁT HIỆN LẦN ĐẦU
+                        PlayDetectionSound(); 
+                        HandleChaseMusic(true); // Bắt đầu Chase Music (Chỉ phát nếu chưa phát)
+
                         chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y);
                         targetDetected = true;
                     }
@@ -364,13 +449,21 @@ public class AI_Move_NavMesh : MonoBehaviour
             }
         }
         
-        // Kiểm tra điều kiện mất dấu và hết thời gian Chase
-        if (targetDetected  && chaseDuration <= 0f)
+        // Nếu AI đang Chase nhưng Player vừa mất dấu
+        if (targetDetected && !playerInSight)
         {
-            targetDetected = false;
-            isReturningToStayArea = true;
-            agent.SetDestination(initialPosition);
-            agent.speed = returnSpeed;
+             // Cho phép thời gian chaseDuration giảm dần (sử dụng như Lost Target Timer)
+             if (chaseDuration <= 0f)
+             {
+                 targetDetected = false;
+                 isReturningToStayArea = true;
+                 agent.SetDestination(initialPosition);
+                 agent.speed = returnSpeed;
+                 SetAnimation("walk"); 
+                 
+                 // --- LOGIC DỪNG NHẠC CHASE KHI MẤT DẤU ---
+                 HandleChaseMusic(false); 
+             }
         }
     }
 
@@ -403,13 +496,13 @@ public class AI_Move_NavMesh : MonoBehaviour
 
         if(distanceToPlayer > 1f) 
         {
-            SetAnimation("run");
+            SetAnimation("run"); 
             agent.SetDestination(player.transform.position);
         }
         else // Đã chạm tới/rất gần Player
         {
             // LOGIC ĐÁNH BẠI PLAYER
-            if (playerManager.isDied == false)
+            if (playerManager != null && playerManager.isDied == false)
             {
                 playerManager.isDied = true; 
             }
@@ -419,7 +512,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             isReturningToStayArea = true;
             agent.SetDestination(initialPosition);
             agent.speed = returnSpeed;
-            SetAnimation("idle");
+            SetAnimation("idle"); 
         }
     }
 
@@ -427,7 +520,7 @@ public class AI_Move_NavMesh : MonoBehaviour
     public void ReturnToStayArea()
     {
         agent.speed = returnSpeed;
-        SetAnimation("walk");
+        SetAnimation("walk"); 
 
         // Nếu đã đến gần vị trí ban đầu
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
@@ -442,6 +535,10 @@ public class AI_Move_NavMesh : MonoBehaviour
                 agent.SetDestination(transform.position); // Dừng hẳn
                 IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y); // Bắt đầu thời gian idle
                 
+                // Logic dừng nhạc Chase được chuyển sang RayCastHitTarget, 
+                // nhưng vẫn gọi ở đây để đảm bảo dừng nếu thoát khỏi Chase do bắt được Player.
+                HandleChaseMusic(false); 
+
                 // Kích hoạt quét nếu trạng thái là Stationary
                 if (currentMovementState == MovementState.Stationary)
                 {
@@ -450,12 +547,13 @@ public class AI_Move_NavMesh : MonoBehaviour
                 
                 // Khởi tạo lại trạng thái di chuyển thông thường ban đầu
                 InitializeMovementState(); 
+                SetAnimation("idle"); 
             }
         }
     }
 
     // =========================================================================
-    //                                   GIZMOS
+    //                                  GIZMOS
     // =========================================================================
 
     private void OnDrawGizmosSelected()
@@ -484,7 +582,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             forward,
             Quaternion.AngleAxis(-raycastAngle, Vector3.up) * forward,
             Quaternion.AngleAxis(raycastAngle, Vector3.up) * forward,
-            Quaternion.AngleAxis(raycastAngle, transform.right) * forward, 
+            Quaternion.AngleAxis(raycastAngle, transform.right) * forward,
             Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
         };
         
