@@ -42,7 +42,7 @@ public class AI_Move_NavMesh : MonoBehaviour
     public float raycastAngle = 30f;     
     public Vector2 chaseDurationPublic = new Vector2(5f, 10f); 
     [HideInInspector] public bool targetDetected = false;
-    [HideInInspector] public float chaseDuration = 0f;
+     public float chaseDuration = 0f;
 
     [Header("🚶 Normal Movement States")]
     public MovementState currentMovementState = MovementState.RandomMove; 
@@ -363,8 +363,11 @@ public class AI_Move_NavMesh : MonoBehaviour
         // Kiểm tra xem audioSources[1] có tồn tại không
         if (audioSources.Length > 1 && audioSources[1] != null)
         {
-            audioSources[1].loop = false; 
-            audioSources[1].Play();
+            audioSources[1].loop = false;
+            if (!audioSources[1].isPlaying)
+            {
+                audioSources[1].Play();
+            }
         }
     }
 
@@ -380,23 +383,22 @@ public class AI_Move_NavMesh : MonoBehaviour
             if (!isChaseMusicPlaying)
             {
                 audioSources[2].loop = true;
-                audioSources[2].Play();
+                if (!audioSources[2].isPlaying)
+                {
+                    audioSources[2].Play();
+                }
                 isChaseMusicPlaying = true; // Đặt cờ global
-                isResponsibleForMusic = true; // NPC này chịu trách nhiệm dừng nhạc
                 Debug.Log("Chase Music Started by: " + gameObject.name);
             }
         }
         else 
         {
             // DỪNG NHẠC CHỈ KHI NPC NÀY LÀ NPC ĐANG KIỂM SOÁT NHẠC
-            if (isResponsibleForMusic)
-            {
-                 // Dừng nhạc
-                audioSources[2].Stop();
-                isChaseMusicPlaying = false; // Reset cờ global
-                isResponsibleForMusic = false; // NPC này không còn trách nhiệm
-                Debug.Log("Chase Music Stopped by: " + gameObject.name);
-            }
+                // Dừng nhạc
+            audioSources[2].Stop();
+            isChaseMusicPlaying = false; // Reset cờ global
+            isResponsibleForMusic = false; // NPC này không còn trách nhiệm
+            Debug.Log("Chase Music Stopped by: " + gameObject.name);
         }
     }
 
@@ -421,7 +423,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         };
 
         // Biến kiểm tra xem Player có đang trong tầm nhìn Raycast không
-        bool playerInSight = false;
 
         foreach (Vector3 dir in directions)
         {
@@ -430,17 +431,12 @@ public class AI_Move_NavMesh : MonoBehaviour
                 Debug.DrawLine(rayStart, hit.point, Color.red);
                 if (hit.collider.CompareTag("Player"))
                 {
-                    playerInSight = true; // Player đang trong tầm nhìn
-                    if (!targetDetected)
-                    {
                         // PHÁT HIỆN LẦN ĐẦU
                         PlayDetectionSound(); 
                         HandleChaseMusic(true); // Bắt đầu Chase Music (Chỉ phát nếu chưa phát)
 
                         chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y);
                         targetDetected = true;
-                    }
-                    break;
                 }
             }
             else
@@ -450,7 +446,7 @@ public class AI_Move_NavMesh : MonoBehaviour
         }
         
         // Nếu AI đang Chase nhưng Player vừa mất dấu
-        if (targetDetected && !playerInSight)
+        if (targetDetected)
         {
              // Cho phép thời gian chaseDuration giảm dần (sử dụng như Lost Target Timer)
              if (chaseDuration <= 0f)
@@ -521,6 +517,10 @@ public class AI_Move_NavMesh : MonoBehaviour
     {
         agent.speed = returnSpeed;
         SetAnimation("walk"); 
+        if(chaseDuration <= 0f)
+        {
+            HandleChaseMusic(false); 
+        }
 
         // Nếu đã đến gần vị trí ban đầu
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
@@ -537,7 +537,7 @@ public class AI_Move_NavMesh : MonoBehaviour
                 
                 // Logic dừng nhạc Chase được chuyển sang RayCastHitTarget, 
                 // nhưng vẫn gọi ở đây để đảm bảo dừng nếu thoát khỏi Chase do bắt được Player.
-                HandleChaseMusic(false); 
+                
 
                 // Kích hoạt quét nếu trạng thái là Stationary
                 if (currentMovementState == MovementState.Stationary)

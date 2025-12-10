@@ -199,6 +199,10 @@ namespace StarterAssets
                     } 
                 return;
             }
+            else if(player.currpoint == player.totalpoint)
+            {
+                return;
+            }
 
             _hasAnimator = TryGetComponent(out _animator);
 

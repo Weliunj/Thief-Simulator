@@ -3,18 +3,24 @@ guid: d3308c33712ef614f8bf836e22c70ddf
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
-  fontSize: 16
-  forceTextureCase: -2
+  fontSize: 3
+  forceTextureCase: 0
   characterSpacing: 0
   characterPadding: 1
   includeFontData: 1
   fontNames:
   - Stack Sans Notch
-  fallbackFontReferences: []
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: e5d2f014448c0a744aea8c97ef4b674c, type: 3}
+  - {fileID: 12800000, guid: 11bd05250769d204fa3db9e911f8c3d8, type: 3}
+  - {fileID: 12800000, guid: b92e2a6f2f20d6841bec0ebe905d2d63, type: 3}
+  - {fileID: 12800000, guid: 1f97ddc68b1f2f04ca85210fdd62dd12, type: 3}
+  - {fileID: 12800000, guid: bb0206f83ba54a245ae3ea14f673eb36, type: 3}
+  - {fileID: 12800000, guid: abfe322a2d0f5b4479bc23349d9786c4, type: 3}
   customCharacters: 
   fontRenderingMode: 0
-  ascentCalculationMode: 1
-  useLegacyBoundsCalculation: 0
+  ascentCalculationMode: 0
+  useLegacyBoundsCalculation: 1
   shouldRoundAdvanceValue: 1
   userData: 
   assetBundleName: 
