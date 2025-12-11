@@ -55,6 +55,17 @@ public class HomeScreen : MonoBehaviour
     {
         if (audioSources.Length > 0) audioSources[1].Play();
         Debug.Log("Exit");
+        StartCoroutine(QuitAfterDelay(0.5f)); // Chờ âm thanh phát xong rồi quit
+    }
+
+    private IEnumerator QuitAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
     }
 
     private void Options_clicked()
