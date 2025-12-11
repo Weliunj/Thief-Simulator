@@ -233,7 +233,8 @@ public class Kid : MonoBehaviour
                         AI_Move_NavMesh adultNpc = collider.GetComponent<AI_Move_NavMesh>();
                         if(adultNpc != null)
                         {
-
+                            adultNpc.PlayDetectionSound(); 
+                            adultNpc.HandleChaseMusic(true);
                             adultNpc.targetDetected = true;
                             adultNpc.chaseDuration = Random.Range(
                                 adultNpc.chaseDurationPublic.x, 
