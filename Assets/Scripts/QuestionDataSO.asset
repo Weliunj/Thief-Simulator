@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e16b4e4ea34ac7d44aa6f763941980c0, type: 3}
+  m_Name: QuestionDataSO
+  m_EditorClassIdentifier: Assembly-CSharp::Questions
+  allQuestions:
+  - questionContent: "C\xE2u 1. Cho A=3x+5. T\xEDnh A khi x = 2"
+    correctAnswer: 11
+    incorrectAnswers:
+    - 12
+    - 8
+    - 15
+  - questionContent: "C\xE2u 2. T\xEDnh A = 4x+6=26"
+    correctAnswer: 5
+    incorrectAnswers:
+    - 8
+    - 32
+    - 4
+  - questionContent: "C\xE2u3. Ti\u1EC1n taxi \u0111\u01B0\u1EE3c t\xEDnh: 10 000\u0111
+      cho 1 km \u0111\u1EA7u v\xE0 6 000\u0111 cho m\u1ED7i km ti\u1EBFp theo. \u0110i
+      t\u1ED5ng c\u1ED9ng 4 km th\xEC h\u1EBFt bao nhi\xEAu ti\u1EC1n?"
+    correctAnswer: 28k
+    incorrectAnswers:
+    - 24k
+    - 34k
+    - 40k
+  - questionContent: "C\xE2u 4. Tam gi\xE1c ABC, g\xF3c A = 50\xB0, g\xF3c B = 60\xB0.
+      T\xEDnh g\xF3c C."
+    correctAnswer: 70
+    incorrectAnswers:
+    - 100
+    - 60
+    - 130
+  - questionContent: "5.L\u1EDBp 7B c\xF3 20 h\u1ECDc sinh. Bi\u1EC3u \u0111\u1ED3
+      tr\xF2n cho th\u1EA5y:  25% th\xEDch To\xE1n  35% th\xEDch V\u0103n  40% th\xEDch
+      Ti\u1EBFng Anh. C\xE2u h\u1ECFi: T\xEDnh s\u1ED1 h\u1ECDc sinh th\xEDch m\u1ED7i
+      m\xF4n (theo th\u1EE9 t\u1EF1 To\xE1n, V\u0103n, Anh)"
+    correctAnswer: 5, 7, 8
+    incorrectAnswers:
+    - 7, 5, 8
+    - 4, 7, 9
+    - 5, 4, 6

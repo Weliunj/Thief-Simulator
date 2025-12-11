@@ -5,13 +5,7 @@ using UnityEngine.AI;
 
 public class AI_Move_NavMesh : MonoBehaviour
 {
-    // Enum mới để quản lý các kiểu di chuyển của AI
-    public enum MovementState
-    {
-        RandomMove,  // Di chuyển ngẫu nhiên
-        Stationary,  // Đứng im
-        Patrol       // Tuần tra giữa các điểm
-    }
+    public enum MovementState { RandomMove, Stationary, Patrol }
 
     // =========================================================================
     // BIẾN STATIC TOÀN CỤC CHO NHẠC CHASE (QUAN TRỌNG: Đảm bảo chỉ 1 AudioSource phát)
@@ -25,24 +19,23 @@ public class AI_Move_NavMesh : MonoBehaviour
     private ThirdPersonController player; 
     public PlayerManager playerManager;
     
-    // BIẾN THEO DÕI NỘI BỘ: Xác định NPC nào đang kiểm soát việc phát nhạc
+    // BIẾN THEO DÕI NỘI BỘ
     private bool isResponsibleForMusic = false; 
 
     [Header("🏃 Movement Settings")]
-    // audioSources[0]: Bước chân, audioSources[1]: Phát hiện (ngắn), audioSources[2]: Chase Music
-    public AudioSource[] audioSources; 
+    public AudioSource[] audioSources; // 0: Bước chân, 1: Phát hiện, 2: Chase Music
     private bool isWalkSoundPlaying = false; 
-    public float walkSpeed = 1.5f;   
-    public float runSpeed = 3f;      
+    public float walkSpeed = 1.5f;   
+    public float runSpeed = 3f;      
     public float stoppingDistanceThreshold = 0.5f; 
 
     [Header("👀 Detection & Chase")]
     public float raycastRangePublic = 15f; 
     private float raycastRange = 15f;
-    public float raycastAngle = 30f;     
+    public float raycastAngle = 30f;     
     public Vector2 chaseDurationPublic = new Vector2(5f, 10f); 
     [HideInInspector] public bool targetDetected = false;
-     public float chaseDuration = 0f;
+    public float chaseDuration = 0f;
 
     [Header("🚶 Normal Movement States")]
     public MovementState currentMovementState = MovementState.RandomMove; 
@@ -51,67 +44,46 @@ public class AI_Move_NavMesh : MonoBehaviour
     private float IdleTime = 0f;
     
     [Header("🔎 Stationary Scan")]
-    public float scanDuration = 1f; // Thời gian duy trì góc nhìn khi quét
+    public float scanDuration = 1f; 
     private float scanTimer = 0f;
-    private Quaternion targetScanRotation; // Góc quay mục tiêu khi đang quét
+    private Quaternion targetScanRotation; 
     
     [Header("📍 Patrol Points (Chỉ dùng cho chế độ Patrol)")]
     public Transform[] patrolPoints; 
     private int currentPatrolIndex = 0; 
 
     [Header("🏡 AI Stay Area")]
-    public float maxChaseRadius = 30f;   
-    public float returnSpeed = 2f;       
-    private Vector3 initialPosition;      
-    private Quaternion initialRotation;    
+    public float maxChaseRadius = 30f;   
+    public float returnSpeed = 2f;       
+    private Vector3 initialPosition;      
+    private Quaternion initialRotation;    
     private bool isReturningToStayArea = false; 
 
-    [Header("🎨 Appearance Settings")] // Header mới để quản lý hình thức
-    public Material[] availableMaterials; // Mảng chứa các vật liệu bạn muốn chọn
-    private Renderer aiRenderer;         // Component Renderer của GameObject AI
+    [Header("🎨 Appearance Settings")]
+    public Material[] availableMaterials; 
+    private Renderer aiRenderer;         
     // =========================================================================
 
     void Start()
     {
-        // 1. Lấy Component
+        // ... (Khởi tạo Component & Material) ...
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         player = FindAnyObjectByType<ThirdPersonController>(); 
-
-        // LẤY RENDERER VÀ GÁN MATERIAL NGẪU NHIÊN
+        
         aiRenderer = GetComponentInChildren<Renderer>(); 
-        if (aiRenderer == null)
-        {
-            Debug.LogWarning("Renderer component không được tìm thấy trên AI.");
-        }
-
         if (availableMaterials.Length > 0 && aiRenderer != null)
         {
             int randomIndex = Random.Range(0, availableMaterials.Length);
             aiRenderer.material = availableMaterials[randomIndex];
             Debug.Log($"Đã gán Material: {availableMaterials[randomIndex].name}");
         }
-        else if (aiRenderer != null)
-        {
-            Debug.LogWarning("Mảng Materials rỗng! Không thể gán material ngẫu nhiên.");
-        }
-
-        if (agent == null)
-        {
-            Debug.LogError("NavMeshAgent component không được tìm thấy.");
-            enabled = false;
-            return;
-        }
-
-        if (player == null)
-        {
-             Debug.LogWarning("Không tìm thấy ThirdPersonController (Player). AI sẽ không thể Chase.");
-        }
         
-        // Thiết lập ban đầu
+        if (agent == null) { Debug.LogError("NavMeshAgent component không được tìm thấy."); enabled = false; return; }
+        if (player == null) { Debug.LogWarning("Không tìm thấy ThirdPersonController (Player)."); }
+        
+        // ⭐ Đảm bảo NavMeshAgent.stoppingDistance thấp (ví dụ: 0.1 trong Inspector)
         agent.speed = walkSpeed;
-        
-        // LƯU VỊ TRÍ & GÓC QUAY BAN ĐẦU
         initialPosition = transform.position;
         initialRotation = transform.rotation;
         
@@ -154,19 +126,20 @@ public class AI_Move_NavMesh : MonoBehaviour
                 HandlePatrol();
                 break;
         }
-
-        // Cập nhật Animation cho việc di chuyển thông thường (walk/idle)
-        UpdateNormalMoveAnimation();
     }
 
     // =========================================================================
-    //                            CÁC HÀM XỬ LÝ TRẠNG THÁI
+    //                            LOGIC CHUYỂN ĐỘNG THƯỜNG
     // =========================================================================
 
     private void InitializeMovementState()
     {
         IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y);
         agent.speed = walkSpeed;
+        
+        // Thiết lập Scan ban đầu cho RandomMove và Stationary
+        targetScanRotation = initialRotation; 
+        SetRandomScanRotation(); 
 
         if (currentMovementState == MovementState.RandomMove)
         {
@@ -179,13 +152,23 @@ public class AI_Move_NavMesh : MonoBehaviour
                 agent.SetDestination(patrolPoints[currentPatrolIndex].position);
             }
         }
-        else if (currentMovementState == MovementState.Stationary)
-        {
-            targetScanRotation = initialRotation; // Bắt đầu bằng góc ban đầu
-            SetRandomScanRotation();
-        }
     }
     
+    // --- Hàm tìm và thiết lập điểm đến ngẫu nhiên ---
+    private void SetRandomDestination()
+    {
+        Vector3 randomPoint;
+        if (GetRandomPoint(transform.position, targetRadius, out randomPoint))
+        {
+            agent.SetDestination(randomPoint);
+            // Debug.Log($"AI đang di chuyển đến vị trí ngẫu nhiên: {randomPoint}");
+        }
+        else
+        {
+            // Debug.LogWarning("Không thể tìm thấy vị trí ngẫu nhiên hợp lệ trên NavMesh.");
+        }
+    }
+
     // --- Hàm thiết lập Góc Quét Ngẫu nhiên ---
     private void SetRandomScanRotation()
     {
@@ -199,48 +182,57 @@ public class AI_Move_NavMesh : MonoBehaviour
     }
 
 
-    // --- Xử lý Trạng thái Di chuyển Ngẫu nhiên ---
+    // --- Xử lý Trạng thái Di chuyển Ngẫu nhiên (Kèm Scan khi Idle) ---
     private void HandleRandomMove()
     {
+        // Kiểm tra xem AI đã đến gần đích chưa
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold )
         {
-            if(IdleTime > 0f)
+            // Đã đến đích, bắt đầu thời gian idle/quét
+            
+            if (IdleTime > 0f)
             {
+                SetAnimation("idle");
                 IdleTime -= Time.deltaTime;
+                
+                // Xử lý Quét (Scan) trong thời gian Idle
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetScanRotation, Time.deltaTime * 3f);
+                scanTimer -= Time.deltaTime;
+                
+                if (scanTimer <= 0f)
+                {
+                    SetRandomScanRotation(); 
+                }
                 return; 
             }
             else
             {
+                // Hết thời gian Idle -> Chọn điểm mới
                 IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y);
                 SetRandomDestination();
+                SetRandomScanRotation(); // Thiết lập Góc quét mới
             }
+        }
+        else
+        {
+            // Đang di chuyển
+            agent.speed = walkSpeed;
+            SetAnimation("walk");
         }
     }
 
-    // --- Xử lý Trạng thái Đứng Im (VÀ QUÉT) ---
+    // --- Xử lý Trạng thái Đứng Im (Chỉ quét) ---
     private void HandleStationary()
     {
-        // Đảm bảo agent đã dừng
-        if (agent.hasPath)
-        {
-            agent.SetDestination(transform.position);
-        }
-
+        if (agent.hasPath) { agent.SetDestination(transform.position); }
         SetAnimation("idle");
         
-        // Chỉ quét khi không đang đuổi và không đang quay về
         if (!targetDetected && !isReturningToStayArea)
         {
-            // Quay AI về góc quay mục tiêu (targetScanRotation)
             transform.rotation = Quaternion.Slerp(transform.rotation, targetScanRotation, Time.deltaTime * 3f);
-            
-            // Cập nhật Scan Timer
             scanTimer -= Time.deltaTime;
 
-            if (scanTimer <= 0f)
-            {
-                SetRandomScanRotation();
-            }
+            if (scanTimer <= 0f) { SetRandomScanRotation(); }
         }
     }
 
@@ -258,6 +250,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             if (IdleTime > 0f)
             {
                 IdleTime -= Time.deltaTime;
+                SetAnimation("idle");
                 return;
             }
             else
@@ -265,36 +258,16 @@ public class AI_Move_NavMesh : MonoBehaviour
                 IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y);
                 currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
                 agent.SetDestination(patrolPoints[currentPatrolIndex].position);
+                SetAnimation("walk");
             }
-        }
-    }
-    
-    // --- Cập nhật Animation Di chuyển Thường ---
-    private void UpdateNormalMoveAnimation()
-    {
-        // Chỉ xử lý nếu không đang trong trạng thái Stationary (vì Stationary có logic riêng)
-        if (currentMovementState == MovementState.Stationary) return; 
-
-        if (agent.hasPath && !agent.pathPending && agent.remainingDistance > agent.stoppingDistance + stoppingDistanceThreshold)
-        {
-            SetAnimation("walk");
         }
         else
         {
-            SetAnimation("idle");
+             agent.speed = walkSpeed;
+             SetAnimation("walk");
         }
     }
-
-    // --- Hàm tìm và thiết lập điểm đến ngẫu nhiên ---
-    private void SetRandomDestination()
-    {
-        Vector3 randomPoint;
-        if (GetRandomPoint(transform.position, targetRadius, out randomPoint))
-        {
-            agent.SetDestination(randomPoint);
-        }
-    }
-
+    
     // --- Hàm hỗ trợ tìm kiếm điểm ngẫu nhiên trên NavMesh ---
     private bool GetRandomPoint(Vector3 center, float range, out Vector3 result)
     {
@@ -312,117 +285,27 @@ public class AI_Move_NavMesh : MonoBehaviour
         return false;
     }
 
-    // --- Hàm thiết lập Animation (SỬ DỤNG LẠI SETTRIGGER VÀ CÓ THÊM ÂM THANH) ---
-    private void SetAnimation(string name)
-    {
-        if (animator == null || currAnimState == name)
-        {
-            return;
-        }
-        animator.SetTrigger(name);
-        currAnimState = name;
-        
-        // LOGIC XỬ LÝ ÂM THANH BƯỚC CHÂN
-        if (name == "walk")
-        {
-            HandleWalkSound(true);
-        }
-        else // idle, run, hoặc các trạng thái khác
-        {
-            HandleWalkSound(false);
-        }
-    }
-
-    // --- Xử lý Âm thanh Bước chân (chỉ áp dụng cho 'walk') ---
-    private void HandleWalkSound(bool shouldPlay)
-    {
-        // Chỉ phát âm thanh bước chân (audioSources[0])
-        if (audioSources.Length == 0 || audioSources[0] == null) return;
-
-        if (shouldPlay && !isWalkSoundPlaying)
-        {
-            audioSources[0].loop = true;
-            audioSources[0].Play();
-            isWalkSoundPlaying = true;
-        }
-        else if (!shouldPlay && isWalkSoundPlaying)
-        {
-            audioSources[0].Stop();
-            isWalkSoundPlaying = false;
-        }
-    }
-
 
     // =========================================================================
-    //                            PHÁT HIỆN, CHASE & QUAY VỀ
+    //                            PHÁT HIỆN, CHASE & QUAY VỀ
     // =========================================================================
-
-    // --- Hàm Phát âm thanh Phát hiện (audioSources[1]) ---
-    public void PlayDetectionSound()
-    {
-        // Kiểm tra xem audioSources[1] có tồn tại không
-        if (audioSources.Length > 1 && audioSources[1] != null)
-        {
-            audioSources[1].loop = false;
-            if (!audioSources[1].isPlaying)
-            {
-                audioSources[1].Play();
-            }
-        }
-    }
-
-    // --- Hàm Xử lý nhạc Chase Music (audioSources[2]) ---
-    public void HandleChaseMusic(bool shouldPlay)
-    {
-        // Yêu cầu: Đảm bảo AudioSource[2] tồn tại
-        if (audioSources.Length < 3 || audioSources[2] == null) return;
-
-        if (shouldPlay)
-        {
-            // CHỈ PHÁT NHẠC NỀN NẾU CHƯA CÓ NPC NÀO PHÁT (Sử dụng cờ static)
-            if (!isChaseMusicPlaying)
-            {
-                audioSources[2].loop = true;
-                if (!audioSources[2].isPlaying)
-                {
-                    audioSources[2].Play();
-                }
-                isChaseMusicPlaying = true; // Đặt cờ global
-                Debug.Log("Chase Music Started by: " + gameObject.name);
-            }
-        }
-        else 
-        {
-            // DỪNG NHẠC CHỈ KHI NPC NÀY LÀ NPC ĐANG KIỂM SOÁT NHẠC
-                // Dừng nhạc
-            audioSources[2].Stop();
-            isChaseMusicPlaying = false; // Reset cờ global
-            isResponsibleForMusic = false; // NPC này không còn trách nhiệm
-            Debug.Log("Chase Music Stopped by: " + gameObject.name);
-        }
-    }
 
     public void RayCastHitTarget()
     {
         if (player == null) return; 
         
-        // Giảm tầm nhìn nếu Player đang Crouch
-        raycastRange = (player != null && player.Crouching) ? raycastRangePublic / 2f : raycastRangePublic;
+        raycastRange = (player.Crouching) ? raycastRangePublic / 2f : raycastRangePublic;
 
         Vector3 rayStart = transform.position + Vector3.up;
         Vector3 forward = transform.forward;
-
-        // Các hướng raycast
         Vector3[] directions = new Vector3[]
         {
-            forward,
-            Quaternion.AngleAxis(-raycastAngle, Vector3.up) * forward,
-            Quaternion.AngleAxis(raycastAngle, Vector3.up) * forward,
-            Quaternion.AngleAxis(raycastAngle, transform.right) * forward,
-            Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
+             forward,
+             Quaternion.AngleAxis(-raycastAngle, Vector3.up) * forward,
+             Quaternion.AngleAxis(raycastAngle, Vector3.up) * forward,
+             Quaternion.AngleAxis(raycastAngle, transform.right) * forward,
+             Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
         };
-
-        // Biến kiểm tra xem Player có đang trong tầm nhìn Raycast không
 
         foreach (Vector3 dir in directions)
         {
@@ -431,12 +314,11 @@ public class AI_Move_NavMesh : MonoBehaviour
                 Debug.DrawLine(rayStart, hit.point, Color.red);
                 if (hit.collider.CompareTag("Player"))
                 {
-                        // PHÁT HIỆN LẦN ĐẦU
-                        PlayDetectionSound(); 
-                        HandleChaseMusic(true); // Bắt đầu Chase Music (Chỉ phát nếu chưa phát)
-
-                        chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y);
-                        targetDetected = true;
+                    PlayDetectionSound(); 
+                    HandleChaseMusic(true); 
+                    chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y);
+                    targetDetected = true;
+                    return; // Thoát ngay khi tìm thấy player
                 }
             }
             else
@@ -445,21 +327,21 @@ public class AI_Move_NavMesh : MonoBehaviour
             }
         }
         
-        // Nếu AI đang Chase nhưng Player vừa mất dấu
-        if (targetDetected)
+        // Cập nhật Chase Duration/Lost Target Timer
+        if(targetDetected && chaseDuration > 0f)
         {
-             // Cho phép thời gian chaseDuration giảm dần (sử dụng như Lost Target Timer)
-             if (chaseDuration <= 0f)
-             {
-                 targetDetected = false;
-                 isReturningToStayArea = true;
-                 agent.SetDestination(initialPosition);
-                 agent.speed = returnSpeed;
-                 SetAnimation("walk"); 
-                 
-                 // --- LOGIC DỪNG NHẠC CHASE KHI MẤT DẤU ---
-                 HandleChaseMusic(false); 
-             }
+            chaseDuration -= Time.deltaTime;
+        }
+
+        // Nếu AI đang Chase nhưng Player vừa mất dấu (hết thời gian grace)
+        if (targetDetected && chaseDuration <= 0f)
+        {
+            targetDetected = false;
+            isReturningToStayArea = true;
+            agent.SetDestination(initialPosition);
+            agent.speed = returnSpeed;
+            SetAnimation("walk"); 
+            HandleChaseMusic(false); 
         }
     }
 
@@ -468,11 +350,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         if (player == null) return;
         
         // 1. Kiểm tra thời gian Chase & Bán kính tối đa
-        if(chaseDuration > 0f)
-        {
-            chaseDuration -= Time.deltaTime;
-        }
-        
         float distanceToInitial = Vector3.Distance(transform.position, initialPosition);
         
         if (distanceToInitial > maxChaseRadius || chaseDuration <= 0f)
@@ -483,6 +360,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             agent.SetDestination(initialPosition);
             agent.speed = returnSpeed;
             SetAnimation("walk"); 
+            HandleChaseMusic(false);
             return;
         }
 
@@ -490,7 +368,7 @@ public class AI_Move_NavMesh : MonoBehaviour
         agent.speed = runSpeed;
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
 
-        if(distanceToPlayer > 1f) 
+        if(distanceToPlayer > agent.stoppingDistance + stoppingDistanceThreshold) 
         {
             SetAnimation("run"); 
             agent.SetDestination(player.transform.position);
@@ -509,18 +387,15 @@ public class AI_Move_NavMesh : MonoBehaviour
             agent.SetDestination(initialPosition);
             agent.speed = returnSpeed;
             SetAnimation("idle"); 
+            HandleChaseMusic(false);
         }
     }
 
-    // --- Xử lý Trạng thái Quay về Khu vực Stay ---
     public void ReturnToStayArea()
     {
+        // ... (Logic ReturnToStayArea giữ nguyên) ...
         agent.speed = returnSpeed;
         SetAnimation("walk"); 
-        if(chaseDuration <= 0f)
-        {
-            HandleChaseMusic(false); 
-        }
 
         // Nếu đã đến gần vị trí ban đầu
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
@@ -533,17 +408,6 @@ public class AI_Move_NavMesh : MonoBehaviour
             {
                 isReturningToStayArea = false;
                 agent.SetDestination(transform.position); // Dừng hẳn
-                IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y); // Bắt đầu thời gian idle
-                
-                // Logic dừng nhạc Chase được chuyển sang RayCastHitTarget, 
-                // nhưng vẫn gọi ở đây để đảm bảo dừng nếu thoát khỏi Chase do bắt được Player.
-                
-
-                // Kích hoạt quét nếu trạng thái là Stationary
-                if (currentMovementState == MovementState.Stationary)
-                {
-                    SetRandomScanRotation();
-                }
                 
                 // Khởi tạo lại trạng thái di chuyển thông thường ban đầu
                 InitializeMovementState(); 
@@ -551,14 +415,79 @@ public class AI_Move_NavMesh : MonoBehaviour
             }
         }
     }
+    
+    // ... (Logic âm thanh và Gizmos giữ nguyên) ...
+    // (HandleWalkSound, PlayDetectionSound, HandleChaseMusic, SetAnimation, OnDrawGizmosSelected)
+    private void SetAnimation(string name)
+    {
+        if (animator == null || currAnimState == name) return;
+        
+        animator.SetTrigger(name);
+        currAnimState = name;
+        
+        if (name == "walk" || name == "run")
+        {
+             HandleWalkSound(true);
+        }
+        else
+        {
+             HandleWalkSound(false);
+        }
+    }
+    private void HandleWalkSound(bool shouldPlay)
+    {
+        if (audioSources.Length == 0 || audioSources[0] == null) return;
 
-    // =========================================================================
-    //                                  GIZMOS
-    // =========================================================================
+        if (shouldPlay && !isWalkSoundPlaying)
+        {
+            audioSources[0].loop = true;
+            audioSources[0].Play();
+            isWalkSoundPlaying = true;
+        }
+        else if (!shouldPlay && isWalkSoundPlaying)
+        {
+            audioSources[0].Stop();
+            isWalkSoundPlaying = false;
+        }
+    }
+    public void PlayDetectionSound()
+    {
+        if (audioSources.Length > 1 && audioSources[1] != null)
+        {
+            audioSources[1].loop = false;
+            if (!audioSources[1].isPlaying)
+            {
+                audioSources[1].Play();
+            }
+        }
+    }
+    public void HandleChaseMusic(bool shouldPlay)
+    {
+        if (audioSources.Length < 3 || audioSources[2] == null) return;
 
+        if (shouldPlay)
+        {
+            if (!isChaseMusicPlaying)
+            {
+                audioSources[2].loop = true;
+                if (!audioSources[2].isPlaying)
+                {
+                    audioSources[2].Play();
+                }
+                isChaseMusicPlaying = true;
+                Debug.Log("Chase Music Started by: " + gameObject.name);
+            }
+        }
+        else 
+        {
+             audioSources[2].Stop();
+             isChaseMusicPlaying = false; 
+             Debug.Log("Chase Music Stopped by: " + gameObject.name);
+        }
+    }
     private void OnDrawGizmosSelected()
     {
-        // Lấy vị trí hiện tại của AI
+        // ... (Logic OnDrawGizmosSelected giữ nguyên) ...
         Vector3 position = transform.position;
 
         // 1. VẼ VÙNG HOẠT ĐỘNG TỐI ĐA (MAX CHASE RADIUS)
@@ -567,7 +496,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         Vector3 centerPosition = (Application.isPlaying && initialPosition != Vector3.zero) ? initialPosition : position;
         Gizmos.DrawWireSphere(centerPosition, maxChaseRadius);
         
-        // Đánh dấu Vị trí Quay về Ban đầu (Initial Position)
         Gizmos.color = Color.yellow;
         Gizmos.DrawSphere(centerPosition, 0.2f);
         
@@ -579,11 +507,11 @@ public class AI_Move_NavMesh : MonoBehaviour
         Vector3 forward = transform.forward;
         Vector3[] detectionDirections = new Vector3[]
         {
-            forward,
-            Quaternion.AngleAxis(-raycastAngle, Vector3.up) * forward,
-            Quaternion.AngleAxis(raycastAngle, Vector3.up) * forward,
-            Quaternion.AngleAxis(raycastAngle, transform.right) * forward,
-            Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
+             forward,
+             Quaternion.AngleAxis(-raycastAngle, Vector3.up) * forward,
+             Quaternion.AngleAxis(raycastAngle, Vector3.up) * forward,
+             Quaternion.AngleAxis(raycastAngle, transform.right) * forward,
+             Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
         };
         
         float currentRange = Application.isPlaying ? raycastRange : raycastRangePublic;
@@ -597,7 +525,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         
         if (targetDetected && player != null)
         {
-            // Màu Đỏ: Đang Chase Player
             Gizmos.color = Color.red;
             Gizmos.DrawLine(position, player.transform.position);
             Gizmos.DrawWireSphere(player.transform.position, 0.5f);
@@ -606,7 +533,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         
         if (isReturningToStayArea)
         {
-            // Màu Cam: Đang quay về vùng Stay
             Gizmos.color = Color.Lerp(Color.red, Color.yellow, 0.5f); 
             Gizmos.DrawLine(position, centerPosition);
             Gizmos.DrawWireSphere(centerPosition, 0.5f);
@@ -617,11 +543,9 @@ public class AI_Move_NavMesh : MonoBehaviour
         switch (currentMovementState)
         {
             case MovementState.RandomMove:
-                // Màu Xanh dương: Vùng tìm kiếm điểm ngẫu nhiên
                 Gizmos.color = Color.blue;
                 Gizmos.DrawWireSphere(position, targetRadius); 
                 
-                // Vẽ đường đến điểm đích (nếu đang di chuyển)
                 if (agent != null && agent.hasPath)
                 {
                     Gizmos.color = Color.cyan;
@@ -631,13 +555,10 @@ public class AI_Move_NavMesh : MonoBehaviour
                 break;
 
             case MovementState.Stationary:
-                // Màu Trắng: Đang đứng yên
                 Gizmos.color = Color.white;
                 Gizmos.DrawWireSphere(position, 0.5f); 
 
-                // Mới: Vẽ góc quét mục tiêu
                 Gizmos.color = Color.magenta;
-                // Chỉ vẽ nếu targetScanRotation đã được khởi tạo
                 if (Application.isPlaying && targetScanRotation != Quaternion.identity) 
                 {
                     Vector3 scanDirection = targetScanRotation * Vector3.forward;
@@ -646,7 +567,6 @@ public class AI_Move_NavMesh : MonoBehaviour
                 break;
 
             case MovementState.Patrol:
-                // Màu Tím: Đường tuần tra
                 Gizmos.color = Color.magenta;
                 if (patrolPoints != null && patrolPoints.Length > 0)
                 {

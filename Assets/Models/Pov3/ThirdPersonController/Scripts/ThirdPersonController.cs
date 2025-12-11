@@ -96,6 +96,7 @@ namespace StarterAssets
         private int _animIDMotionSpeed;
 
         [Header("Setting")]
+        private UI_Manager ui;
         public float rangeInteract = 2f;
         private List<GameObject> heldItem = new List<GameObject>();
 
@@ -146,8 +147,11 @@ namespace StarterAssets
 
         private void Start()
         {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
             characterController = GetComponent<CharacterController>();
+            ui = FindFirstObjectByType<UI_Manager>();
             StartCenter = characterController.center;
             StartHeight = characterController.height;
             
@@ -410,6 +414,10 @@ namespace StarterAssets
 
         private void CameraRotation()
         {
+            if(ui.isSolving == true || player.currpoint == player.totalpoint || player.isDied)
+            {
+                return;
+            }
             // if there is an input and camera position is not fixed
             if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
