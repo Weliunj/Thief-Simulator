@@ -1,10 +1,71 @@
-- Anti-aliasing (Khử răng cưa): Khi bạn thấy các đường chéo hoặc đường cong bị "răng cưa" (như cầu thang gạch), chức năng này sẽ làm chúng mượt mà, không còn lởm chởm nữa.
-- Ambient Occlusion (Đổ bóng môi trường): Khi hai bức tường gặp nhau, hoặc một vật thể nằm trên mặt đất, chức năng này sẽ thêm một vệt bóng tối mềm mại vào chỗ tiếp xúc đó, làm hình ảnh có độ sâu và "nặng" hơn.
-- Screen Space Reflections (Phản xạ không gian màn hình): Nếu có một vũng nước hoặc sàn nhà bóng loáng, bạn sẽ thấy hình ảnh của môi trường xung quanh (cây cối, tường...) phản chiếu trên bề mặt đó.
-- Depth of Field (Độ sâu trường ảnh): Khi bạn tập trung vào một vật thể (ví dụ: khẩu súng của nhân vật), phần nền phía sau sẽ bị làm mờ đi, giống như khi bạn chụp ảnh chân dung bằng máy ảnh chuyên nghiệp.
-- Motion Blur (Làm mờ chuyển động): Khi bạn quay camera thật nhanh (hoặc nhân vật chạy nhanh), hình ảnh sẽ bị nhòe đi một chút. Điều này giúp mắt người dễ chịu hơn khi có chuyển động tốc độ cao.
-- Bloom (Phát sáng): Các nguồn sáng rất mạnh (như đèn pha, mặt trời, hoặc đèn neon) sẽ tạo ra một quầng sáng mờ rực rỡ xung quanh chúng, làm tăng hiệu ứng chói lóa.
-- Color Grading (Chỉnh màu): Thay đổi bộ lọc màu tổng thể của trò chơi. Ví dụ: Chuyển cảnh từ màu sắc tươi sáng sang màu xanh xám lạnh để tạo không khí u ám, kịch tính.
-- Vignette (Họa tiết góc): Các góc/viền xung quanh màn hình sẽ bị làm tối hoặc hơi mờ đi, giúp bạn tập trung sự chú ý vào chính giữa màn hình.
-- Chromatic Aberration (Sắc sai): Ở các cạnh màn hình, bạn sẽ thấy màu sắc của vật thể như bị tách ra thành viền xanh và đỏ mỏng, giống như lỗi nhỏ của một ống kính cũ.
-- Lens Distortion (Méo ống kính): Khiến hình ảnh cong vênh (ví dụ: phình ra ở giữa hoặc lõm vào), giống như nhìn qua mắt cá hoặc cửa sổ bằng kính cong.
+1: Anti-aliasing (Khử răng cưa) 
+Chức năng: Làm mượt các đường chéo và đường cong lởm chởm. 
+Ứng dụng: Giúp các thanh chắn đường, lưới sắt trông sắc nét và trơn tru hơn.
+
+2: Ambient Occlusion (Đổ bóng môi trường) 
+Chức năng: Thêm bóng tối mềm nơi các vật thể giao nhau, tăng độ sâu. 
+Ứng dụng: Tạo vệt tối nhẹ ở chân bàn ghế hoặc góc tường để vật thể "dính" vào môi trường hơn.
+
+3: Screen Space Reflections (Phản xạ không gian màn hình) 
+Chức năng: Tạo phản chiếu hình ảnh môi trường trên bề mặt bóng loáng. 
+Ứng dụng: Phản chiếu của đèn điện, trần nhà trên sàn đá hoa cương sạch bóng.
+
+4: Depth of Field (Độ sâu trường ảnh) 
+Chức năng: Làm mờ nền để tập trung vào vật thể chính (như chụp chân dung). 
+Ứng dụng: Khi bạn kiểm tra một vật phẩm trong kho đồ, mọi thứ xung quanh vật phẩm đó sẽ mờ đi.
+
+5: Motion Blur (Làm mờ chuyển động) 
+Chức năng: Làm nhòe hình ảnh khi camera hoặc vật thể di chuyển nhanh. 
+Ứng dụng: Khi quay đầu đột ngột hoặc khi game thủ sử dụng kỹ năng tăng tốc.
+
+6: Bloom (Phát sáng) 
+Chức năng: Tạo quầng sáng mờ rực rỡ xung quanh nguồn sáng mạnh. 
+Ứng dụng: Làm cho mắt của robot hoặc cổng dịch chuyển phát sáng chói lòa.
+
+7: Color Grading (Chỉnh màu) 
+Chức năng: Thay đổi bộ lọc màu tổng thể của trò chơi (tông màu, độ tương phản). 
+Ứng dụng: Tạo không khí u ám (màu xanh lạnh) hoặc tươi sáng/ấm áp (màu vàng cam).
+
+8: Vignette (Họa tiết góc) 
+Chức năng: Làm tối hoặc mờ các góc/viền màn hình. 
+Ứng dụng: Khi nhân vật bị thương/ngộ độc, các góc màn hình tối dần lại để cảnh báo.
+
+9: Chromatic Aberration (Sắc sai) 
+Chức năng: Tách màu thành viền xanh/đỏ mỏng ở các cạnh. 
+Ứng dụng: Mô phỏng hiệu ứng nhìn qua cửa kính vỡ hoặc khi bị choáng váng.
+
+10: Lens Distortion (Méo ống kính) 
+Chức năng: Khiến hình ảnh cong vênh, như nhìn qua mắt cá. 
+Ứng dụng: Dùng trong các cảnh quay hành động cường độ cao hoặc tầm nhìn camera an ninh.
+
+11: Exposure (Phơi sáng) 
+Chức năng: Điều chỉnh độ sáng tổng thể của cảnh. 
+Ứng dụng: Khi nhân vật bước từ nơi tối ra ánh sáng mặt trời, hình ảnh sẽ từ từ sáng lên (hiệu ứng thích nghi của mắt).
+
+12: White Balance (Cân bằng trắng) 
+Chức năng: Điều chỉnh tông màu lạnh/nóng để hình ảnh trông tự nhiên hơn. 
+Ứng dụng: Giúp vật thể màu trắng trông thực sự trắng dưới các nguồn sáng khác nhau (không bị ám vàng hay xanh).
+
+13: Sharpen (Độ sắc nét) 
+Chức năng: Tăng cường độ rõ ràng và chi tiết của các cạnh. 
+Ứng dụng: Làm cho kết cấu của da, vải, hoặc đá trong game trở nên chi tiết và rõ ràng hơn.
+
+14: Grain / Noise (Nhiễu hạt) 
+Chức năng: Thêm các hạt nhiễu nhỏ li ti vào hình ảnh. 
+Ứng dụng: Tạo cảm giác phim ảnh cũ, cổ điển hoặc bầu không khí hồi hộp, đáng sợ.
+
+15: Split Toning (Tách tông màu) 
+Chức năng: Đặt màu khác nhau cho vùng tối (Shadows) và vùng sáng (Highlights). 
+Ứng dụng: Tô màu xanh cho vùng bóng tối và màu vàng cho vùng ánh sáng để tạo phong cách phim ảnh đặc trưng.
+
+16: Contrast (Tương phản) 
+Chức năng: Điều chỉnh sự khác biệt giữa vùng sáng nhất và vùng tối nhất. 
+Ứng dụng: Tăng sự kịch tính và chiều sâu của hình ảnh bằng cách làm nổi bật sự chênh lệch sáng/tối.
+
+17: Saturation (Độ bão hòa) 
+Chức năng: Điều chỉnh cường độ màu sắc (màu tươi hay nhạt). 
+Ứng dụng: Giảm độ bão hòa khi nhân vật bị thương nặng hoặc tăng độ bão hòa để tạo cảnh tượng vui vẻ, lễ hội.
+
+18: Lens Flare (Giảm ánh sáng chói) 
+Chức năng: Mô phỏng ánh sáng mặt trời/đèn đường bị tán xạ bởi ống kính. 
+Ứng dụng: Tạo hiệu ứng vệt sáng kéo dài khi camera đối diện với nguồn sáng mạnh (phổ biến trong phim khoa học viễn tưởng).
