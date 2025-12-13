@@ -113,6 +113,8 @@ namespace StarterAssets
         private float _airTime = 0f; 
         private const float MaxAirTimeForDoubleJump = 1.5f; 
 
+        public bool DoubleJumb_mode = false;
+
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -560,108 +562,116 @@ namespace StarterAssets
 
         private void JumpAndGravity()
 {
-    // NGĂN NHẢY KHI ĐANG CÚI
-    if (Crouching) 
-    {
-        _input.jump = false;
-        _animator.SetBool(_animIDFreeFall, false);
-        return; 
-    }
-
-    if (Grounded)
-    {
-        // 1. Reset các biến khi tiếp đất
-        _fallTimeoutDelta = FallTimeout;
-        _jumpCount = 0;
-        _airTime = 0f; // Reset thời gian trên không
-
-        if (_hasAnimator)
-        {
-            _animator.SetBool(_animIDJump, false);
-            _animator.SetBool(_animIDFreeFall, false);
-        }
-
-        if (_verticalVelocity < 0.0f)
-        {
-            _verticalVelocity = -2f;
-        }
-
-        // 2. Nhảy (Jump 1)
-        if (_input.jump && _jumpTimeoutDelta <= 0.0f && !Crouching)
-        {
-            _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
-            _jumpCount = 1; // Đánh dấu đã nhảy 1 lần
-
-            if (_hasAnimator)
-            {
-                _animator.SetBool(_animIDJump, true);
+            if(Input.GetKeyDown(KeyCode.M)){
+                DoubleJumb_mode = false;
             }
-        }
-
-        // jump timeout
-        if (_jumpTimeoutDelta >= 0.0f)
-        {
-            _jumpTimeoutDelta -= Time.deltaTime;
-        }
-    }
-    else // KHÔNG Grounded (Đang trên không)
-    {
-        // 1. Đếm thời gian trên không
-        _airTime += Time.deltaTime;
-        _jumpTimeoutDelta = JumpTimeout; // Reset jump timeout (để chỉ dùng jump input cho double jump)
-
-
-        // 2. Double Jump Logic
-        // Cho phép Double Jump nếu:
-        // a) Có input nhảy (_input.jump)
-        // b) Chưa nhảy đủ 2 lần (_jumpCount < 2)
-        // c) Thời gian trên không chưa quá MaxAirTimeForDoubleJump (1.5s)
-        if (_input.jump && _jumpCount < 2 && _airTime <= MaxAirTimeForDoubleJump)
-        {
-            // Vô hiệu hóa input nhảy ngay lập tức để tránh 3, 4 lần nhảy
-
-            _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity); 
-            _jumpCount = 2; 
-
-            // Gắn hoạt ảnh Double Jump/Jump lại (tùy thuộc vào animator của bạn)
-            if (_hasAnimator)
+            else if (Input.GetKeyDown(KeyCode.L))
             {
-                // Có thể dùng một trigger khác cho Double Jump nếu có, 
-                // hoặc reset/set lại Jump trigger.
-                _animator.SetBool(_animIDJump, false);
-                _animator.SetBool(_animIDJump, true); 
-                Debug.Log("Double Jump!");
+                DoubleJumb_mode = true;
             }
-        }
-        else
-        {
-            // Nếu input jump được nhấn nhưng không đủ điều kiện double jump, 
-            // vô hiệu hóa nó để không bị xử lý lại trong các Frame sau
+    
+            // NGĂN NHẢY KHI ĐANG CÚI
+            if (Crouching) 
+            {
+                _input.jump = false;
+                _animator.SetBool(_animIDFreeFall, false);
+                return; 
+            }
+
+            if (Grounded)
+            {
+                // 1. Reset các biến khi tiếp đất
+                _fallTimeoutDelta = FallTimeout;
+                _jumpCount = 0;
+                _airTime = 0f; // Reset thời gian trên không
+
+                if (_hasAnimator)
+                {
+                    _animator.SetBool(_animIDJump, false);
+                    _animator.SetBool(_animIDFreeFall, false);
+                }
+
+                if (_verticalVelocity < 0.0f)
+                {
+                    _verticalVelocity = -2f;
+                }
+
+                // 2. Nhảy (Jump 1)
+                if (_input.jump && _jumpTimeoutDelta <= 0.0f && !Crouching)
+                {
+                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
+                    _jumpCount = 1; // Đánh dấu đã nhảy 1 lần
+
+                    if (_hasAnimator)
+                    {
+                        _animator.SetBool(_animIDJump, true);
+                    }
+                }
+
+                // jump timeout
+                if (_jumpTimeoutDelta >= 0.0f)
+                {
+                    _jumpTimeoutDelta -= Time.deltaTime;
+                }
+            }
+            else // KHÔNG Grounded (Đang trên không)
+            {
+                // 1. Đếm thời gian trên không
+                _airTime += Time.deltaTime;
+                _jumpTimeoutDelta = JumpTimeout; // Reset jump timeout (để chỉ dùng jump input cho double jump)
+
+
+                // 2. Double Jump Logic
+                // Cho phép Double Jump nếu:
+                // a) Có input nhảy (_input.jump)
+                // b) Chưa nhảy đủ 2 lần (_jumpCount < 2)
+                // c) Thời gian trên không chưa quá MaxAirTimeForDoubleJump (1.5s)
+                if (_input.jump && _jumpCount < 2 && _airTime <= MaxAirTimeForDoubleJump && DoubleJumb_mode)
+                {
+                    // Vô hiệu hóa input nhảy ngay lập tức để tránh 3, 4 lần nhảy
+
+                    _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity); 
+                    _jumpCount = 2; 
+
+                    // Gắn hoạt ảnh Double Jump/Jump lại (tùy thuộc vào animator của bạn)
+                    if (_hasAnimator)
+                    {
+                        // Có thể dùng một trigger khác cho Double Jump nếu có, 
+                        // hoặc reset/set lại Jump trigger.
+                        _animator.SetBool(_animIDJump, false);
+                        _animator.SetBool(_animIDJump, true); 
+                        Debug.Log("Double Jump!");
+                    }
+                }
+                else
+                {
+                    // Nếu input jump được nhấn nhưng không đủ điều kiện double jump, 
+                    // vô hiệu hóa nó để không bị xử lý lại trong các Frame sau
+                    _input.jump = false;
+                }
+
+
+                // 3. Fall Timeout (Hiện thị animation FreeFall)
+                if (_fallTimeoutDelta >= 0.0f)
+                {
+                    _fallTimeoutDelta -= Time.deltaTime;
+                }
+                else
+                {
+                    if (_hasAnimator)
+                    {
+                        _animator.SetBool(_animIDFreeFall, true);
+                    }
+                }
+            }
+
+            // 4. Áp dụng trọng lực
+            if (_verticalVelocity < _terminalVelocity)
+            {
+                _verticalVelocity += Gravity * Time.deltaTime;
+            }
             _input.jump = false;
         }
-
-
-        // 3. Fall Timeout (Hiện thị animation FreeFall)
-        if (_fallTimeoutDelta >= 0.0f)
-        {
-            _fallTimeoutDelta -= Time.deltaTime;
-        }
-        else
-        {
-            if (_hasAnimator)
-            {
-                _animator.SetBool(_animIDFreeFall, true);
-            }
-        }
-    }
-
-    // 4. Áp dụng trọng lực
-    if (_verticalVelocity < _terminalVelocity)
-    {
-        _verticalVelocity += Gravity * Time.deltaTime;
-    }
-    _input.jump = false;
-}
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
         {

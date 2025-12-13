@@ -19,6 +19,10 @@ public class RunEffect : MonoBehaviour
     void Update()
     {
 
+        if(Run_Effect == null)
+        {
+            return;
+        }
         if (thirdPersonController.Grounded)
         {
             if(thirdPersonController.targetSpeed > 5)

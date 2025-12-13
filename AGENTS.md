@@ -8,7 +8,7 @@
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item, PostProcessing
 - Active game object:
-  - Name: Global Volume
+  - Name: stout woman c
   - Tag: Untagged
   - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
