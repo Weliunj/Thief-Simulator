@@ -8,7 +8,7 @@
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item
 - Active game object:
-  - Name: PlayerArmature
-  - Tag: Player
-  - Layer: Player
+  - Name: Ui
+  - Tag: Untagged
+  - Layer: UI
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
