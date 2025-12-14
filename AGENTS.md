@@ -8,7 +8,7 @@
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item
 - Active game object:
-  - Name: Global Volume
-  - Tag: Untagged
-  - Layer: Default
+  - Name: PlayerArmature
+  - Tag: Player
+  - Layer: Player
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

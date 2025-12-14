@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Linq; // Cần dùng cho LINQ
 
 public class DoorMath : MonoBehaviour
@@ -9,6 +10,10 @@ public class DoorMath : MonoBehaviour
     public UI_Manager uiManager;
     private AudioSource audioSource;
 
+    [Header("Question Requirements")] // ⭐ THÊM BIẾN MỚI
+    public int requiredCorrectAnswers = 3; // Số câu hỏi phải trả lời đúng liên tiếp
+    
+    [HideInInspector] public int currentCorrectAnswers = 0; // Số câu hỏi đã đúng cho lần tương tác này
     // Tham chiếu đến file ScriptableObject Questions (Cần gán trong Inspector)
     public Questions questionList; 
 
@@ -59,23 +64,63 @@ public class DoorMath : MonoBehaviour
             uiManager.solveCanvasGroup.interactable = true;
             uiManager.solveCanvasGroup.blocksRaycasts = true;
         }
-        // 1. CHỌN CÂU HỎI NGẪU NHIÊN VÀ HIỂN THỊ
+        
+        // ⭐ MỖI LẦN MỞ CỬA: CHỌN CÂU HỎI NGẪU NHIÊN TỪ DANH SÁCH CHƯA GIẢI
         QuestionData selectedQuestion = uiManager.GetRandomAvailableQuestion(questionList);
         
         if (selectedQuestion != null)
         {
             uiManager.currentQuestion = selectedQuestion; // Lưu câu hỏi hiện tại
             uiManager.DisplayQuestion(selectedQuestion); // Hiển thị lên UI
+            Debug.Log($"Đã random câu hỏi mới: {selectedQuestion.questionContent}");
+        }
+        else
+        {
+            Debug.LogWarning("Không còn câu hỏi nào để giải! Đóng panel.");
+            uiManager.Clodetab();
+            return;
         }
         
-        // 2. MỞ KHÓA CHUỘT
+        // MỞ KHÓA CHUỘT
         Cursor.lockState = CursorLockMode.None; 
         Cursor.visible = true;
+        
+        // ⭐ CẬP NHẬT SLIDER TIẾN ĐỘ KHI MỞ CỬA
+        if (uiManager != null)
+        {
+            uiManager.UpdateProgressUI(currentCorrectAnswers);
+        }
+
+        Debug.Log($"Cửa này cần {requiredCorrectAnswers - currentCorrectAnswers} câu đúng nữa (đã đúng {currentCorrectAnswers}/{requiredCorrectAnswers}).");
     }
     
-    // ⭐ HÀM MỚI: Xử lý khi trả lời sai - Gọi AdultNPC
+    public void AnswerCorrect()
+    {
+        currentCorrectAnswers++;
+        Debug.Log($"Trả lời đúng! Đã đúng {currentCorrectAnswers}/{requiredCorrectAnswers} câu.");
+        
+        if (currentCorrectAnswers >= requiredCorrectAnswers)
+        {
+            // ⭐ ĐỦ 3 CÂU ĐÚNG KHÁC NHAU -> HỦY CỬA
+            Debug.Log("Đã đủ 3 câu đúng! Cửa sẽ được mở.");
+            DoorSolved();
+        }
+        else
+        {
+            // ⭐ CHƯA ĐỦ -> ĐÓNG PANEL, PLAYER PHẢI MỞ LẠI ĐỂ GIẢI TIẾP
+            Debug.Log($"Còn {requiredCorrectAnswers - currentCorrectAnswers} câu nữa. Đóng tab, mở lại để giải tiếp.");
+        }
+    }
     public void AnswerFailed()
     {
+        currentCorrectAnswers = 0; // RESET đếm khi trả lời sai
+        
+        // ⭐ RESET SLIDER VỀ 0 KHI TRẢ LỜI SAI
+        if (uiManager != null)
+        {
+            uiManager.UpdateProgressUI(0);
+        }
+        
         if(audioSource.isPlaying == false)
         {
             audioSource.Play();
@@ -121,10 +166,18 @@ public class DoorMath : MonoBehaviour
     // Hàm này sẽ được gọi từ UI_Manager sau khi trả lời đúng
     public void DoorSolved()
     {
-        // 1. Huỷ đối tượng DoorMath này (và cả cửa)
-        Destroy(this.gameObject); 
+        // ⭐ ĐỢI 1 GIÂY ĐỂ SLIDER CHẠY HẾT TRƯỚC KHI DESTROY CỬA
+        StartCoroutine(DestroyDoorAfterDelay());
+    }
+    
+    private IEnumerator DestroyDoorAfterDelay()
+    {
+        // Đợi 1 giây để slider có thời gian chạy đến 3/3
+        yield return new WaitForSeconds(1f);
         
+        // Sau đó mới destroy cửa
         Debug.Log("Cửa đã được mở và bị hủy.");
+        Destroy(this.gameObject);
     }
 // ⭐ HÀM MỚI: Vẽ Gizmos cho phạm vi kêu gọi
     public void OnDrawGizmos()

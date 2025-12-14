@@ -15,6 +15,10 @@ public class PlayerManager : ScriptableObject
     public float StaminaRegenRate = 2.0f;     // Tốc độ hồi phục Stamina (VD: 2f/giây)
     public float StaminaRegenCooldown = 1.0f; // Thời gian chờ trước khi hồi phục (1 giây)
 
+    [Header("Time Settings")]
+    public float MaxTime = 300f; // Thời gian tối đa (giây) - Mặc định 5 phút
+    public float currentTime = 300f; // Thời gian hiện tại còn lại
+
     [HideInInspector]
     public float _MoveSpeed = 2.0f;
     [HideInInspector]
@@ -26,6 +30,7 @@ public class PlayerManager : ScriptableObject
     private void OnEnable()
     {
         _stamina = MaxStamina; // Đảm bảo stamina được thiết lập lại khi khởi động (trong Editor)
+        currentTime = MaxTime; // Đảm bảo thời gian được thiết lập lại khi khởi động
     }
  
 }

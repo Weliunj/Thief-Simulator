@@ -183,24 +183,28 @@ namespace StarterAssets
             _fallTimeoutDelta = FallTimeout;
         }
         private bool die = false;
+        
+        [Header("Item Drop Settings")]
+        public float dropRadius = 2f; // Bán kính spawn items trên đầu player
+        public float minItemDistance = 0.5f; // Khoảng cách tối thiểu giữa các items
+        public float dropHeight = 1.5f; // Độ cao spawn items trên đầu player
+        public ItemSpawner itemSpawner; // Optional spawner to use scene spawn points
+        
         private void Update()
         {   
-            if(player.isDied)
+            if(player.currentTime <= 0f){player.isDied = true;}
+            if(player.isDied )
             {
                 if(!die)
                 {
-                    _animator.SetTrigger("Die"); 
-                    foreach(var cau in heldItem)
-                    {
-                        cau.transform.position = transform.position + Vector3.up * 1f;
-                        cau.SetActive(true);
-
-                    }
+                    if (_animator != null) { _animator.SetTrigger("Die"); }
+                    Debug.Log($"Player died. Dropping {heldItem.Count} held items.");
+                    DropItemsOnDeath();
                     player.currweight = 0;
-                    audioSource[0].SetActive(true);
-                    lightD.SetActive(true);
+                    if (audioSource != null && audioSource.Length > 0 && audioSource[0] != null) audioSource[0].SetActive(true);
+                    if (lightD != null) lightD.SetActive(true);
                     die = true;
-                    } 
+                } 
                 return;
             }
             else if(player.currpoint == player.totalpoint)
@@ -309,14 +313,19 @@ namespace StarterAssets
                         // KIỂM TRA TRỌNG LƯỢNG TỐI ĐA TRƯỚC KHI NHẶT
                         if (player.currweight + item.kg <= player.Maxweight)
                         {
-                            heldItem.Add(hitCollider.gameObject);
-                            player.currweight += item.kg;
-                        
+                            if (!heldItem.Contains(hitCollider.gameObject))
+                            {
+                                heldItem.Add(hitCollider.gameObject);
+                                player.currweight += item.kg;
+                                // Disable physics & hide so it doesn't collide with the world while carried
+                                    Rigidbody rbPick = hitCollider.GetComponent<Rigidbody>();
+                                if (rbPick != null) { rbPick.isKinematic = true; rbPick.linearVelocity = Vector3.zero; }
+                                hitCollider.gameObject.SetActive(false);
+                                Debug.Log($"Picked up: {hitCollider.gameObject.name} (kg: {item.kg}) - new weight: {player.currweight}/{player.Maxweight}");
+                            }
                             isTaking = true;
                             takeTimer = takeDuration;
-                            _animator.SetTrigger("Take");
-                            Debug.Log("Picked up " + hitCollider.gameObject.name);
-                            Debug.Log($"weight: {player.currweight}/{player.Maxweight}");
+                            if (_animator != null) { _animator.SetTrigger("Take"); }
                             break; // Chỉ nhặt một item mỗi lần nhấn E
                         }
                         else
@@ -343,11 +352,23 @@ namespace StarterAssets
                         player.currweight -= item.kg;
                         player.currweight = Mathf.Max(0, player.currweight);
                         
-                        itemToDrop.transform.position = transform.position + transform.forward * 1f;
+                        // Unparent if necessary
+                        itemToDrop.transform.SetParent(null);
+                        itemToDrop.transform.position = transform.position + transform.forward * 1f + Vector3.up * 0.5f;
                         itemToDrop.transform.rotation = Quaternion.identity;
+                        // Reactivate item and physics
                         itemToDrop.SetActive(true);
+                        Rigidbody rbDrop = itemToDrop.GetComponent<Rigidbody>();
+                        if (rbDrop != null)
+                        {
+                            rbDrop.isKinematic = false;
+                            rbDrop.linearVelocity = Vector3.zero;
+                            Vector3 dropForce = (transform.forward + Vector3.up * 0.5f) * Random.Range(1.5f, 3f);
+                            rbDrop.AddForce(dropForce, ForceMode.Impulse);
+                            Debug.Log($"Applied drop force {dropForce} to {itemToDrop.name}");
+                        }
                         heldItem.RemoveAt(heldItem.Count - 1);
-                        Debug.Log($"weight: {player.currweight}/{player.Maxweight}");
+                        Debug.Log($"Dropped item: {itemToDrop.name} at {itemToDrop.transform.position}. weight: {player.currweight}/{player.Maxweight}");
                     }
                 }
                 else
@@ -650,6 +671,128 @@ namespace StarterAssets
             // Vẽ gizmos phạm vi tương tác
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(transform.position, rangeInteract);
+        }
+
+        // ⭐ HÀM SPAWN ITEMS KHI PLAYER CHẾT
+        private void DropItemsOnDeath()
+        {
+            if (heldItem == null || heldItem.Count == 0)
+            {
+                Debug.Log("DropItemsOnDeath called but no held items.");
+                return;
+            }
+
+            Vector3 dropCenter = transform.position + Vector3.up * dropHeight; // Vị trí trung tâm trên đầu player
+            List<Vector3> spawnedPositions = new List<Vector3>(); // Lưu các vị trí đã spawn để tránh spawn quá gần
+
+            Debug.Log($"Drop center: {dropCenter}, radius: {dropRadius}, minDistance: {minItemDistance}");
+            // Sao chép danh sách để tránh sửa đổi trong khi lặp
+            List<GameObject> itemsToDrop = new List<GameObject>(heldItem);
+            int droppedCount = 0;
+
+            // Nếu đã gán ItemSpawner trong scene → ủy quyền spawn cho nó (sử dụng các spawn point trong scene)
+            if (itemSpawner != null && itemSpawner.spawnPoints != null && itemSpawner.spawnPoints.Length > 0)
+            {
+                Debug.Log($"Using ItemSpawner ({itemSpawner.name}) to spawn {itemsToDrop.Count} items.");
+                itemSpawner.SpawnItemsAtSpawnPoints(itemsToDrop);
+                // Xóa các mục đã spawn khỏi danh sách held items
+                heldItem.RemoveAll(x => itemsToDrop.Contains(x));
+                player.currweight = 0;
+                Debug.Log($"ItemSpawner handled {itemsToDrop.Count} items.");
+                return;
+            }
+
+            foreach (var item in itemsToDrop)
+            {
+                if (item == null) continue;
+
+                // Hủy parent để nó không theo player nữa
+                item.transform.SetParent(null);
+
+                // Tìm vị trí hợp lệ không quá gần item khác
+                Vector3 randomPosition = GetRandomDropPosition(dropCenter, dropRadius, spawnedPositions, minItemDistance);
+
+                // Thêm một chút nhiễu cho chiều cao để tránh chồng trực tiếp
+                randomPosition += Vector3.up * Random.Range(-0.05f, 0.05f);
+
+                item.transform.position = randomPosition;
+                item.SetActive(true);
+                spawnedPositions.Add(randomPosition);
+
+                // Kích hoạt physics và đặt lực vừa phải (không văng quá mạnh)
+                Rigidbody rb = item.GetComponent<Rigidbody>();
+                    if (rb != null)
+                    {
+                        rb.isKinematic = false;
+                        rb.linearVelocity = Vector3.zero; // reset velocity để nhất quán
+                    // Lực nhẹ, chủ yếu theo XYXZ nhỏ và hướng lên
+                    Vector3 force = (Random.insideUnitSphere * 1.2f) + (Vector3.up * Random.Range(0.8f, 1.8f));
+                    rb.AddForce(force, ForceMode.Impulse);
+                    // Thêm quay nhẹ để items rơi tự nhiên
+                    rb.AddTorque(Random.insideUnitSphere * Random.Range(0.5f, 2.0f), ForceMode.Impulse);
+                }
+
+Debug.Log($"Dropped item: {item.name} at {randomPosition}");
+                droppedCount++;
+            }
+
+            // Xóa các item đã spawn khỏi danh sách held items, reset trọng lượng
+            heldItem.RemoveAll(x => itemsToDrop.Contains(x));
+            player.currweight = 0;
+
+            Debug.Log($"Đã spawn {droppedCount} items trong phạm vi {dropRadius}m trên đầu player.");
+        }
+        
+        // ⭐ HÀM TÌM VỊ TRÍ SPAWN NGẪU NHIÊN (TRÁNH SPAWN QUÁ GẦN NHAU)
+        private Vector3 GetRandomDropPosition(Vector3 center, float radius, List<Vector3> existingPositions, float minDistance)
+        {
+            Vector3 randomPos;
+            int attempts = 0;
+            int maxAttempts = 50; // Giới hạn số lần thử để tránh vòng lặp vô hạn
+            
+            do
+            {
+                // Tạo vị trí random trong phạm vi hình tròn trên mặt phẳng ngang
+                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                float distance = Random.Range(0f, radius);
+                
+                randomPos = center + new Vector3(
+                    Mathf.Cos(angle) * distance,
+                    0f, // Giữ nguyên độ cao
+                    Mathf.Sin(angle) * distance
+                );
+                
+                attempts++;
+                
+                // Kiểm tra xem vị trí có quá gần các items khác không
+                bool tooClose = false;
+                foreach (var existingPos in existingPositions)
+                {
+                    if (Vector3.Distance(randomPos, existingPos) < minDistance)
+                    {
+                        tooClose = true;
+                        break;
+                    }
+                }
+                
+                if (!tooClose) break; // Tìm được vị trí hợp lệ
+                
+            } while (attempts < maxAttempts);
+            
+            // Nếu không tìm được vị trí hợp lệ sau nhiều lần thử, trả về vị trí random bất kỳ
+            if (attempts >= maxAttempts)
+            {
+                float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                float distance = Random.Range(0f, radius);
+                randomPos = center + new Vector3(
+                    Mathf.Cos(angle) * distance,
+                    0f,
+                    Mathf.Sin(angle) * distance
+                );
+                Debug.LogWarning($"GetRandomDropPosition: could not find non-overlapping position after {maxAttempts} attempts, using fallback position {randomPos}");
+            }
+            
+            return randomPos;
         }
 
         private void OnFootstep(AnimationEvent animationEvent)

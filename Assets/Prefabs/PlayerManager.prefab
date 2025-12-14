@@ -360,7 +360,7 @@ Transform:
   m_GameObject: {fileID: 1299224968624478542}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.059174504, z: -0, w: 0.9982476}
-  m_LocalPosition: {x: -23.68, y: 1.539, z: -152.1}
+  m_LocalPosition: {x: -27.3, y: 1.539, z: -133.43002}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1122,7 +1122,7 @@ Light:
   serializedVersion: 11
   m_Type: 0
   m_Color: {r: 1, g: 0.9891925, b: 0.9276729, a: 1}
-  m_Intensity: 16
+  m_Intensity: 20.82
   m_Range: 17
   m_SpotAngle: 56.371033
   m_InnerSpotAngle: 0
@@ -1909,7 +1909,7 @@ Transform:
   m_GameObject: {fileID: 6973001202530683238}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.059174504, z: -0, w: 0.9982476}
-  m_LocalPosition: {x: -11.08, y: 0, z: -124.57}
+  m_LocalPosition: {x: -14.7, y: 0, z: -105.9}
   m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2017,6 +2017,10 @@ MonoBehaviour:
   audioSource:
   - {fileID: 6561774101880650058}
   _animator: {fileID: 0}
+  dropRadius: 2
+  minItemDistance: 0.5
+  dropHeight: 1.5
+  itemSpawner: {fileID: 0}
   isClimbingLadder: 0
   Crouching: 0
 --- !u!114 &6487387858774349113
@@ -2215,7 +2219,7 @@ Transform:
   m_GameObject: {fileID: 7185892199502154268}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.059174508, z: -0, w: 0.9982477}
-  m_LocalPosition: {x: -11.08, y: 1.539, z: -124.57}
+  m_LocalPosition: {x: -14.7, y: 1.539, z: -105.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2895,7 +2899,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -11.08
+      value: -14.7
       objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2903,7 +2907,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -124.57
+      value: -105.9
       objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalRotation.w

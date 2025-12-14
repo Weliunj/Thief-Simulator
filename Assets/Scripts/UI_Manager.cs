@@ -1,523 +1,351 @@
-
 using UnityEngine;
-
 using TMPro;
-
 using UnityEngine.SceneManagement;
-
 using UnityEngine.UI;
-
+using System.Collections;
 using System.Collections.Generic;
-
-using System.Linq; // Cần dùng cho LINQ
-
-
+using System.Linq; 
 
 public class UI_Manager : MonoBehaviour
-
 {
-
     // =========================================================================
-
     [Header("⚙️ References")]
-
     public PlayerManager playerManager;
-
     public GameObject GuidePanel;
-
     public bool isSolving = false;
-
     [HideInInspector]public bool toggleGuide = false;
-
     
-
     public GameObject diedPanel;
-
     public GameObject WinPanel;
-
-
 
     [Header("Math UI")]
     [HideInInspector] public CanvasGroup solveCanvasGroup;
-
     public GameObject SolvePanel;
-
     public TextMeshProUGUI content;
-
     public TextMeshProUGUI[] c; // c1 2 3 4
-
-    // Trong UI_Manager.cs, thêm vào phần khai báo biến
-[HideInInspector] public DoorMath activeDoor;
-
     
+    [Header("Progress Slider")]
+    public Slider progressSlider; // Slider hiển thị tiến độ
+    public TextMeshProUGUI progressText; // Text hiển thị "1/3", "2/3", "3/3"
 
-    // BIẾN MỚI CẦN THIẾT
+    [HideInInspector] public DoorMath activeDoor; // Cánh cửa đang được giải
 
+    // BIẾN NỘI BỘ
     [HideInInspector] public QuestionData currentQuestion;
-
-    private List<string> solvedQuestionContents = new List<string>(); // Danh sách nội dung câu hỏi đã giải
-
-
+    private List<string> solvedQuestionContents = new List<string>(); 
 
     [Header("🔋 Stamina UI")]
-
-    public TextMeshProUGUI currStamina; // Stamina hiện tại (ví dụ: 8.5)
-
-    public TextMeshProUGUI Stamina;     // Max Stamina (ví dụ: 10)
-
-    
+    public TextMeshProUGUI currStamina; 
+    public TextMeshProUGUI Stamina;     
 
     [Header("🏋️ Weight UI")]
-
-    public TextMeshProUGUI currkg;      // Cân nặng hiện tại (ví dụ: 50)
-
-    public TextMeshProUGUI kg;          // Max Cân nặng (ví dụ: 100)
-
-    
+    public TextMeshProUGUI currkg;      
+    public TextMeshProUGUI kg;          
 
     [Header("🌟 Point UI")]
-
-    public TextMeshProUGUI point;       // Điểm hiện tại (ví dụ: 250)
-
-    public TextMeshProUGUI targetPoint; // Mục tiêu điểm (ví dụ: 400)
-
+    public TextMeshProUGUI point;       
+    public TextMeshProUGUI targetPoint;
+    
+    [Header("⏰ Time UI")]
+    public TextMeshProUGUI timeText; // Text hiển thị thời gian còn lại
     // =========================================================================
-
-
-
-    // Hàm Start (Khởi tạo, chỉ chạy một lần)
 
     void Start()
-
     {
-
-// Lấy Canvas Group của SolvePanel
-    solveCanvasGroup = SolvePanel.GetComponent<CanvasGroup>();
-    if (solveCanvasGroup == null)
-    {
-        Debug.LogWarning("SolvePanel thiếu component Canvas Group. Vui lòng thêm vào để kiểm soát tương tác.");
-    }
+        // ⭐ RESET DANH SÁCH CÂU HỎI ĐÃ GIẢI KHI BẮT ĐẦU SCENE MỚI (REPLAY)
+        solvedQuestionContents.Clear();
+        Debug.Log("Đã reset danh sách câu hỏi đã giải. Tất cả câu hỏi sẽ hiện lại khi replay.");
+        
+        solveCanvasGroup = SolvePanel.GetComponent<CanvasGroup>();
+        if (solveCanvasGroup == null)
+        {
+            Debug.LogWarning("SolvePanel thiếu component Canvas Group. Vui lòng thêm vào để kiểm soát tương tác.");
+        }
         diedPanel.SetActive(false);
-
         WinPanel.SetActive(false);
-
         SolvePanel.SetActive(false);
 
-
-
         if (playerManager == null)
-
         {
-
-            Debug.LogError("PlayerManager ScriptableObject chưa được gán trong UI_Manager.");
-
+            Debug.LogError("PlayerManager ScriptableObject chưa được gán.");
             enabled = false;
-
             return;
-
         }
-
         
-
-        // Đảm bảo TextMeshPro được đặt giá trị Max/Target Point ngay từ đầu
-
-        if (Stamina != null)
-
+        // Thiết lập giá trị Max/Target Point cố định
+        if (Stamina != null) { Stamina.text = $"{playerManager.MaxStamina:F0}"; }
+        if (kg != null) { kg.text = $"{playerManager.Maxweight}"; }
+        if (targetPoint != null) { targetPoint.text = $"{playerManager.totalpoint}"; }
+        
+        // Thiết lập thời gian ban đầu
+        if (playerManager != null)
         {
-
-             // Dùng PlayerManager.MaxStamina
-
-             Stamina.text = $"{playerManager.MaxStamina:F0}"; // Hiển thị số nguyên
-
+            playerManager.currentTime = playerManager.MaxTime;
         }
-
-        if (kg != null)
-
+        
+        // Thiết lập Slider tiến độ
+        if (progressSlider != null)
         {
-
-             // Dùng PlayerManager.MaxWeight
-
-             kg.text = $"{playerManager.Maxweight}";
-
+            progressSlider.minValue = 0f;
+            progressSlider.maxValue = 3f;
+            progressSlider.value = 0f;
         }
+        UpdateProgressUI(0);
 
-        if (targetPoint != null)
-
+        // Gán Listener cho các nút đáp án (Sử dụng cách tìm kiếm chính xác)
+        for (int i = 0; i < c.Length; i++)
         {
-
-             // Dùng PlayerManager.TotalPointGoal
-
-             targetPoint.text = $"{playerManager.totalpoint}";
-
-        }
-
-
-
-        // Thêm Listener cho các nút đáp án
-
-        // Thêm Listener cho các nút đáp án
-    for (int i = 0; i < c.Length; i++)
-    {
-        // ⭐ BƯỚC 1: Lấy Game Object cha trực tiếp của Text (TMP)
-        Transform parentTransform = c[i].transform.parent;
-
-        if (parentTransform != null)
-        {
-            // ⭐ BƯỚC 2: Chỉ tìm component Button TRÊN Game Object cha đó
-            Button btn = parentTransform.GetComponent<Button>();
-            
-            if (btn != null)
+            Transform parentTransform = c[i].transform.parent;
+            if (parentTransform != null)
             {
-                int index = i;
-                btn.onClick.RemoveAllListeners(); 
-                btn.onClick.AddListener(() => ChooseAnswer(c[index].text));
-                Debug.Log($"[UI_Manager] Gán thành công Button đáp án số {i} trên Game Object: {parentTransform.name}");
-            }
-            else
-            {
-                Debug.LogError($"[UI_Manager] LỖI: Game Object '{parentTransform.name}' (cha của c[{i}]) KHÔNG có Component Button.");
+                Button btn = parentTransform.GetComponent<Button>();
+                if (btn != null)
+                {
+                    int index = i;
+                    btn.onClick.RemoveAllListeners(); 
+                    btn.onClick.AddListener(() => ChooseAnswer(c[index].text));
+                }
             }
         }
-        else
-        {
-            Debug.LogError($"[UI_Manager] LỖI CẤU TRÚC: TextMeshProUGUI c[{i}] không có Game Object cha.");
-        }
     }
-
-    }
-
-
-
-    // Hàm Update (Chạy mỗi Frame để cập nhật giá trị động)
 
     void Update()
-
     {
-
         if (playerManager == null) return;
-
         
-
-        // --- CẬP NHẬT TRẠNG THÁI THẮNG/THUA (ĐIỀU KHIỂN CHUỘT) ---
-
+        // --- CẬP NHẬT THỜI GIAN ---
+        // ⭐ CHỈ ĐẾM THỜI GIAN KHI CHƯA CHẾT VÀ CHƯA WIN
+        if (!playerManager.isDied && playerManager.currpoint < playerManager.totalpoint)
+        {
+            // Giảm thời gian mỗi frame
+            playerManager.currentTime -= Time.deltaTime;
+            
+            // Kiểm tra hết thời gian
+            if (playerManager.currentTime <= 0f)
+            {
+                playerManager.currentTime = 0f;
+                Debug.Log("HẾT THỜI GIAN! Game Over (tạm thời chỉ debug)");
+                // TODO: Thêm logic game over khi hết thời gian
+            }
+        }
+        // ⭐ KHI WIN: DỪNG THỜI GIAN (không cần làm gì, thời gian sẽ tự động dừng vì điều kiện trên)
+        
+        // --- CẬP NHẬT UI ĐỘNG ---
+        if (currStamina != null) { currStamina.text = $"{playerManager._stamina:F1}"; }
+        if (currkg != null) { currkg.text = $"{playerManager.currweight}"; }
+        if (point != null) { point.text = $"{playerManager.currpoint}"; }
+        
+        // Cập nhật UI thời gian
+        if (timeText != null)
+        {
+            int minutes = Mathf.FloorToInt(playerManager.currentTime / 60f);
+            int seconds = Mathf.FloorToInt(playerManager.currentTime % 60f);
+            timeText.text = $"{minutes:00}:{seconds:00}";
+        }
+        
+        // --- XỬ LÝ TRẠNG THÁI GAME ---
         if (playerManager.isDied)
-
         {
-
-            diedPanel.SetActive(true);
-
-            WinPanel.SetActive(false);
-
-            Cursor.lockState = CursorLockMode.None; 
-
-            Cursor.visible = true;
-
+            diedPanel.SetActive(true); WinPanel.SetActive(false);
+            Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
         } 
-
-        else if(playerManager.currpoint == playerManager.totalpoint)
-
+        else if(playerManager.currpoint >= playerManager.totalpoint) // ⭐ SỬA: >= thay vì == để tránh lỗi nếu vượt quá
         {
-
-            diedPanel.SetActive(false);
-
-            WinPanel.SetActive(true);
-
-            Cursor.lockState = CursorLockMode.None; 
-
-            Cursor.visible = true;
-
+            diedPanel.SetActive(false); WinPanel.SetActive(true);
+            Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
+            // ⭐ THỜI GIAN ĐÃ TỰ ĐỘNG DỪNG (vì điều kiện trên không thỏa mãn)
+            Debug.Log($"WIN! Đã đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
         }
-
-
-
-        // ====================================================================
-
-        // --- KHỐI LOGIC UI BỊ MẤT ĐÃ ĐƯỢC THÊM LẠI Ở ĐÂY ---
-
-        // ====================================================================
-
         
-
-        // --- 1. Cập nhật Stamina hiện tại ---
-
-        if (currStamina != null)
-
-        {
-
-            // Dùng PlayerManager.CurrentStamina (giá trị có thể có số lẻ)
-
-            currStamina.text = $"{playerManager._stamina:F1}"; // Làm tròn 1 chữ số thập phân
-
-        }
-
-
-
-        // --- 2. Cập nhật Cân nặng hiện tại ---
-
-        if (currkg != null)
-
-        {
-
-            // Dùng PlayerManager.CurrentWeight (giá trị số nguyên)
-
-            currkg.text = $"{playerManager.currweight}";
-
-        }
-
-
-
-        // --- 3. Cập nhật Điểm hiện tại ---
-
-        if (point != null)
-
-        {
-
-            // Dùng PlayerManager.CurrentPoint (giá trị số nguyên)
-
-            point.text = $"{playerManager.currpoint}";
-
-        }
-
-
-
-        // --- 4. Xử lý Guide Panel ---
-
-        if (Input.GetKeyDown(KeyCode.H) && !isSolving)
-
-        {
-
-            toggleGuide = !toggleGuide;
-
-        }
-
+        // --- XỬ LÝ GUIDE & ESCAPE ---
+        if (Input.GetKeyDown(KeyCode.H) && !isSolving) { toggleGuide = !toggleGuide; }
         GuidePanel.SetActive(toggleGuide);
-
         
-
-        // --- 5. Xử lý Escape để đóng bảng giải đố ---
-
-        if (Input.GetKeyDown(KeyCode.Escape) && isSolving)
-
-        {
-
-            Clodetab();
-
-        }
-
+        if (Input.GetKeyDown(KeyCode.Escape) && isSolving) { Clodetab(); }
     }
 
-    
-
     // =========================================================================
-
-    //                            LOGIC CÂU HỎI (GIỮ NGUYÊN)
-
+    //                            LOGIC CÂU HỎI
     // =========================================================================
-
     
-
     public List<QuestionData> GetAvailableQuestions(Questions questionList)
-
     {
-
         return questionList.allQuestions
-
             .Where(q => !solvedQuestionContents.Contains(q.questionContent))
-
             .ToList();
-
     }
-
     
-
     public QuestionData GetRandomAvailableQuestion(Questions questionList)
-
     {
-
         List<QuestionData> available = GetAvailableQuestions(questionList);
-
-        
-
-        if (available.Count == 0)
-
-        {
-
-            return null;
-
-        }
-
-        
-
+        if (available.Count == 0) return null;
         int randomIndex = Random.Range(0, available.Count);
-
         return available[randomIndex];
-
     }
-
     
-
     public void DisplayQuestion(QuestionData q)
-
     {
-
         content.text = q.questionContent;
-
-        
-
         List<string> answers = new List<string>();
-
         answers.Add(q.correctAnswer);
-
         answers.AddRange(q.incorrectAnswers);
-
         
-
+        // Xáo trộn đáp án
         int n = answers.Count;
-
         while (n > 1)
-
         {
-
             n--;
-
             int k = Random.Range(0, n + 1);
-
             string value = answers[k];
-
             answers[k] = answers[n];
-
             answers[n] = value;
-
         }
-
         
-
         for (int i = 0; i < c.Length; i++)
-
         {
-
-            if (i < answers.Count)
-
-            {
-
-                c[i].text = answers[i];
-
-            }
-
-            else
-
-            {
-
-                c[i].text = "";
-
-            }
-
+            c[i].text = (i < answers.Count) ? answers[i] : "";
         }
-
     }
-
     
-
-    public void ChooseAnswer(string chosenAnswer)
+    // Trong UI_Manager.cs
+// Trong UI_Manager.cs
+public void ChooseAnswer(string chosenAnswer)
 {
     if (currentQuestion == null) return;
     
     if (chosenAnswer == currentQuestion.correctAnswer)
     {
         Debug.Log("Đáp án Đúng!");
-        solvedQuestionContents.Add(currentQuestion.questionContent); 
         
-        
-        // HỦY CỬA TRƯỚC KHI ĐÓNG PANEL (để tránh lỗi)
-        if (activeDoor != null)
+        // ⭐ QUAN TRỌNG: Đánh dấu câu hỏi này đã được giải đúng (không lặp lại)
+        if (!solvedQuestionContents.Contains(currentQuestion.questionContent))
         {
-            activeDoor.DoorSolved(); // Gọi hàm Destroy trên cánh cửa đã tương tác
+            solvedQuestionContents.Add(currentQuestion.questionContent);
+            Debug.Log($"Đã đánh dấu câu hỏi: {currentQuestion.questionContent}");
         }
         
-        // Đóng Panel
-        Clodetab();
+        // 1. Ghi nhận câu trả lời đúng (activeDoor.AnswerCorrect() sẽ TĂNG ĐẾM và HỦY CỬA nếu đạt 3/3)
+        if (activeDoor != null) 
+        {
+            activeDoor.AnswerCorrect(); 
+        }
+
+        // ⭐ KIỂM TRA ĐỦ 3 CÂU ĐÚNG TRƯỚC KHI HIỂN THỊ CÂU HỎI MỚI
+        if (activeDoor != null && activeDoor.currentCorrectAnswers >= activeDoor.requiredCorrectAnswers)
+        {
+            // ⭐ CẬP NHẬT SLIDER ĐẾN 3/3
+            UpdateProgressUI(activeDoor.currentCorrectAnswers);
+            Debug.Log("Đã đủ 3 câu đúng! Cửa sẽ được mở sau 1 giây.");
+            
+            // Đợi 1 giây để slider chạy hết, sau đó đóng tab
+            StartCoroutine(CloseTabAfterDelay(1f));
+            return;
+        }
         
-        // Quan trọng: Đặt lại activeDoor sau khi đã xử lý
-        activeDoor = null; 
+        // ⭐ CẬP NHẬT SLIDER TIẾN ĐỘ
+        if (activeDoor != null)
+        {
+            UpdateProgressUI(activeDoor.currentCorrectAnswers);
+        }
+        
+        // ⭐ NẾU CHƯA ĐỦ 3 CÂU → HIỂN THỊ CÂU HỎI MỚI (KHÔNG ĐÓNG TAB)
+        if (activeDoor != null)
+        {
+            Debug.Log($"Trả lời đúng! Còn {activeDoor.requiredCorrectAnswers - activeDoor.currentCorrectAnswers} câu nữa. Tiếp tục với câu hỏi mới.");
+            
+            // Tải câu hỏi mới từ danh sách chưa giải
+            QuestionData nextQuestion = GetRandomAvailableQuestion(activeDoor.questionList);
+            
+            if (nextQuestion != null)
+            {
+                currentQuestion = nextQuestion;
+                DisplayQuestion(nextQuestion);
+            }
+            else
+            {
+                // Trường hợp hiếm: Hết câu hỏi nhưng chưa đủ 3 câu 
+                Debug.LogWarning("Không còn câu hỏi nào để giải! Đóng panel.");
+                Clodetab();
+                activeDoor = null;
+            }
+        }
     }
-    else
+    else // Đáp án Sai
     {
-        Debug.Log("Đáp án Sai! Gọi AI.");
+        Debug.Log("Đáp án Sai! Reset đếm, gọi AI và đóng Panel.");
         
-        // ⭐ KÍCH HOẠT SỰ KIỆN GỌI AI TRÊN CÁNH CỬA ĐANG TƯƠNG TÁC
+        // KÍCH HOẠT SỰ KIỆN GỌI AI VÀ RESET ĐẾM
+        if (activeDoor != null) { activeDoor.AnswerFailed(); }
+        
+        // Đóng Panel và đặt lại activeDoor
+        Clodetab(); 
+        activeDoor = null;
+    }
+}
+
+    // =========================================================================
+    //                            LOGIC UI CƠ BẢN
+    // =========================================================================
+
+    public void Replay()
+    {
+        Time.timeScale = 1f; SceneManager.LoadScene("Lv1");
+    }
+    
+    public void Menu()
+    {
+        Time.timeScale = 1f; SceneManager.LoadScene("HomeMenu");
+    }
+    
+    public void Clodetab()
+    {
+        isSolving = false;
+        SolvePanel.SetActive(false);
+        
+        // Vô hiệu hóa tương tác Raycast
+        if (solveCanvasGroup != null)
+        {
+            solveCanvasGroup.interactable = false;
+            solveCanvasGroup.blocksRaycasts = false;
+        }
+
+        Cursor.lockState = CursorLockMode.Locked; 
+        Cursor.visible = false;
+        currentQuestion = null;
+        
+        // ⭐ RESET TIẾN TRÌNH GIẢI KHI ĐÓNG TAB (trừ khi đã đủ 3 câu và cửa đang được destroy)
         if (activeDoor != null)
         {
-            activeDoor.AnswerFailed(); // Gọi hàm mới trên DoorMath
+            activeDoor.currentCorrectAnswers = 0;
+            Debug.Log("Đã reset tiến trình giải về 0 khi đóng tab.");
         }
         
-        // Đóng Panel và đặt lại activeDoor như thường lệ
-        Clodetab();
+        // Reset slider khi đóng tab
+        UpdateProgressUI(0);
+        
+        // Reset activeDoor
         activeDoor = null;
     }
     
-    // ⭐ XÓA BỎ HOÀN TOÀN KHỐI CODE BỊ LẶP LẠI (activeDoor = null) KHỎI CUỐI HÀM NÀY
-}
-
-
-
-    // =========================================================================
-
-    //                            LOGIC UI CƠ BẢN (GIỮ NGUYÊN)
-
-    // =========================================================================
-
-
-
-    public void Replay()
-
+    // ⭐ HÀM CẬP NHẬT SLIDER TIẾN ĐỘ
+    public void UpdateProgressUI(int correctCount)
     {
-
-        Time.timeScale = 1f;
-
-        SceneManager.LoadScene("Lv1");
-
-    }
-
-    
-
-    public void Menu()
-
-    {
-
-        Time.timeScale = 1f;
-
-        SceneManager.LoadScene("HomeMenu");
-
-    }
-
-    
-
-    public void Clodetab()
-
-    {
-
-        isSolving = false;
-
-        SolvePanel.SetActive(false);
-        // ⭐ Vô hiệu hóa tương tác để Raycast Game hoạt động lại
-    if (solveCanvasGroup != null)
-    {
-        solveCanvasGroup.interactable = false;
-        solveCanvasGroup.blocksRaycasts = false;
-    }
-
-        // Khóa chuột lại khi thoát khỏi Panel
-
-        Cursor.lockState = CursorLockMode.Locked; 
-
-        Cursor.visible = false;
-
+        if (progressSlider != null)
+        {
+            progressSlider.value = correctCount;
+        }
         
-
-        // Khi đóng, câu hỏi hiện tại bị hủy để lần sau DoorMath gọi, nó sẽ random lại
-
-        currentQuestion = null; 
-
+        if (progressText != null)
+        {
+            progressText.text = $"{correctCount}/3";
+        }
     }
-
+    
+    // ⭐ COROUTINE ĐỢI 1 GIÂY TRƯỚC KHI ĐÓNG TAB (KHI ĐỦ 3 CÂU)
+    private IEnumerator CloseTabAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        Clodetab();
+        activeDoor = null;
+    }
 }

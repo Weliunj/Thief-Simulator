@@ -58,6 +58,7 @@
     <Compile Include="Assets\Scripts\Skip_Cutscene.cs" />
     <Compile Include="Assets\Models\Forest sp\Environments\Town\Scripts\Door.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\Utilities\MobileDisableAutoSwitchControls.cs" />
+    <Compile Include="Assets\Scripts\ItemLibrary.cs" />
     <Compile Include="Assets\Scripts\PlayerManager.cs" />
     <Compile Include="Assets\Models\Pov3\ThirdPersonController\Scripts\ThirdPersonController.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\VirtualInputs\UIVirtualTouchZone.cs" />
@@ -66,11 +67,14 @@
     <Compile Include="Assets\Models\Animals\Scripts\PlayerCamera.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\VirtualInputs\UIVirtualJoystick.cs" />
     <Compile Include="Assets\Models\LowPolyDungeon\Demo Scenes\PlayerMovement.cs" />
+    <Compile Include="Assets\Scripts\SetItem.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\Models\Pov1\InputSystem\StarterAssetsInputs.cs" />
+    <Compile Include="Assets\Scripts\ItemSpawner.cs" />
     <Compile Include="Assets\Scripts\UI_Manager.cs" />
     <Compile Include="Assets\Models\LowPolyPeople\Example\Scripts\AnimationController.cs" />
     <Compile Include="Assets\Models\Pov1\Mobile\Scripts\VirtualInputs\UIVirtualButton.cs" />
+    <Compile Include="Assets\BTM_Assets\BTM_Items_Gems\Scripts\SimpleGemsAnim.cs" />
     <Compile Include="Assets\Scripts\NavMeshHelper.cs" />
     <Compile Include="Assets\Scripts\Done_CutScene.cs" />
     <Compile Include="Assets\Models\Animals\Scripts\ThirdPersonCamera.cs" />
@@ -94,6 +98,7 @@
     <None Include="Assets\Input\Stack_Sans_Notch\OFL.txt" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro_Mobile.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF SSD.shader" />
+    <None Include="Assets\Scripts\PostProcess.txt" />
     <None Include="Assets\UI Toolkit\HomeScreen.uxml" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Surface-Mobile.shader" />
     <None Include="Assets\Models\LowPolyPeople\readme.txt" />

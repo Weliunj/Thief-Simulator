@@ -312,7 +312,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             if (Physics.Raycast(rayStart, dir, out RaycastHit hit, raycastRange))
             {
                 Debug.DrawLine(rayStart, hit.point, Color.red);
-                if (hit.collider.CompareTag("Player"))
+                if (hit.collider.CompareTag("Player") && !playerManager.isDied)
                 {
                     PlayDetectionSound(); 
                     HandleChaseMusic(true); 
