@@ -368,7 +368,7 @@ GameObject:
   - component: {fileID: 1799935899007365018}
   - component: {fileID: 6292277310016189970}
   - component: {fileID: 2252996109531099229}
-  - component: {fileID: -8256481552136636026}
+  - component: {fileID: 3329072219907102854}
   m_Layer: 0
   m_Name: "B\u1EBB kh\xF3a"
   m_TagString: Untagged
@@ -483,6 +483,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DoorMath
   callRange: 13.2
   uiManager: {fileID: 0}
+  requiredCorrectAnswers: 3
+  currentCorrectAnswers: 0
   questionList: {fileID: 11400000, guid: 0171fd7bfe52fc247a991381230d578a, type: 2}
 --- !u!82 &2252996109531099229
 AudioSource:
@@ -581,19 +583,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!208 &-8256481552136636026
-NavMeshObstacle:
+--- !u!114 &3329072219907102854
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8577628722364368169}
   m_Enabled: 1
-  serializedVersion: 3
-  m_Shape: 1
-  m_Extents: {x: 0.69600004, y: 1.054, z: 0.120000005}
-  m_MoveThreshold: 0.1
-  m_Carve: 1
-  m_CarveOnlyStationary: 1
-  m_Center: {x: 0.66400003, y: 0.119, z: 0.052}
-  m_TimeToStationary: 0.5
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 0
+  m_Area: 0
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 1
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff

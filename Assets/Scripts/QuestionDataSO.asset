@@ -270,12 +270,12 @@ MonoBehaviour:
     - 0,35
     - 0,55
     - 0,4
-  - questionContent: "T\xECm x trong t\u1EC9 l\u1EC7 th\u1EE9c: (x + 2)/5 = (x - 1)/3"
-    correctAnswer: 11/2
+  - questionContent: "T\xECm x trong t\u1EC9 l\u1EC7 th\u1EE9c: x/4 = 5/2"
+    correctAnswer: 10
     incorrectAnswers:
-    - 9/2
-    - 13/2
-    - 5
+    - 11
+    - 7
+    - 9
   - questionContent: "T\xEDnh: (-1)^10 + (-1)^11 = ?"
     correctAnswer: 0
     incorrectAnswers:
@@ -288,93 +288,110 @@ MonoBehaviour:
     - -1
     - 1
     - 5
-  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 40\xB0, g\xF3c B = 80\xB0. T\xEDnh g\xF3c C."
+  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 40\xB0, g\xF3c B = 80\xB0.
+      T\xEDnh g\xF3c C."
     correctAnswer: 60
     incorrectAnswers:
     - 50
     - 70
     - 80
-  - questionContent: "Tam gi\xE1c vu\xF4ng c\xE2n c\xF3 1 g\xF3c vu\xF4ng v\xE0 2 g\xF3c b\u1EB1ng nhau. M\u1ED7i g\xF3c nh\u1ECDn b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
+  - questionContent: "Tam gi\xE1c vu\xF4ng c\xE2n c\xF3 1 g\xF3c vu\xF4ng v\xE0 2
+      g\xF3c b\u1EB1ng nhau. M\u1ED7i g\xF3c nh\u1ECDn b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
     correctAnswer: 45
     incorrectAnswers:
     - 30
     - 60
     - 90
-  - questionContent: "Hai g\xF3c \u0111\u1ED1i \u0111\u1EC9nh th\xEC b\u1EB1ng nhau. \u0110\xFAng hay Sai?"
+  - questionContent: "Hai g\xF3c \u0111\u1ED1i \u0111\u1EC9nh th\xEC b\u1EB1ng nhau.
+      \u0110\xFAng hay Sai?"
     correctAnswer: "\u0110\xFAng"
     incorrectAnswers:
     - Sai
     - '-'
     - '-'
-  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng vu\xF4ng g\xF3c t\u1EA1o th\xE0nh bao nhi\xEAu g\xF3c vu\xF4ng?"
+  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng vu\xF4ng g\xF3c t\u1EA1o
+      th\xE0nh bao nhi\xEAu g\xF3c vu\xF4ng?"
     correctAnswer: 4
     incorrectAnswers:
     - 2
     - 1
     - 3
-  - questionContent: "Tam gi\xE1c \u0111\u1EC1u c\xF3 m\u1ED7i g\xF3c b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
+  - questionContent: "Tam gi\xE1c \u0111\u1EC1u c\xF3 m\u1ED7i g\xF3c b\u1EB1ng bao
+      nhi\xEAu \u0111\u1ED9?"
     correctAnswer: 60
     incorrectAnswers:
     - 45
     - 90
     - 30
-  - questionContent: "G\xF3c ngo\xE0i c\u1EE7a tam gi\xE1c b\u1EB1ng t\u1ED5ng hai g\xF3c trong kh\xF4ng k\u1EC1. \u0110\xFAng hay Sai?"
+  - questionContent: "G\xF3c ngo\xE0i c\u1EE7a tam gi\xE1c b\u1EB1ng t\u1ED5ng hai
+      g\xF3c trong kh\xF4ng k\u1EC1. \u0110\xFAng hay Sai?"
     correctAnswer: "\u0110\xFAng"
     incorrectAnswers:
     - Sai
     - '-'
     - '-'
-  - questionContent: "Tam gi\xE1c ABC c\xF3 AB = AC. Tam gi\xE1c n\xE0y l\xE0 tam gi\xE1c g\xEC?"
+  - questionContent: "Tam gi\xE1c ABC c\xF3 AB = AC. Tam gi\xE1c n\xE0y l\xE0 tam
+      gi\xE1c g\xEC?"
     correctAnswer: Tam gi\xE1c c\xE2n
     incorrectAnswers:
     - Tam gi\xE1c \u0111\u1EC1u
     - Tam gi\xE1c vu\xF4ng
     - Tam gi\xE1c th\u01B0\u1EDDng
-  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng song song b\u1ECB c\u1EAFt b\u1EDFi m\u1ED9t \u0111\u01B0\u1EDDng th\u1EB3ng th\u1EE9 ba. C\xE1c g\xF3c so le trong b\u1EB1ng nhau. \u0110\xFAng hay Sai?"
+  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng song song b\u1ECB c\u1EAFt
+      b\u1EDFi m\u1ED9t \u0111\u01B0\u1EDDng th\u1EB3ng th\u1EE9 ba. C\xE1c g\xF3c
+      so le trong b\u1EB1ng nhau. \u0110\xFAng hay Sai?"
     correctAnswer: "\u0110\xFAng"
     incorrectAnswers:
     - Sai
     - '-'
     - '-'
-  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 50\xB0, g\xF3c B = 70\xB0. G\xF3c ngo\xE0i t\u1EA1i \u0111\u1EC9nh C b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
+  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 50\xB0, g\xF3c B = 70\xB0.
+      G\xF3c ngo\xE0i t\u1EA1i \u0111\u1EC9nh C b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
     correctAnswer: 120
     incorrectAnswers:
     - 110
     - 130
     - 100
-  - questionContent: "Hai g\xF3c k\u1EC1 b\xF9 c\xF3 t\u1ED5ng b\u1EB1ng 180\xB0. \u0110\xFAng hay Sai?"
+  - questionContent: "Hai g\xF3c k\u1EC1 b\xF9 c\xF3 t\u1ED5ng b\u1EB1ng 180\xB0.
+      \u0110\xFAng hay Sai?"
     correctAnswer: "\u0110\xFAng"
     incorrectAnswers:
     - Sai
     - '-'
     - '-'
-  - questionContent: "Tam gi\xE1c vu\xF4ng c\xF3 t\u1ED5ng hai g\xF3c nh\u1ECDn b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
+  - questionContent: "Tam gi\xE1c vu\xF4ng c\xF3 t\u1ED5ng hai g\xF3c nh\u1ECDn b\u1EB1ng
+      bao nhi\xEAu \u0111\u1ED9?"
     correctAnswer: 90
     incorrectAnswers:
     - 180
     - 60
     - 45
-  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng vu\xF4ng g\xF3c v\u1EDBi c\xF9ng m\u1ED9t \u0111\u01B0\u1EDDng th\u1EB3ng th\xEC song song v\u1EDBi nhau. \u0110\xFAng hay Sai?"
+  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng vu\xF4ng g\xF3c v\u1EDBi
+      c\xF9ng m\u1ED9t \u0111\u01B0\u1EDDng th\u1EB3ng th\xEC song song v\u1EDBi
+      nhau. \u0110\xFAng hay Sai?"
     correctAnswer: "\u0110\xFAng"
     incorrectAnswers:
     - Sai
     - '-'
     - '-'
-  - questionContent: "Tam gi\xE1c ABC c\xF3 AB = BC = CA. Tam gi\xE1c n\xE0y l\xE0 tam gi\xE1c g\xEC?"
-    correctAnswer: Tam gi\xE1c \u0111\u1EC1u
+  - questionContent: "Tam gi\xE1c ABC c\xF3 AB = BC = CA. Tam gi\xE1c n\xE0y l\xE0
+      tam gi\xE1c g\xEC?"
+    correctAnswer: "Tam gi\xE1c vu\xF4ng"
     incorrectAnswers:
-    - Tam gi\xE1c c\xE2n
-    - Tam gi\xE1c vu\xF4ng
-    - Tam gi\xE1c th\u01B0\u1EDDng
-  - questionContent: "G\xF3c t\u1EA1o b\u1EDFi hai \u0111\u01B0\u1EDDng th\u1EB3ng vu\xF4ng g\xF3c b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
+    - "Tam gi\xE1c \u0111\u1EC1u"
+    - "Tam gi\xE1c t\xF9"
+    - "Tam gi\xE1c nh\u1ECDn"
+  - questionContent: "G\xF3c t\u1EA1o b\u1EDFi hai \u0111\u01B0\u1EDDng th\u1EB3ng
+      vu\xF4ng g\xF3c b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
     correctAnswer: 90
     incorrectAnswers:
     - 180
     - 45
     - 60
-  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 30\xB0, g\xF3c B = 60\xB0. Tam gi\xE1c n\xE0y l\xE0 tam gi\xE1c g\xEC?"
-    correctAnswer: Tam gi\xE1c vu\xF4ng
+  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 30\xB0, g\xF3c B = 60\xB0.
+      Tam gi\xE1c n\xE0y l\xE0 tam gi\xE1c g\xEC?"
+    correctAnswer: "Tam gi\xE1c vu\xF4ng"
     incorrectAnswers:
-    - Tam gi\xE1c \u0111\u1EC1u
-    - Tam gi\xE1c c\xE2n
-    - Tam gi\xE1c th\u01B0\u1EDDng
+    - "Tam gi\xE1c \u0111\u1EC1u"
+    - "Tam gi\xE1c t\xF9"
+    - "Tam gi\xE1c nh\u1ECDn"

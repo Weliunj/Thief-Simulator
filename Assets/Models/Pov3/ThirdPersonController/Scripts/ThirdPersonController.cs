@@ -222,7 +222,6 @@ namespace StarterAssets
             Move();
             TakeItem();            
         }
-
         // --- HÀM XỬ LÝ STAMINA MỚI ---
         private void HandleStamina()
         {

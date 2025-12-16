@@ -368,6 +368,7 @@ GameObject:
   - component: {fileID: 4794384195022594153}
   - component: {fileID: 7040137941670039046}
   - component: {fileID: 6081328428730537969}
+  - component: {fileID: -8452839381098209453}
   m_Layer: 8
   m_Name: Goblet
   m_TagString: item
@@ -511,3 +512,23 @@ MonoBehaviour:
   Price: 20
   kg: 5
   playerManagerl: {fileID: 11400000, guid: 3745f85ce46b18b4d954cdfa3e6ace6d, type: 2}
+--- !u!114 &-8452839381098209453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6835442301732354725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 0
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 1
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff
