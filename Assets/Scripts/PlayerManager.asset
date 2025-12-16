@@ -12,19 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca494f87361080d468a38ffd0c10856e, type: 3}
   m_Name: PlayerManager
   m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
-  isDied: 1
+  isDied: 0
   MoveSpeed: 2
-  SprintSpeed: 7.3
+  SprintSpeed: 7.4
   MaxStamina: 10
   Maxweight: 100
   currweight: 0
   StaminaDepletionRate: 1
   StaminaRegenRate: 5
   StaminaRegenCooldown: 0.5
-  MaxTime: 500
-  currentTime: 0
+  MaxTime: 800
+  currentTime: 738.3049
   _MoveSpeed: 2
-  _SprintSpeed: 7.3
+  _SprintSpeed: 20
   _stamina: 10
   currpoint: 0
   totalpoint: 700
