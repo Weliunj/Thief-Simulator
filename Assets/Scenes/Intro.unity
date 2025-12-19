@@ -15248,7 +15248,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -14, y: -11.599945}
+  m_AnchoredPosition: {x: -14, y: -11.599976}
   m_SizeDelta: {x: 304.7, y: 76.2}
   m_Pivot: {x: 1, y: 0}
 --- !u!114 &1259185017
@@ -21937,6 +21937,10 @@ MonoBehaviour:
   lightD: {fileID: 0}
   audioSource: []
   _animator: {fileID: 0}
+  dropRadius: 2
+  minItemDistance: 0.5
+  dropHeight: 1.5
+  itemSpawner: {fileID: 0}
   isClimbingLadder: 0
   Crouching: 0
 --- !u!143 &1722473151
@@ -21981,12 +21985,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 1
-  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
-    are already bound by a Humanoid avatar. These transforms can only be changed
-    by Humanoid clips.\n\tTransform 'Foot.L'\n\tTransform 'UpperArm.R'\n\tTransform
-    'Hip.L'\n\tTransform 'UpperArm.L'\n\tTransform 'UpperLeg.L'\n\tTransform 'UpperLeg.R'\n\tTransform
-    'Head'\n\tTransform 'LowerLeg.L'\n\tTransform 'Hand.R'\n\tTransform 'LowerArm.L'\n\tand
-    more ..."
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
