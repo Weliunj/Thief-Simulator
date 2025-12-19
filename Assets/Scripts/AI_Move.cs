@@ -294,7 +294,7 @@ public class AI_Move_NavMesh : MonoBehaviour
     {
         if (player == null) return; 
         
-        raycastRange = (player.Crouching) ? raycastRangePublic / 2f : raycastRangePublic;
+        raycastRange = (player.Crouching) ? raycastRangePublic / 2.2f : raycastRangePublic;
 
         Vector3 rayStart = transform.position + Vector3.up;
         Vector3 forward = transform.forward;
@@ -309,6 +309,7 @@ public class AI_Move_NavMesh : MonoBehaviour
 
         foreach (Vector3 dir in directions)
         {
+
             if (Physics.Raycast(rayStart, dir, out RaycastHit hit, raycastRange))
             {
                 Debug.DrawLine(rayStart, hit.point, Color.red);
