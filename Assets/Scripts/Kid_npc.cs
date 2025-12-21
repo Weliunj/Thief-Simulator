@@ -269,7 +269,7 @@ public class Kid : MonoBehaviour
         {
             // Thiết lập đích đến cho NavMeshAgent
             agent.SetDestination(randomPoint);
-            Debug.Log($"AI đang di chuyển đến vị trí ngẫu nhiên: {randomPoint}");
+            //Debug.Log($"AI đang di chuyển đến vị trí ngẫu nhiên: {randomPoint}");
         }
         else
         {

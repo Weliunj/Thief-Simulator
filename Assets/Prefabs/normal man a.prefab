@@ -14,7 +14,8 @@ GameObject:
   - component: {fileID: 6398101588952067393}
   - component: {fileID: 3261206213275874394}
   - component: {fileID: 8460456772865149987}
-  m_Layer: 0
+  - component: {fileID: 121871142039982695}
+  m_Layer: 9
   m_Name: normal man a
   m_TagString: adult
   m_Icon: {fileID: 0}
@@ -76,13 +77,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AI_Move
   playerManager: {fileID: 11400000, guid: 3745f85ce46b18b4d954cdfa3e6ace6d, type: 2}
+  flashlight: {fileID: 7015688491967565960}
   audioSources:
   - {fileID: 9099329816845606805}
   - {fileID: 3982662623142589851}
   - {fileID: 4551562288031646330}
   walkSpeed: 1.5
   runSpeed: 6
-  stoppingDistanceThreshold: 1
+  stoppingDistanceThreshold: 0.4
   raycastRangePublic: 20
   raycastAngle: 20
   chaseDurationPublic: {x: 5, y: 8}
@@ -169,6 +171,29 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!136 &121871142039982695
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 510847348265952882}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.57
+  m_Height: 2.4
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.93, z: 0}
 --- !u!1 &2545870997741994508
 GameObject:
   m_ObjectHideFlags: 0
@@ -214,10 +239,10 @@ Light:
   serializedVersion: 11
   m_Type: 0
   m_Color: {r: 1, g: 0.9891925, b: 0.9276729, a: 1}
-  m_Intensity: 223.9
-  m_Range: 15.8
-  m_SpotAngle: 63.0039
-  m_InnerSpotAngle: 32
+  m_Intensity: 405.4
+  m_Range: 26.267784
+  m_SpotAngle: 61.61056
+  m_InnerSpotAngle: 30.284489
   m_CookieSize: 10
   m_Shadows:
     m_Type: 0
@@ -256,7 +281,7 @@ Light:
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
+  m_BounceIntensity: 0
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
@@ -480,7 +505,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 1
-  MaxDistance: 24.72
+  MaxDistance: 38.3
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0

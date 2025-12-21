@@ -193,9 +193,9 @@ namespace StarterAssets
         private void Update()
         {   
             if(player.currentTime <= 0f){player.isDied = true;}
-            if(player.isDied )
+            if (player.isDied)
             {
-                if(!die)
+                if (!die)
                 {
                     if (_animator != null) { _animator.SetTrigger("Die"); }
                     Debug.Log($"Player died. Dropping {heldItem.Count} held items.");
@@ -204,7 +204,21 @@ namespace StarterAssets
                     if (audioSource != null && audioSource.Length > 0 && audioSource[0] != null) audioSource[0].SetActive(true);
                     if (lightD != null) lightD.SetActive(true);
                     die = true;
-                } 
+
+                    Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), true);
+                }
+
+                // Continue applying gravity and move the controller down so the player falls instead of hovering.
+                JumpAndGravity();
+                GroundedCheck();
+                _controller.Move(new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+
+                // Ensure player stays snapped to ground when landed
+                if (Grounded && _verticalVelocity <= 0.0f)
+                {
+                    _verticalVelocity = -2f;
+                }
+
                 return;
             }
             else if(player.currpoint == player.totalpoint)
@@ -434,7 +448,7 @@ namespace StarterAssets
 
         private void CameraRotation()
         {
-            if(ui.isSolving == true || player.currpoint == player.totalpoint || player.isDied)
+            if(ui.isSolving == true || player.currpoint == player.totalpoint)
             {
                 return;
             }

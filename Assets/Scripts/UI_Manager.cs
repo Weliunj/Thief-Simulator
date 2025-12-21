@@ -36,11 +36,20 @@ public class UI_Manager : MonoBehaviour
 
     [Header("🔋 Stamina UI")]
     public TextMeshProUGUI currStamina; 
-    public TextMeshProUGUI Stamina;     
+    public TextMeshProUGUI Stamina; 
 
     [Header("🏋️ Weight UI")]
-    public TextMeshProUGUI currkg;      
-    public TextMeshProUGUI kg;          
+    public TextMeshProUGUI currkg;       
+    public TextMeshProUGUI kg;          
+
+    [Header("⚠️ Warning Colors")]
+    [Tooltip("Normal base color (used when value < threshold)")]
+    public Color normalColor = Color.white;
+    [Tooltip("Alert color (used at 100%)")]
+    public Color alertColor = Color.red;
+    [Range(0f, 1f)]
+    [Tooltip("Normalized threshold where coloring starts (0.5 = 50%)")]
+    public float warnThreshold = 0.5f;
 
     [Header("🌟 Point UI")]
     public TextMeshProUGUI point;       
@@ -48,6 +57,7 @@ public class UI_Manager : MonoBehaviour
     
     [Header("⏰ Time UI")]
     public TextMeshProUGUI timeText; // Text hiển thị thời gian còn lại
+    public AudioSource alarm;
     // =========================================================================
 
     void Start()
@@ -112,6 +122,14 @@ public class UI_Manager : MonoBehaviour
     void Update()
     {
         if (playerManager == null) return;
+        if( playerManager.currentTime <= 0f)
+        {
+            if (!alarm.isPlaying)
+            {
+                alarm.loop = true;
+                alarm.Play();
+            }
+        }
         
         // --- CẬP NHẬT THỜI GIAN ---
         // ⭐ CHỈ ĐẾM THỜI GIAN KHI CHƯA CHẾT VÀ CHƯA WIN
@@ -121,7 +139,7 @@ public class UI_Manager : MonoBehaviour
             playerManager.currentTime -= Time.deltaTime;
             
             // Kiểm tra hết thời gian
-            if (playerManager.currentTime <= 0f)
+            if (playerManager.currentTime <= 0.3f)
             {
                 playerManager.currentTime = 0f;
                 Debug.Log("HẾT THỜI GIAN! Game Over (tạm thời chỉ debug)");
@@ -131,8 +149,40 @@ public class UI_Manager : MonoBehaviour
         // ⭐ KHI WIN: DỪNG THỜI GIAN (không cần làm gì, thời gian sẽ tự động dừng vì điều kiện trên)
         
         // --- CẬP NHẬT UI ĐỘNG ---
-        if (currStamina != null) { currStamina.text = $"{playerManager._stamina:F1}"; }
-        if (currkg != null) { currkg.text = $"{playerManager.currweight}"; }
+        if (currStamina != null) 
+        { 
+            currStamina.text = $"{playerManager._stamina:F1}"; 
+            // set color: low stamina -> alertColor. When normalized stamina <= warnThreshold start lerping to alert at 0.
+            if (playerManager.MaxStamina > 0f)
+            {
+                float sNorm = Mathf.Clamp01(playerManager._stamina / playerManager.MaxStamina);
+                Color sColor = normalColor;
+                if (sNorm <= warnThreshold)
+                {
+                    // t = 0 at warnThreshold, t = 1 at 0 (fully depleted)
+                    float t = Mathf.InverseLerp(warnThreshold, 0f, sNorm);
+                    sColor = Color.Lerp(normalColor, alertColor, t);
+                }
+                currStamina.color = sColor;
+            }
+        }
+
+        if (currkg != null) 
+        { 
+            currkg.text = $"{playerManager.currweight}"; 
+            if (playerManager.Maxweight > 0)
+            {
+                float wNorm = Mathf.Clamp01((float)playerManager.currweight / (float)playerManager.Maxweight);
+                Color wColor = normalColor;
+                if (wNorm >= warnThreshold)
+                {
+                    float t = Mathf.InverseLerp(warnThreshold, 1f, wNorm);
+                    wColor = Color.Lerp(normalColor, alertColor, t);
+                }
+                currkg.color = wColor;
+            }
+        }
+
         if (point != null) { point.text = $"{playerManager.currpoint}"; }
         
         // Cập nhật UI thời gian

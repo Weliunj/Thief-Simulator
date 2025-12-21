@@ -18,6 +18,7 @@ public class AI_Move_NavMesh : MonoBehaviour
     private NavMeshAgent agent;
     private ThirdPersonController player; 
     public PlayerManager playerManager;
+    public Light flashlight;
     
     // BIẾN THEO DÕI NỘI BỘ
     private bool isResponsibleForMusic = false; 
@@ -295,7 +296,7 @@ public class AI_Move_NavMesh : MonoBehaviour
         if (player == null) return; 
         
         raycastRange = (player.Crouching) ? raycastRangePublic / 2.2f : raycastRangePublic;
-
+        flashlight.range = (player.Crouching) ? 8f : 27f;
         Vector3 rayStart = transform.position + Vector3.up;
         Vector3 forward = transform.forward;
         Vector3[] directions = new Vector3[]
@@ -368,7 +369,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         // 2. Thực hiện Chase
         agent.speed = runSpeed;
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
-
         if(distanceToPlayer > agent.stoppingDistance + stoppingDistanceThreshold) 
         {
             SetAnimation("run"); 
@@ -376,12 +376,6 @@ public class AI_Move_NavMesh : MonoBehaviour
         }
         else // Đã chạm tới/rất gần Player
         {
-            // LOGIC ĐÁNH BẠI PLAYER
-            if (playerManager != null && playerManager.isDied == false)
-            {
-                playerManager.isDied = true; 
-            }
-
             // Dừng AI và bắt đầu quá trình quay về
             targetDetected = false; 
             isReturningToStayArea = true;
@@ -392,6 +386,15 @@ public class AI_Move_NavMesh : MonoBehaviour
         }
     }
 
+    public void OnTriggerEnter(Collider other)
+    {
+        // LOGIC ĐÁNH BẠI PLAYER
+        if (playerManager != null && playerManager.isDied == false && other.CompareTag("Player"))
+        {
+            playerManager.isDied = true; 
+            Debug.Log(other.gameObject.name);
+        }
+    }
     public void ReturnToStayArea()
     {
         // ... (Logic ReturnToStayArea giữ nguyên) ...

@@ -194,7 +194,7 @@ public class SetItem : MonoBehaviour
                 GameObject spawnedItem = Instantiate(selectedItemPrefab, spawnPoint.position+ new Vector3(0f, 0.32f, 0f), spawnPoint.rotation);
                 spawnedItem.transform.SetParent(spawnPoint); 
 
-                Debug.Log($"Đã spawn Item: {selectedItemPrefab.name} tại ItemBase_{i} - Vị trí: {spawnPoint.name}");
+                //Debug.Log($"Đã spawn Item: {selectedItemPrefab.name} tại ItemBase_{i} - Vị trí: {spawnPoint.name}");
             }
         }
     }
