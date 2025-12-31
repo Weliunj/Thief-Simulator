@@ -157,10 +157,12 @@ namespace StarterAssets
             
             lightD.SetActive(false);
             player.isDied = false;
+            die = false;
             player.currweight = 0;
             player._MoveSpeed = player.MoveSpeed;
             player._SprintSpeed = player.SprintSpeed;
 
+            Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), false);
             // Khởi tạo Stamina
             player._stamina = player.MaxStamina; 
             _staminaRegenTimer = 0f; // Reset timer

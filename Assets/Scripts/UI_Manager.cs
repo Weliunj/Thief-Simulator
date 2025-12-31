@@ -338,9 +338,20 @@ public void ChooseAnswer(string chosenAnswer)
     // =========================================================================
 
     public void Replay()
+{
+    // ⭐ Reset các trạng thái quan trọng của PlayerManager trước khi load lại
+    if (playerManager != null)
     {
-        Time.timeScale = 1f; SceneManager.LoadScene("Lv1");
+        playerManager.isDied = false;
+        playerManager.currweight = 0;
+        playerManager.currpoint = 0;
+        playerManager.currentTime = playerManager.MaxTime;
+        playerManager._stamina = playerManager.MaxStamina;
     }
+
+    Time.timeScale = 1f; 
+    SceneManager.LoadScene("Lv1");
+}
     
     public void Menu()
     {

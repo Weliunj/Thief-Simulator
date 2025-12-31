@@ -2,13 +2,13 @@
 - Project name: Game3D_Coban
 - Unity version: Unity 6000.2.10f1
 - Active scene:
-  - Name: Intro
+  - Name: Lv1
   - Tags:
     - Untagged, Respawn, Finish, EditorOnly, MainCamera, Player, GameController, CinemachineTarget, kid, adult, item, home
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item, Npc
 - Active game object:
-  - Name: Done
+  - Name: Global Volume
   - Tag: Untagged
-  - Layer: UI
+  - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
