@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca494f87361080d468a38ffd0c10856e, type: 3}
   m_Name: PlayerManager
   m_EditorClassIdentifier: Assembly-CSharp::PlayerManager
-  isDied: 1
+  isDied: 0
   MoveSpeed: 2
   SprintSpeed: 7.4
   MaxStamina: 10
@@ -21,10 +21,10 @@ MonoBehaviour:
   StaminaDepletionRate: 1
   StaminaRegenRate: 5
   StaminaRegenCooldown: 0.5
-  MaxTime: 800
-  currentTime: 788.3674
+  MaxTime: 1000
+  currentTime: 1000
   _MoveSpeed: 2
   _SprintSpeed: 7.4
-  _stamina: 0
-  currpoint: 0
+  _stamina: 10
+  currpoint: 700
   totalpoint: 700

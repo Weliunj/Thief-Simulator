@@ -12,7 +12,7 @@ public class UI_Manager : MonoBehaviour
     [Header("⚙️ References")]
     public PlayerManager playerManager;
     public GameObject GuidePanel;
-    public bool isSolving = false;
+    public static bool isSolving = false;
     [HideInInspector]public bool toggleGuide = false;
     
     public GameObject diedPanel;
@@ -196,7 +196,12 @@ public class UI_Manager : MonoBehaviour
         // --- XỬ LÝ TRẠNG THÁI GAME ---
         if (playerManager.isDied)
         {
-            diedPanel.SetActive(true); WinPanel.SetActive(false);
+            if (isSolving) 
+            {
+                Clodetab(); // Gọi hàm này để ẩn SolvePanel và reset isSolving
+            }
+            diedPanel.SetActive(true); 
+            WinPanel.SetActive(false);
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
         } 
         else if(playerManager.currpoint >= playerManager.totalpoint) // ⭐ SỬA: >= thay vì == để tránh lỗi nếu vượt quá

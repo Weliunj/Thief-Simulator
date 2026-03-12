@@ -13,385 +13,321 @@ MonoBehaviour:
   m_Name: QuestionDataSO
   m_EditorClassIdentifier: Assembly-CSharp::Questions
   allQuestions:
-  - questionContent: "C\xE2u h\u1ECFi. Cho A=3x+5. T\xEDnh A khi x = 2"
-    correctAnswer: 11
+  - questionContent: "C\xE1i g\xEC c\u1EE7a m\xECnh nh\u01B0ng to\xE0n ng\u01B0\u1EDDi
+      kh\xE1c d\xF9ng?"
+    correctAnswer: "C\xE1i t\xEAn"
     incorrectAnswers:
-    - 12
-    - 8
-    - 15
-  - questionContent: "C\xE2u h\u1ECFi. T\xEDnh A = 4x+6=26"
-    correctAnswer: 5
+    - "C\xE1i v\xED"
+    - "C\xE1i \xE1o"
+    - "C\xE1i gh\u1EBF"
+  - questionContent: "Con g\xEC \u0111\u1EADp th\xEC s\u1ED1ng, kh\xF4ng \u0111\u1EADp
+      th\xEC ch\u1EBFt?"
+    correctAnswer: Con tim
     incorrectAnswers:
-    - 8
-    - 32
-    - 4
-  - questionContent: "C\xE2u h\u1ECFi. Ti\u1EC1n taxi \u0111\u01B0\u1EE3c t\xEDnh:
-      10 000\u0111 cho 1 km \u0111\u1EA7u v\xE0 6 000\u0111 cho m\u1ED7i km ti\u1EBFp
-      theo. \u0110i t\u1ED5ng c\u1ED9ng 4 km th\xEC h\u1EBFt bao nhi\xEAu ti\u1EC1n?"
-    correctAnswer: 28k
+    - "Con mu\u1ED7i"
+    - Con quay
+    - "Con c\xE1"
+  - questionContent: "C\xE0ng thiu c\xE0ng ngon l\xE0 c\xE1i g\xEC?"
+    correctAnswer: "Gi\u1EA5c ng\u1EE7"
     incorrectAnswers:
-    - 24k
-    - 34k
-    - 40k
-  - questionContent: "C\xE2u h\u1ECFi. Tam gi\xE1c ABC, g\xF3c A = 50\xB0, g\xF3c
-      B = 60\xB0. T\xEDnh g\xF3c C."
-    correctAnswer: 70
+    - "Th\u1EE9c \u0103n"
+    - "C\xE1 kh\xF4"
+    - "N\u01B0\u1EDBc m\u1EAFm"
+  - questionContent: "L\u1ECBch n\xE0o d\xE0i nh\u1EA5t?"
+    correctAnswer: "L\u1ECBch s\u1EED"
     incorrectAnswers:
-    - 100
-    - 60
-    - 130
-  - questionContent: "C\xE2u h\u1ECFi. L\u1EDBp 7B c\xF3 20 h\u1ECDc sinh. Bi\u1EC3u
-      \u0111\u1ED3 tr\xF2n cho th\u1EA5y:  25% th\xEDch To\xE1n  35% th\xEDch V\u0103n 
-      40% th\xEDch Ti\u1EBFng Anh. C\xE2u h\u1ECFi: T\xEDnh s\u1ED1 h\u1ECDc sinh
-      th\xEDch m\u1ED7i m\xF4n (theo th\u1EE9 t\u1EF1 To\xE1n, V\u0103n, Anh)"
-    correctAnswer: 5, 7, 8
+    - "L\u1ECBch v\u1EA1n ni\xEAn"
+    - "L\u1ECBch \xE2m"
+    - "L\u1ECBch treo t\u01B0\u1EDDng"
+  - questionContent: "Qu\u1EA3 g\xEC kh\xF4ng \u0103n \u0111\u01B0\u1EE3c nh\u01B0ng
+      l\u1EA1i treo \u0111\u01B0\u1EE3c?"
+    correctAnswer: "Qu\u1EA3 b\xF3ng"
     incorrectAnswers:
-    - 7, 5, 8
-    - 4, 7, 9
-    - 5, 4, 6
-  - questionContent: "T\xEDnh: (-3/4) + (1/2) = ?"
-    correctAnswer: -1/4
+    - "Qu\u1EA3 m\xEDt"
+    - "Qu\u1EA3 c\xE2n"
+    - "Qu\u1EA3 xo\xE0i"
+  - questionContent: "C\xE1i g\xEC ch\u1EB7t kh\xF4ng \u0111\u1EE9t, b\u1EE9t kh\xF4ng
+      r\u1EDDi?"
+    correctAnswer: "N\u01B0\u1EDBc"
     incorrectAnswers:
-    - 1/4
-    - -5/4
-    - 5/4
-  - questionContent: "T\xEDnh: (2/3) \xD7 (-6) = ?"
-    correctAnswer: -4
+    - "S\u1EE3i d\xE2y"
+    - "C\xE1nh c\u1EEDa"
+    - "Mi\u1EBFng th\u1ECBt"
+  - questionContent: "Con g\xEC kh\xF4ng c\xF3 x\u01B0\u01A1ng s\u1ED1ng m\xE0 v\u1EABn
+      \u0111\u1EE9ng \u0111\u01B0\u1EE3c?"
+    correctAnswer: "Con d\u1ED1c"
     incorrectAnswers:
-    - 4
-    - -12
-    - 12
-  - questionContent: "T\xEDnh: (-5) - (-8) = ?"
-    correctAnswer: 3
+    - Con giun
+    - "Con \u1ED1c s\xEAn"
+    - "Con r\u1EAFn"
+  - questionContent: "B\u1ECF ngo\xE0i n\u01B0\u1EDBng trong, \u0103n ngo\xE0i b\u1ECF
+      trong l\xE0 g\xEC?"
+    correctAnswer: "B\u1EAFp ng\xF4"
     incorrectAnswers:
-    - -13
-    - -3
-    - 13
-  - questionContent: "T\xEDnh: | -7 | = ?"
-    correctAnswer: 7
+    - "C\u1EE7 khoai"
+    - "Con g\xE0"
+    - "Qu\u1EA3 tr\u1EE9ng"
+  - questionContent: "Con g\xEC c\xE0ng to l\u1EA1i c\xE0ng nh\u1ECF?"
+    correctAnswer: Con cua
     incorrectAnswers:
-    - -7
-    - 0
-    - 14
-  - questionContent: "T\xEDnh: (1/2) \xF7 (3/4) = ?"
-    correctAnswer: 2/3
+    - "Con ki\u1EBFn"
+    - Con voi
+    - "Con mu\u1ED7i"
+  - questionContent: "C\xE1i g\xEC c\xF3 r\u0103ng m\xE0 kh\xF4ng c\xF3 mi\u1EC7ng?"
+    correctAnswer: "C\xE1i l\u01B0\u1EE3c"
     incorrectAnswers:
-    - 3/8
-    - 3/2
-    - 1/3
-  - questionContent: "T\xECm x bi\u1EBFt: 2x + 5 = 13"
-    correctAnswer: 4
+    - "C\xE1i c\u01B0a"
+    - Con ma
+    - "C\xE1i n\u0129a"
+  - questionContent: "S\u1EDF th\xFA b\u1ECB ch\xE1y, con g\xEC ch\u1EA1y ra \u0111\u1EA7u
+      ti\xEAn?"
+    correctAnswer: "Con ng\u01B0\u1EDDi"
     incorrectAnswers:
-    - 9
-    - 3
-    - 5
-  - questionContent: "T\xECm x bi\u1EBFt: 3x - 7 = 8"
-    correctAnswer: 5
+    - Con voi
+    - "Con h\u1ED5"
+    - "Con kh\u1EC9"
+  - questionContent: "C\xE1i g\xEC c\xF3 c\u1ED5 nh\u01B0ng kh\xF4ng c\xF3 \u0111\u1EA7u?"
+    correctAnswer: "C\xE1i \xE1o"
     incorrectAnswers:
-    - 1
-    - 15
-    - 4
-  - questionContent: "T\xEDnh: (-2)^3 = ?"
-    correctAnswer: -8
+    - "C\xE1i l\u1ECD"
+    - "Con c\xF2"
+    - "C\xE1i chai"
+  - questionContent: "Qu\u1EA7n r\u1ED9ng nh\u1EA5t l\xE0 qu\u1EA7n g\xEC?"
+    correctAnswer: "Qu\u1EA7n \u0111\u1EA3o"
     incorrectAnswers:
-    - 8
-    - -6
-    - 6
-  - questionContent: "T\xEDnh: \u221A16 = ?"
-    correctAnswer: 4
+    - "Qu\u1EA7n \u0111\xF9i"
+    - "Qu\u1EA7n b\xF2"
+    - "Qu\u1EA7n t\xE2y"
+  - questionContent: "C\xE1i g\xEC lu\xF4n \u1EDF ph\xEDa tr\u01B0\u1EDBc m\xE0 b\u1EA1n
+      kh\xF4ng th\u1EA5y?"
+    correctAnswer: "T\u01B0\u01A1ng lai"
     incorrectAnswers:
-    - 8
-    - 2
-    - -4
-  - questionContent: "T\xEDnh: 0,5 + 0,25 = ?"
-    correctAnswer: 0,75
+    - "C\xE1i m\u0169i"
+    - "M\u1EB7t tr\u1EDDi"
+    - "C\xE1nh c\u1EEDa"
+  - questionContent: "Con g\xEC kh\xF4ng bi\u1EBFt \u0111i nh\u01B0ng l\u1EA1i bi\u1EBFt
+      bay?"
+    correctAnswer: "Con di\u1EC1u"
     incorrectAnswers:
-    - 0,3
-    - 0,5
-    - 1
-  - questionContent: "T\xECm x trong t\u1EC9 l\u1EC7 th\u1EE9c: x/3 = 4/6"
-    correctAnswer: 2
+    - Con chim
+    - "Con mu\u1ED7i"
+    - "Con ru\u1ED3i"
+  - questionContent: "Nh\xE0 tr\u1EAFng \u1EDF \u0111\xE2u?"
+    correctAnswer: "\u1EDE M\u1EF9"
     incorrectAnswers:
-    - 8
-    - 1
-    - 3
-  - questionContent: "Cho h\xE0m s\u1ED1 y = 2x. T\xEDnh y khi x = 5"
-    correctAnswer: 10
+    - "\u1EDE gi\u1EEFa"
+    - "\u1EDE tr\xEAn"
+    - "Kh\xF4ng t\u1ED3n t\u1EA1i"
+  - questionContent: "C\xE1i g\xEC c\xE0ng k\xE9o c\xE0ng ng\u1EAFn?"
+    correctAnswer: "\u0110i\u1EBFu thu\u1ED1c"
     incorrectAnswers:
-    - 7
-    - 3
-    - 25
-  - questionContent: "Hai g\xF3c \u0111\u1ED1i \u0111\u1EC9nh c\xF3 s\u1ED1 \u0111o
-      b\u1EB1ng nhau. \u0110\xFAng hay Sai?"
-    correctAnswer: "\u0110\xFAng"
+    - "S\u1EE3i d\xE2y"
+    - "C\xE2y th\u01B0\u1EDBc"
+    - "Con \u0111\u01B0\u1EDDng"
+  - questionContent: "Con g\xEC c\xF3 th\u1EC3 \u0111i b\u1ED9 b\u1EB1ng \u0111\u1EA7u?"
+    correctAnswer: "Con ch\u1EA5y"
     incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng song song th\xEC kh\xF4ng
-      c\xF3 \u0111i\u1EC3m chung. \u0110\xFAng hay Sai?"
-    correctAnswer: "\u0110\xFAng"
+    - "Con ki\u1EBFn"
+    - "Con r\u1EAFn"
+    - "Con \u1ED1c"
+  - questionContent: "C\xE1i g\xEC c\xF3 ch\xE2n m\xE0 kh\xF4ng bi\u1EBFt \u0111i?"
+    correctAnswer: "C\xE1i b\xE0n"
     incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "T\u1ED5ng 3 g\xF3c trong tam gi\xE1c b\u1EB1ng bao nhi\xEAu
-      \u0111\u1ED9?"
-    correctAnswer: 180
+    - "Con v\u1ECBt"
+    - "C\xE1i \xE1o"
+    - "Qu\u1EA3 b\xF3ng"
+  - questionContent: "V\u01B0\u1EE3t qua ng\u01B0\u1EDDi th\u1EE9 2, b\u1EA1n \u0111\u1EE9ng
+      th\u1EE9 m\u1EA5y?"
+    correctAnswer: "Th\u1EE9 2"
     incorrectAnswers:
-    - 90
-    - 360
-    - 270
-  - questionContent: "Tam gi\xE1c vu\xF4ng c\xF3 1 g\xF3c b\u1EB1ng 90\xB0. \u0110\xFAng
-      hay Sai?"
-    correctAnswer: "\u0110\xFAng"
+    - "Th\u1EE9 1"
+    - "Th\u1EE9 3"
+    - "Cu\u1ED1i c\xF9ng"
+  - questionContent: "C\xE1i g\xEC c\xF3 l\u01B0\u1EE1i m\xE0 kh\xF4ng c\xF3 mi\u1EC7ng?"
+    correctAnswer: Con dao
     incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "T\xEDnh: 15% c\u1EE7a 200 = ?"
-    correctAnswer: 30
+    - "C\xE1i k\xE9o"
+    - "C\xE1i \u0111\u0129a"
+    - "C\xE1i th\xECa"
+  - questionContent: "Hoa g\xEC lu\xF4n h\u01B0\u1EDBng v\u1EC1 ph\xEDa m\u1EB7t
+      tr\u1EDDi?"
+    correctAnswer: "Hoa h\u01B0\u1EDBng d\u01B0\u01A1ng"
     incorrectAnswers:
-    - 15
-    - 25
-    - 35
-  - questionContent: "T\xEDnh: 2^4 = ?"
-    correctAnswer: 16
+    - "Hoa h\u1ED3ng"
+    - "Hoa hu\u1EC7"
+    - Hoa lan
+  - questionContent: "Con \u0111\u01B0\u1EDDng d\xE0i nh\u1EA5t l\xE0 \u0111\u01B0\u1EDDng
+      n\xE0o?"
+    correctAnswer: "\u0110\u01B0\u1EDDng \u0111\u1EDDi"
     incorrectAnswers:
-    - 8
-    - 6
-    - 32
-  - questionContent: "T\xEDnh: (-1/3) + (2/3) = ?"
-    correctAnswer: 1/3
+    - "\u0110\u01B0\u1EDDng b\u1ED9"
+    - "\u0110\u01B0\u1EDDng s\u1EAFt"
+    - "\u0110\u01B0\u1EDDng m\xF2n"
+  - questionContent: "C\xE1i g\xEC \u0111\xE1nh cha m\u1EB9, anh em, b\u1EA1n b\xE8?"
+    correctAnswer: "B\xE0n ch\u1EA3i r\u0103ng"
     incorrectAnswers:
-    - -1/3
-    - 1
-    - 0
-  - questionContent: "T\xECm x bi\u1EBFt: x/4 = 3/2"
-    correctAnswer: 6
+    - "C\xE1i g\u1EADy"
+    - "C\xE2y roi"
+    - "L\u1EDDi n\xF3i"
+  - questionContent: "N\u1EAFng ba n\u0103m ta ch\u01B0a h\u1EC1 b\u1ECF b\u1EA1n?"
+    correctAnswer: "C\xE1i b\xF3ng"
     incorrectAnswers:
-    - 2
-    - 8
-    - 4
-  - questionContent: "T\xEDnh: 0,3 \xD7 0,2 = ?"
-    correctAnswer: 0,06
+    - "\u0110\xF4i d\xE9p"
+    - "C\xE1i n\xF3n"
+    - "C\xE1i \xE1o"
+  - questionContent: "Tr\xE1i g\xEC kh\xF4ng th\u1EC3 c\u1EA7m \u0111\u01B0\u1EE3c?"
+    correctAnswer: "Tr\xE1i tim"
     incorrectAnswers:
-    - 0,5
-    - 0,6
-    - 0,1
-  - questionContent: "Cho h\xE0m s\u1ED1 y = -x + 3. T\xEDnh y khi x = 2"
-    correctAnswer: 1
+    - "Tr\xE1i b\xF3ng"
+    - "Tr\xE1i m\xEDt"
+    - "Tr\xE1i \u0111\u1EA5t"
+  - questionContent: "C\xE1i g\xEC c\xE0ng r\u1EEDa c\xE0ng b\u1EA9n?"
+    correctAnswer: "N\u01B0\u1EDBc"
     incorrectAnswers:
-    - 5
-    - -1
-    - 0
-  - questionContent: "Hai g\xF3c k\u1EC1 b\xF9 c\xF3 t\u1ED5ng b\u1EB1ng bao nhi\xEAu
-      \u0111\u1ED9?"
-    correctAnswer: 180
+    - "C\xE1i b\xE1t"
+    - "C\xE1i kh\u0103n"
+    - "C\xE1i tay"
+  - questionContent: "Xe 15 t\u1EA5n qua c\u1EA7u 10 t\u1EA5n kh\xF4ng s\u1EADp?"
+    correctAnswer: "Xe kh\xF4ng ch\u1EDF g\xEC"
     incorrectAnswers:
-    - 90
-    - 360
-    - 270
-  - questionContent: "T\xEDnh: (-2/3) + (5/6) - (1/4) = ?"
-    correctAnswer: 1/12
+    - "C\u1EA7u s\u1EAFt"
+    - "Xe ch\u1EA1y nhanh"
+    - "C\u1EA7u m\u1EDBi"
+  - questionContent: "B\u1EAFn ch\u1EBFt 1 con chim trong \u0111\xE0n 10 con?"
+    correctAnswer: 0 con
     incorrectAnswers:
-    - 5/12
-    - -1/12
-    - 7/12
-  - questionContent: "T\xEDnh: (3/5) \xD7 (-10/9) = ?"
-    correctAnswer: -2/3
+    - 9 con
+    - 1 con
+    - 10 con
+  - questionContent: "N\xFAi n\xE0o b\u1ECB ch\u1EB7t ra t\u1EEBng kh\xFAc?"
+    correctAnswer: "Th\xE1i S\u01A1n"
     incorrectAnswers:
-    - 2/3
-    - -6/5
-    - 6/5
-  - questionContent: "T\xECm x bi\u1EBFt: 2x - 3 = 5x + 9"
-    correctAnswer: -4
+    - Everest
+    - "Ng\u0169 H\xE0nh"
+    - Langbiang
+  - questionContent: "C\xE2y g\xEC kh\xF4ng l\xE1, kh\xF4ng hoa, kh\xF4ng qu\u1EA3?"
+    correctAnswer: "C\u1ED9t \u0111i\u1EC7n"
     incorrectAnswers:
-    - 4
-    - -2
-    - 2
-  - questionContent: "T\xEDnh: (-1,5) + 2,7 - (-0,8) = ?"
-    correctAnswer: 2
+    - "X\u01B0\u01A1ng r\u1ED3ng"
+    - "C\xE2y kh\xF4"
+    - "C\xE2y th\xF4ng"
+  - questionContent: "C\xE1i g\xEC Adam c\xF3 2 m\xE0 Eva ch\u1EC9 c\xF3 1?"
+    correctAnswer: "Ch\u1EEF A"
     incorrectAnswers:
-    - 1
-    - 3
-    - 0,5
-  - questionContent: "T\xECm x bi\u1EBFt: (x + 3)/4 = (2x - 1)/5"
-    correctAnswer: 19/3
+    - "Con m\u1EAFt"
+    - "C\xE1i ch\xE2n"
+    - "C\xE1i tai"
+  - questionContent: "C\xE1i g\xEC c\xF3 l\u1ED7 h\u1ED5ng m\xE0 v\u1EABn gi\u1EEF
+      \u0111\u01B0\u1EE3c n\u01B0\u1EDBc?"
+    correctAnswer: "B\u1ECDt bi\u1EC3n"
     incorrectAnswers:
-    - 17/3
-    - 7
-    - 6
-  - questionContent: "T\xEDnh: | -5 | + | 3 | - | -2 | = ?"
-    correctAnswer: 6
+    - "C\xE1i r\u1ED5"
+    - "C\xE1i ly"
+    - "C\xE1i x\xF4"
+  - questionContent: "Con m\xE8o n\xE0o s\u1EE3 chu\u1ED9t nh\u1EA5t?"
+    correctAnswer: Doraemon
     incorrectAnswers:
-    - 4
-    - 10
-    - 0
-  - questionContent: "T\xEDnh: (-3)^2 \xD7 (-2)^3 = ?"
-    correctAnswer: -72
+    - "M\xE8o m\u01B0\u1EDBp"
+    - "M\xE8o tam th\u1EC3"
+    - "M\xE8o \u0111en"
+  - questionContent: "Th\xE1ng n\xE0o trong n\u0103m c\xF3 28 ng\xE0y?"
+    correctAnswer: "T\u1EA5t c\u1EA3"
     incorrectAnswers:
-    - 72
-    - -54
-    - 54
-  - questionContent: "T\xECm x bi\u1EBFt: 3(x - 2) = 2(x + 5)"
-    correctAnswer: 16
+    - "Th\xE1ng 2"
+    - "Th\xE1ng 1"
+    - "Th\xE1ng 12"
+  - questionContent: "B\u1EC7nh g\xEC b\xE1c s\u0129 b\xF3 tay?"
+    correctAnswer: "G\xE3y tay"
     incorrectAnswers:
-    - 14
-    - 18
-    - 12
-  - questionContent: "T\xEDnh: (2/3 - 1/2) \xF7 (5/6) = ?"
-    correctAnswer: 1/5
+    - "B\u1EC7nh tim"
+    - "Ung th\u01B0"
+    - "\u0110au \u0111\u1EA7u"
+  - questionContent: "S\xF4ng g\xEC kh\xF4ng c\xF3 n\u01B0\u1EDBc?"
+    correctAnswer: "S\xF4ng tr\xEAn b\u1EA3n \u0111\u1ED3"
     incorrectAnswers:
-    - 2/5
-    - 1/3
-    - 1/6
-  - questionContent: "T\xEDnh: \u221A25 + \u221A9 - \u221A16 = ?"
-    correctAnswer: 4
+    - "S\xF4ng \u0110\xE0"
+    - "S\xF4ng H\u1ED3ng"
+    - "S\xF4ng C\u1EA7u"
+  - questionContent: "Ki\u1EBFn g\xEC kh\xF4ng bao gi\u1EDD ng\u1EE7?"
+    correctAnswer: "Ki\u1EBFn th\u1EE9c"
     incorrectAnswers:
-    - 2
-    - 6
-    - 8
-  - questionContent: "T\xECm x bi\u1EBFt: 4x - 7 = 3x + 5"
-    correctAnswer: 12
+    - "Ki\u1EBFn l\u1EEDa"
+    - "Ki\u1EBFn th\u1EE3"
+    - "Ki\u1EBFn gi\xF3"
+  - questionContent: "Con g\xEC mang \u0111\u01B0\u1EE3c c\u1EA3 mi\u1EBFng g\u1ED7
+      nh\u01B0ng kh\xF4ng mang \u0111\u01B0\u1EE3c h\xF2n s\u1ECFi?"
+    correctAnswer: "Con s\xF4ng"
     incorrectAnswers:
-    - 10
-    - 14
-    - 8
-  - questionContent: "T\xEDnh: (-4/5) \xD7 (15/8) = ?"
-    correctAnswer: -3/2
+    - "Con ki\u1EBFn"
+    - Con voi
+    - "Con c\xE1"
+  - questionContent: "N\u01A1i n\xE0o c\xF3 \u0111\u01B0\u1EDDng x\xE1 nh\u01B0ng
+      kh\xF4ng c\xF3 xe?"
+    correctAnswer: "B\u1EA3n \u0111\u1ED3"
     incorrectAnswers:
-    - 3/2
-    - -5/2
-    - 5/2
-  - questionContent: "T\xEDnh: 0,75 \xD7 0,4 + 0,25 \xD7 0,6 = ?"
-    correctAnswer: 0,45
+    - "Sa m\u1EA1c"
+    - "R\u1EEBng r\u1EADm"
+    - "Ngh\u0129a \u0111\u1ECBa"
+  - questionContent: "C\xE1i g\xEC kh\xF4ng m\u01B0\u1EE3n m\xE0 tr\u1EA3?"
+    correctAnswer: "L\u1EDDi ch\xE0o"
     incorrectAnswers:
-    - 0,35
-    - 0,55
-    - 0,4
-  - questionContent: "T\xECm x trong t\u1EC9 l\u1EC7 th\u1EE9c: x/4 = 5/2"
-    correctAnswer: 10
+    - "Ti\u1EC1n b\u1EA1c"
+    - "Cu\u1ED1n s\xE1ch"
+    - "C\xE1i n\u1EE3"
+  - questionContent: "Tay tr\xE1i c\u1EA7m \u0111\u01B0\u1EE3c nh\u01B0ng tay ph\u1EA3i
+      kh\xF4ng c\u1EA7m \u0111\u01B0\u1EE3c?"
+    correctAnswer: "Khu\u1EF7u tay ph\u1EA3i"
     incorrectAnswers:
-    - 11
-    - 7
-    - 9
-  - questionContent: "T\xEDnh: (-1)^10 + (-1)^11 = ?"
-    correctAnswer: 0
+    - "C\xE1i b\xFAt"
+    - "C\xE1i b\xE1t"
+    - "C\u1EE5c \u0111\xE1"
+  - questionContent: "Con g\xEC v\u1ED1n d\u0129 \u0111\xE3 \xE1c m\u1ED3m \xE1c
+      mi\u1EC7ng?"
+    correctAnswer: "Con c\xE1 s\u1EA5u"
     incorrectAnswers:
-    - 2
-    - -2
-    - 1
-  - questionContent: "Cho h\xE0m s\u1ED1 y = 3x - 2. T\xEDnh y khi x = -1"
-    correctAnswer: -5
+    - "Con h\u1ED5"
+    - "Con r\u1EAFn"
+    - "Con s\u01B0 t\u1EED"
+  - questionContent: "C\xE1i g\xEC kh\xF4ng c\xE1nh m\xE0 bay?"
+    correctAnswer: "Th\u1EDDi gian"
     incorrectAnswers:
-    - -1
-    - 1
-    - 5
-  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 40\xB0, g\xF3c B = 80\xB0.
-      T\xEDnh g\xF3c C."
-    correctAnswer: 60
+    - Con chim
+    - "M\xE1y bay"
+    - "L\xE0n kh\xF3i"
+  - questionContent: "Qu\u1EA3 g\xEC t\xEAn g\u1ECDi nh\u01B0 \u0111au?"
+    correctAnswer: "Qu\u1EA3 kh\u1ED5 qua"
     incorrectAnswers:
-    - 50
-    - 70
-    - 80
-  - questionContent: "Tam gi\xE1c vu\xF4ng c\xE2n c\xF3 1 g\xF3c vu\xF4ng v\xE0 2
-      g\xF3c b\u1EB1ng nhau. M\u1ED7i g\xF3c nh\u1ECDn b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
-    correctAnswer: 45
+    - "Qu\u1EA3 \u1EDBt"
+    - "Qu\u1EA3 chanh"
+    - "Qu\u1EA3 me"
+  - questionContent: "X\xE3 n\xE0o \u0111\xF4ng d\xE2n nh\u1EA5t?"
+    correctAnswer: "X\xE3 h\u1ED9i"
     incorrectAnswers:
-    - 30
-    - 60
-    - 90
-  - questionContent: "Hai g\xF3c \u0111\u1ED1i \u0111\u1EC9nh th\xEC b\u1EB1ng nhau.
-      \u0110\xFAng hay Sai?"
-    correctAnswer: "\u0110\xFAng"
+    - "X\xE3 n\xF4ng th\xF4n"
+    - "X\xE3 mi\u1EC1n n\xFAi"
+    - "X\xE3 \u0111\u1EA3o"
+  - questionContent: "Ti\u1EC1n g\xEC kh\xF4ng d\xF9ng \u0111\u1EC3 mua \u0111\u1ED3?"
+    correctAnswer: "Ti\u1EC1n s\u1EED"
     incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng vu\xF4ng g\xF3c t\u1EA1o
-      th\xE0nh bao nhi\xEAu g\xF3c vu\xF4ng?"
-    correctAnswer: 4
+    - "Ti\u1EC1n \u0111\xF4"
+    - "Ti\u1EC1n l\u1EBB"
+    - "Ti\u1EC1n r\xE1ch"
+  - questionContent: "H\u1EA1t g\xEC d\xE0i nh\u1EA5t?"
+    correctAnswer: "H\u1EA1t m\u01B0a"
     incorrectAnswers:
-    - 2
-    - 1
-    - 3
-  - questionContent: "Tam gi\xE1c \u0111\u1EC1u c\xF3 m\u1ED7i g\xF3c b\u1EB1ng bao
-      nhi\xEAu \u0111\u1ED9?"
-    correctAnswer: 60
+    - "H\u1EA1t g\u1EA1o"
+    - "H\u1EA1t d\u01B0a"
+    - "H\u1EA1t \u0111\u1EADu"
+  - questionContent: "Con g\xEC c\xE0ng \u0111\xE1nh c\xE0ng y\xEAu?"
+    correctAnswer: "Con g\xE1i"
     incorrectAnswers:
-    - 45
-    - 90
-    - 30
-  - questionContent: "G\xF3c ngo\xE0i c\u1EE7a tam gi\xE1c b\u1EB1ng t\u1ED5ng hai
-      g\xF3c trong kh\xF4ng k\u1EC1. \u0110\xFAng hay Sai?"
-    correctAnswer: "\u0110\xFAng"
+    - "Con ch\xF3"
+    - "Con m\xE8o"
+    - "Con mu\u1ED7i"
+  - questionContent: "C\xE1i g\xEC \u0111i n\u1EB1m, \u0111\u1EE9ng n\u1EB1m, nh\u01B0ng
+      n\u1EB1m l\u1EA1i \u0111\u1EE9ng?"
+    correctAnswer: "B\xE0n ch\xE2n"
     incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "Tam gi\xE1c ABC c\xF3 AB = AC. Tam gi\xE1c n\xE0y l\xE0 tam
-      gi\xE1c g\xEC?"
-    correctAnswer: Tam gi\xE1c c\xE2n
-    incorrectAnswers:
-    - Tam gi\xE1c \u0111\u1EC1u
-    - Tam gi\xE1c vu\xF4ng
-    - Tam gi\xE1c th\u01B0\u1EDDng
-  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng song song b\u1ECB c\u1EAFt
-      b\u1EDFi m\u1ED9t \u0111\u01B0\u1EDDng th\u1EB3ng th\u1EE9 ba. C\xE1c g\xF3c
-      so le trong b\u1EB1ng nhau. \u0110\xFAng hay Sai?"
-    correctAnswer: "\u0110\xFAng"
-    incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 50\xB0, g\xF3c B = 70\xB0.
-      G\xF3c ngo\xE0i t\u1EA1i \u0111\u1EC9nh C b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
-    correctAnswer: 120
-    incorrectAnswers:
-    - 110
-    - 130
-    - 100
-  - questionContent: "Hai g\xF3c k\u1EC1 b\xF9 c\xF3 t\u1ED5ng b\u1EB1ng 180\xB0.
-      \u0110\xFAng hay Sai?"
-    correctAnswer: "\u0110\xFAng"
-    incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "Tam gi\xE1c vu\xF4ng c\xF3 t\u1ED5ng hai g\xF3c nh\u1ECDn b\u1EB1ng
-      bao nhi\xEAu \u0111\u1ED9?"
-    correctAnswer: 90
-    incorrectAnswers:
-    - 180
-    - 60
-    - 45
-  - questionContent: "Hai \u0111\u01B0\u1EDDng th\u1EB3ng vu\xF4ng g\xF3c v\u1EDBi
-      c\xF9ng m\u1ED9t \u0111\u01B0\u1EDDng th\u1EB3ng th\xEC song song v\u1EDBi
-      nhau. \u0110\xFAng hay Sai?"
-    correctAnswer: "\u0110\xFAng"
-    incorrectAnswers:
-    - Sai
-    - '-'
-    - '-'
-  - questionContent: "Tam gi\xE1c ABC c\xF3 AB = BC = CA. Tam gi\xE1c n\xE0y l\xE0
-      tam gi\xE1c g\xEC?"
-    correctAnswer: "Tam gi\xE1c vu\xF4ng"
-    incorrectAnswers:
-    - "Tam gi\xE1c \u0111\u1EC1u"
-    - "Tam gi\xE1c t\xF9"
-    - "Tam gi\xE1c nh\u1ECDn"
-  - questionContent: "G\xF3c t\u1EA1o b\u1EDFi hai \u0111\u01B0\u1EDDng th\u1EB3ng
-      vu\xF4ng g\xF3c b\u1EB1ng bao nhi\xEAu \u0111\u1ED9?"
-    correctAnswer: 90
-    incorrectAnswers:
-    - 180
-    - 45
-    - 60
-  - questionContent: "Tam gi\xE1c ABC c\xF3 g\xF3c A = 30\xB0, g\xF3c B = 60\xB0.
-      Tam gi\xE1c n\xE0y l\xE0 tam gi\xE1c g\xEC?"
-    correctAnswer: "Tam gi\xE1c vu\xF4ng"
-    incorrectAnswers:
-    - "Tam gi\xE1c \u0111\u1EC1u"
-    - "Tam gi\xE1c t\xF9"
-    - "Tam gi\xE1c nh\u1ECDn"
+    - "C\xE1i gi\u01B0\u1EDDng"
+    - "C\xE1i gh\u1EBF"
+    - "C\xE1i t\u1EE7"

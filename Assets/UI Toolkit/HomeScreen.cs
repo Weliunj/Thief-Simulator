@@ -9,14 +9,12 @@ public class HomeScreen : MonoBehaviour
     public AudioSource[] audioSources;
     VisualElement visualElement;
     Button play;
-    Button options;
     Button exit;
     VisualElement Charac;
     private void OnEnable()
     {
          visualElement = GetComponent<UIDocument>().rootVisualElement;
          play = visualElement.Q<Button>("Play");
-         options = visualElement.Q<Button>("Options");
          exit = visualElement.Q<Button>("Exit");
          Charac = visualElement.Q<Image>("Char"); //anh player man hinh chinh
         /*
@@ -25,12 +23,10 @@ public class HomeScreen : MonoBehaviour
         */
 
         play.clicked += Play_clicked;
-        options.clicked += Options_clicked;
         exit.clicked += Exit_clicked;
 
 
         RegisterHoverEvents(play);
-        RegisterHoverEvents(options);
         RegisterHoverEvents(exit);
     }
     private void RegisterHoverEvents(Button button)

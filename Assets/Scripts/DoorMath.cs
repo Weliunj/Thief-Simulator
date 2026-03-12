@@ -28,7 +28,7 @@ public class DoorMath : MonoBehaviour
     private void Update()
     {
         // Điều kiện kích hoạt Panel câu hỏi
-        if (ROI.InRange && Input.GetKeyDown(KeyCode.E) && !uiManager.isSolving)
+        if (ROI.InRange && Input.GetKeyDown(KeyCode.E) && !UI_Manager.isSolving)
         {
             // Chỉ mở Panel nếu còn câu hỏi chưa giải
             if (uiManager.GetAvailableQuestions(questionList).Count > 0)
@@ -45,7 +45,7 @@ public class DoorMath : MonoBehaviour
         }
         
         // Giữ chuột mở nếu đang giải
-        if (uiManager.isSolving)
+        if (UI_Manager.isSolving)
         {
             Cursor.lockState = CursorLockMode.None; 
             Cursor.visible = true;
@@ -54,7 +54,7 @@ public class DoorMath : MonoBehaviour
 
     private void OpenQuestionPanel()
     {
-        uiManager.isSolving = true;
+        UI_Manager.isSolving = true;
         uiManager.toggleGuide = false;
         uiManager.SolvePanel.SetActive(true);
         

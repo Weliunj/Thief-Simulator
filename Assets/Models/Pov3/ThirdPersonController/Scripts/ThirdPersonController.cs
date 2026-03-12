@@ -450,7 +450,7 @@ namespace StarterAssets
 
         private void CameraRotation()
         {
-            if(ui.isSolving == true || player.currpoint == player.totalpoint)
+            if(UI_Manager.isSolving || player.currpoint == player.totalpoint)
             {
                 return;
             }
@@ -520,7 +520,7 @@ namespace StarterAssets
                 targetSpeed = isSprintingAllowed ? player._SprintSpeed : player._MoveSpeed;
             }
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
-
+            
             WeightCacul();
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0

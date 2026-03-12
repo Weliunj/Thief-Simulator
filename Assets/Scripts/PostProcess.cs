@@ -48,8 +48,8 @@ public class PostProcess : MonoBehaviour
     void HandleVignette()
     {
         if (_vignette == null) return;
-        float targetVignette = controller.Crouching ? 0.40f : 0f;
-        _vignette.intensity.value = Mathf.SmoothDamp(_vignette.intensity.value, targetVignette, ref _vignetteVelocity, 0.06f);
+        float targetVignette = controller.Crouching ? 0.45f : 0.2f;
+        _vignette.intensity.value = Mathf.SmoothDamp(_vignette.intensity.value, targetVignette, ref _vignetteVelocity, 0.15f);
     }
 
     void HandleDepthOfField()

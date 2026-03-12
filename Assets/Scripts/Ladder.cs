@@ -45,7 +45,7 @@ public class Ladder : MonoBehaviour
 
         if(isClimbingLadder)
         {
-            thirdPersonController.transform.position = Vector3.MoveTowards(thirdPersonController.transform.position, B.transform.position, 0.6f * Time.deltaTime);
+            thirdPersonController.transform.position = Vector3.MoveTowards(thirdPersonController.transform.position, B.transform.position, 0.8f * Time.deltaTime);
         }
 
         if(Vector3.Distance(thirdPersonController.transform.position, B.transform.position) < 0.1f && thirdPersonController.isClimbingLadder)

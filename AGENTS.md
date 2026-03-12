@@ -1,6 +1,6 @@
 <!-- UNITY CODE ASSIST INSTRUCTIONS START -->
 - Project name: Game3D_Coban
-- Unity version: Unity 6000.2.10f1
+- Unity version: Unity 6000.3.9f1
 - Active scene:
   - Name: Lv1
   - Tags:
@@ -8,7 +8,7 @@
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item, Npc
 - Active game object:
-  - Name: Global Volume
-  - Tag: Untagged
-  - Layer: Default
+  - Name: PlayerArmature
+  - Tag: Player
+  - Layer: Player
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
