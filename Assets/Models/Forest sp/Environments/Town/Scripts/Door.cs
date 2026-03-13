@@ -10,13 +10,13 @@ public class Door : MonoBehaviour {
 		anim = GetComponent<Animator> ();
 	}
 
-	void OnTriggerEnter (Collider collider) {
+    void OnTriggerStay(Collider other)
+    {
 		anim.SetBool ("DoorOpen", true);
 		anim.SetBool ("DoorClose", false);
+    }
 
-	}
-
-	void OnTriggerExit (Collider collider) {
+    void OnTriggerExit (Collider collider) {
 		anim.SetBool ("DoorOpen", false);
 		anim.SetBool ("DoorClose", true);
 
