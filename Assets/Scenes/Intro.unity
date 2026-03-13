@@ -22001,12 +22001,7 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 1
-  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
-    are already bound by a Humanoid avatar. These transforms can only be changed
-    by Humanoid clips.\n\tTransform 'Foot.L'\n\tTransform 'UpperArm.R'\n\tTransform
-    'Hip.L'\n\tTransform 'UpperArm.L'\n\tTransform 'UpperLeg.L'\n\tTransform 'UpperLeg.R'\n\tTransform
-    'Head'\n\tTransform 'LowerLeg.L'\n\tTransform 'Hand.R'\n\tTransform 'LowerArm.L'\n\tand
-    more ..."
+  m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -22625,7 +22620,7 @@ TerrainCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_TerrainData: {fileID: 15600000, guid: af946b8fc182b2e42afcf4b28f8e90a4, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: e5b841dfd3dbd584086fbfdbadb7b936, type: 2}
   m_EnableTreeColliders: 1
 --- !u!218 &1809881320
 Terrain:
@@ -22636,7 +22631,7 @@ Terrain:
   m_GameObject: {fileID: 1809881318}
   m_Enabled: 1
   serializedVersion: 6
-  m_TerrainData: {fileID: 15600000, guid: af946b8fc182b2e42afcf4b28f8e90a4, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: e5b841dfd3dbd584086fbfdbadb7b936, type: 2}
   m_TreeDistance: 5000
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
