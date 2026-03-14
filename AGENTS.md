@@ -6,7 +6,7 @@
   - Tags:
     - Untagged, Respawn, Finish, EditorOnly, MainCamera, Player, GameController, CinemachineTarget, kid, adult, item, home
   - Layers:
-    - Default, TransparentFX, Ignore Raycast, Water, UI
+    - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item, Npc
 - Active game object:
   - Name: Terrain (1)
   - Tag: Untagged
