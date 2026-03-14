@@ -12,7 +12,7 @@ public class Skip_Cutscene : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetMouseButtonDown(0));
         {
             SceneManager.LoadScene("Lv1");
         }
