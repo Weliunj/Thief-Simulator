@@ -8,7 +8,7 @@
   - Layers:
     - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item, Npc
 - Active game object:
-  - Name: Terrain (1)
-  - Tag: Untagged
-  - Layer: Default
+  - Name: Ceramic vase
+  - Tag: item
+  - Layer: item
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
