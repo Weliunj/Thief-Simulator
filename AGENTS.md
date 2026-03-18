@@ -1,14 +1,14 @@
 <!-- UNITY CODE ASSIST INSTRUCTIONS START -->
-- Project name: Game3D_Coban
+- Project name: Thief-Simulator
 - Unity version: Unity 6000.3.9f1
 - Active scene:
   - Name: Lv1
   - Tags:
-    - Untagged, Respawn, Finish, EditorOnly, MainCamera, Player, GameController, CinemachineTarget, kid, adult, item, home
+    - Untagged, Respawn, Finish, EditorOnly, MainCamera, Player, GameController
   - Layers:
-    - Default, TransparentFX, Ignore Raycast, Player, Water, UI, Obj, Ground, item, Npc
+    - Default, TransparentFX, Ignore Raycast, Water, UI
 - Active game object:
-  - Name: Ceramic vase
-  - Tag: item
-  - Layer: item
+  - Name: PlayerArmature
+  - Tag: Player
+  - Layer: 3
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
