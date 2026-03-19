@@ -1,5 +1,4 @@
-﻿using ithappy.Animals_FREE;
-using StarterAssets;
+﻿using StarterAssets;
 using UnityEngine;
 using UnityEngine.AI;
 
