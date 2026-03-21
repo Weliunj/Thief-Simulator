@@ -13,7 +13,11 @@ public class Range_Interaction : MonoBehaviour
     // Cài đặt Hiển thị
     [Header("Display & Locking")]
     // Đã thay đổi từ TextMesh sang TMPro.TextMeshPro
-    public TMPro.TextMeshPro NameDisplay; 
+    public string Name;
+    public TextMeshPro NameDisplay; 
+    private Item item;
+    public TextMeshPro infItem;
+
     public GameObject Center; // Đối tượng xoay để LookAt
     public GameObject E_icon; // Icon chữ E hoặc button
     public Color NameColor = Color.white; // Màu mặc định
@@ -28,9 +32,8 @@ public class Range_Interaction : MonoBehaviour
         
         // 1. Khởi tạo TextMeshPro
         if (NameDisplay != null)
-        {
-            // Gán tên đối tượng cha (Object mà script này gắn vào)
-            NameDisplay.text = transform.parent.gameObject.name;     
+        { 
+            NameDisplay.text = Name;
             // Áp dụng màu sắc
             NameDisplay.color = NameColor;
         }
@@ -58,6 +61,12 @@ public class Range_Interaction : MonoBehaviour
         if (_target == null)
         {
             Debug.LogError("MainCamera GameObject with tag 'MainCamera' not found.");
+        }
+        item = GetComponentInParent<Item>();
+        if(item != null)
+        {
+            infItem.text = $"Price: {item.Price.ToString("F0")}    Kg: {item.kg}";
+            infItem.color = Color.yellow;
         }
     }
 
