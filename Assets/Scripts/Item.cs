@@ -3,18 +3,20 @@ using UnityEngine;
 
 public class Item : MonoBehaviour
 {
+    public float MinPrice, MaxPrice;
     public float Price = 0f;
+
+    public int MinKg, MaxKg;
     public int kg = 0;
     private Range_Interaction ROI;
     public PlayerManager playerManagerl;
-    void Start()
+    void Awake()
     {
+        MaxKg = MaxKg <= MinKg ? MinKg + 10 : MaxKg;
+        MaxPrice = MaxPrice <= MinPrice ? MinPrice + 10 : MaxPrice;
         ROI = GetComponentInChildren<Range_Interaction>();
-    }
-
-    void Update()
-    {
-        
+        kg = Random.Range(MinKg, MaxKg);
+        Price = Random.Range(MinPrice, MaxPrice);   
     }
     public void OnTriggerEnter(Collider other)
     {
