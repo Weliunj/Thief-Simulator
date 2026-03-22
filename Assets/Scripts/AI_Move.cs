@@ -20,7 +20,6 @@ public class AI_Move_NavMesh : MonoBehaviour
     public Light flashlight;
     
     // BIẾN THEO DÕI NỘI BỘ
-    private bool isResponsibleForMusic = false; 
 
     [Header("🏃 Movement Settings")]
     public AudioSource[] audioSources; // 0: Bước chân, 1: Phát hiện, 2: Chase Music
