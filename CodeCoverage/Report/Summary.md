@@ -1,29 +1,29 @@
 ﻿# Summary
 |||
 |:---|:---|
-| Generated on: | 4/10/2026 - 6:12:55 PM |
+| Generated on: | 4/10/2026 - 10:44:08 PM |
 | Parser: | MultiReportParser (2x OpenCoverParser) |
 | Assemblies: | 9 |
-| Classes: | 257 |
-| Files: | 109 |
-| Covered lines: | 922 |
-| Uncovered lines: | 19244 |
-| Coverable lines: | 20166 |
-| Total lines: | 39825 |
-| Line coverage: | 4.5% (922 of 20166) |
+| Classes: | 258 |
+| Files: | 110 |
+| Covered lines: | 279 |
+| Uncovered lines: | 20029 |
+| Coverable lines: | 20308 |
+| Total lines: | 40039 |
+| Line coverage: | 1.3% (279 of 20308) |
 | Covered branches: | 0 |
 | Total branches: | 0 |
-| Covered methods: | 90 |
-| Total methods: | 2202 |
-| Method coverage: | 4% (90 of 2202) |
+| Covered methods: | 24 |
+| Total methods: | 2212 |
+| Method coverage: | 1% (24 of 2212) |
 
 |**Name**|**Covered**|**Uncovered**|**Coverable**|**Total**|**Line coverage**|**Covered**|**Total**|**Branch coverage**|**Covered**|**Total**|**Method coverage**|
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-|**Assembly-CSharp**|**25**|**885**|**910**|**1789**|**2.7%**|**0**|**0**|****|**6**|**156**|**3.8%**|
-|BasicRigidBodyPush|8|5|13|35|61.5%|0|0||3|3|100%|
-|Benjathemaker.SimpleGemsAnim|12|33|45|81|26.6%|0|0||1|4|25%|
+|**Assembly-CSharp**|**0**|**910**|**910**|**1789**|**0%**|**0**|**0**|****|**0**|**156**|**0%**|
+|BasicRigidBodyPush|0|13|13|35|0%|0|0||0|3|0%|
+|Benjathemaker.SimpleGemsAnim|0|45|45|81|0%|0|0||0|4|0%|
 |DavidJalbert.LowPolyPeople.AnimationController|0|37|37|65|0%|0|0||0|7|0%|
-|Door|5|8|13|29|38.4%|0|0||2|4|50%|
+|Door|0|13|13|29|0%|0|0||0|4|0%|
 |DynamicJoystick|0|24|24|41|0%|0|0||0|7|0%|
 |FloatingJoystick|0|13|13|26|0%|0|0||0|3|0%|
 |ithappy.Animals_FREE.CreatureMover|0|173|173|322|0%|0|0||0|24|0%|
@@ -48,7 +48,7 @@
 |JoystickEditor|0|36|36|64|0%|0|0||0|5|0%|
 |ReadmeEditor|0|140|140|242|0%|0|0||0|14|0%|
 |VariableJoystickEditor|0|18|18|37|0%|0|0||0|3|0%|
-|**Fusion.Unity**|**1**|**3607**|**3608**|**107760**|**0%**|**0**|**0**|****|**1**|**459**|**0.2%**|
+|**Fusion.Unity**|**0**|**3608**|**3608**|**107760**|**0%**|**0**|**0**|****|**0**|**459**|**0%**|
 |Fusion.EnableOnSingleRunner|0|58|58|120|0%|0|0||0|7|0%|
 |Fusion.FusionBasicBillboard|0|36|36|75|0%|0|0||0|8|0%|
 |Fusion.FusionBootstrap|0|315|315|676|0%|0|0||0|42|0%|
@@ -77,7 +77,7 @@
 |Fusion.NetworkPrefabSourceStatic|0|1|1|4315|0%|0|0||0|1|0%|
 |Fusion.NetworkPrefabSourceStaticLazy|0|1|1|4315|0%|0|0||0|1|0%|
 |Fusion.NetworkRunnerVisibilityExtensions|0|207|207|4315|0%|0|0||0|22|0%|
-|Fusion.NetworkSceneManagerDefault|1|359|360|846|0.2%|0|0||1|37|2.7%|
+|Fusion.NetworkSceneManagerDefault|0|360|360|846|0%|0|0||0|37|0%|
 |Fusion.RunnerAOIGizmos|0|30|30|85|0%|0|0||0|3|0%|
 |Fusion.RunnerEnableVisibility|0|51|51|85|0%|0|0||0|22|0%|
 |Fusion.RunnerLagCompensationGizmos|0|45|45|80|0%|0|0||0|5|0%|
@@ -95,7 +95,7 @@
 |Fusion.Statistics.FusionStatsPanelHeader|0|84|84|283|0%|0|0||0|12|0%|
 |Fusion.Statistics.FusionStatsWorldAnchor|0|13|13|25|0%|0|0||0|3|0%|
 |Fusion.TraceChannelsExtensions|0|3|3|4315|0%|0|0||0|1|0%|
-|**Fusion.Unity.Editor**|**23**|**8235**|**8258**|**1546791**|**0.2%**|**0**|**0**|****|**2**|**875**|**0.2%**|
+|**Fusion.Unity.Editor**|**24**|**8234**|**8258**|**1546791**|**0.2%**|**0**|**0**|****|**2**|**875**|**0.2%**|
 |Fusion.Editor.AnimatorControllerTools|0|163|163|15150|0%|0|0||0|15|0%|
 |Fusion.Editor.ArrayLengthAttributeDrawer|0|25|25|15150|0%|0|0||0|2|0%|
 |Fusion.Editor.AssemblyNameAttributeDrawer|0|98|98|15150|0%|0|0||0|5|0%|
@@ -132,7 +132,7 @@
 |Fusion.Editor.FusionGlobalScriptableObjectUtils|0|134|134|15150|0%|0|0||0|12|0%|
 |Fusion.Editor.FusionGrid[TItem,TState]|0|220|220|15150|0%|0|0||0|29|0%|
 |Fusion.Editor.FusionGridItem|0|1|1|15150|0%|0|0||0|1|0%|
-|Fusion.Editor.FusionHierarchyWindowOverlay|20|53|73|15150|27.3%|0|0||1|3|33.3%|
+|Fusion.Editor.FusionHierarchyWindowOverlay|21|52|73|15150|28.7%|0|0||1|3|33.3%|
 |Fusion.Editor.FusionHubWindow|0|301|301|15414|0%|0|0||0|32|0%|
 |Fusion.Editor.FusionInstaller|0|61|61|15150|0%|0|0||0|9|0%|
 |Fusion.Editor.FusionPropertyDrawerMetaAttribute|0|2|2|15150|0%|0|0||0|4|0%|
@@ -205,41 +205,42 @@
 |Fusion.Editor.UnityResourcePathAttributeDrawer|0|26|26|15150|0%|0|0||0|1|0%|
 |Fusion.Editor.WarnIfAttributeDrawer|0|6|6|15150|0%|0|0||0|6|0%|
 |Fusion.Statistics.FusionStatisticsEditor|0|16|16|15150|0%|0|0||0|1|0%|
-|**PlayerTest**|**849**|**1254**|**2103**|**3757**|**40.3%**|**0**|**0**|****|**77**|**145**|**53.1%**|
-|AI_Move_NavMesh|186|197|383|616|48.5%|0|0||14|19|73.6%|
+|**PlayerTest**|**176**|**1927**|**2103**|**3757**|**8.3%**|**0**|**0**|****|**16**|**145**|**11%**|
+|AI_Move_NavMesh|0|383|383|616|0%|0|0||0|19|0%|
 |Done_CutScene|0|5|5|17|0%|0|0||0|2|0%|
-|DoorMath|11|100|111|189|9.9%|0|0||3|9|33.3%|
-|Flashlight|13|9|22|47|59%|0|0||2|2|100%|
-|GameSettings|5|0|5|20|100%|0|0||1|1|100%|
+|DoorMath|28|83|111|189|25.2%|0|0||6|9|66.6%|
+|Flashlight|0|22|22|47|0%|0|0||0|2|0%|
+|GameSettings|0|5|5|20|0%|0|0||0|1|0%|
 |HomeMenu|0|46|46|105|0%|0|0||0|7|0%|
-|Item|9|8|17|31|52.9%|0|0||2|3|66.6%|
+|Item|0|17|17|31|0%|0|0||0|3|0%|
 |ItemLibrary|0|29|29|57|0%|0|0||0|5|0%|
-|ItemSpawner|3|94|97|158|3%|0|0||1|5|20%|
-|Kid|111|96|207|307|53.6%|0|0||8|9|88.8%|
-|Ladder|13|30|43|72|30.2%|0|0||3|4|75%|
+|ItemSpawner|0|97|97|158|0%|0|0||0|5|0%|
+|Kid|0|207|207|307|0%|0|0||0|9|0%|
+|Ladder|0|43|43|72|0%|0|0||0|4|0%|
 |NavMeshHelper|0|8|8|19|0%|0|0||0|1|0%|
 |PlayerController|0|10|10|24|0%|0|0||0|3|0%|
 |PlayerManager|20|0|20|36|100%|0|0||2|2|100%|
-|PostProcess|34|9|43|88|79%|0|0||5|6|83.3%|
-|Pov_mode|22|17|39|67|56.4%|0|0||3|3|100%|
+|PostProcess|0|43|43|88|0%|0|0||0|6|0%|
+|Pov_mode|0|39|39|67|0%|0|0||0|3|0%|
 |QuestionData|0|6|6|85|0%|0|0||0|1|0%|
-|Questions|1|54|55|85|1.8%|0|0||1|2|50%|
-|Range_Interaction|35|35|70|139|50%|0|0||4|7|57.1%|
-|SetItem|90|34|124|241|72.5%|0|0||8|8|100%|
+|Questions|0|55|55|85|0%|0|0||0|2|0%|
+|Range_Interaction|37|33|70|139|52.8%|0|0||4|7|57.1%|
+|SetItem|0|124|124|241|0%|0|0||0|8|0%|
 |Skip_Cutscene|0|8|8|20|0%|0|0||0|2|0%|
-|StarterAssets.StarterAssetsInputs|3|33|36|84|8.3%|0|0||1|11|9%|
-|StarterAssets.ThirdPersonController|197|271|468|833|42%|0|0||15|21|71.4%|
-|UI_Manager|96|155|251|417|38.2%|0|0||4|12|33.3%|
-|**Tests_PlayMode**|**14**|**157**|**171**|**385**|**8.1%**|**0**|**0**|****|**2**|**21**|**9.5%**|
-|AudioTest|14|48|62|131|22.5%|0|0||2|6|33.3%|
+|StarterAssets.StarterAssetsInputs|0|36|36|84|0%|0|0||0|11|0%|
+|StarterAssets.ThirdPersonController|0|468|468|833|0%|0|0||0|21|0%|
+|UI_Manager|91|160|251|417|36.2%|0|0||4|12|33.3%|
+|**Tests_PlayMode**|**79**|**234**|**313**|**599**|**25.2%**|**0**|**0**|****|**6**|**31**|**19.3%**|
+|AudioTest|0|62|62|131|0%|0|0||0|6|0%|
 |GameLogic_PlayMode_Tests|0|19|19|49|0%|0|0||0|3|0%|
+|GameLogicIntegrationTests|79|63|142|214|55.6%|0|0||6|10|60%|
 |Graphic|0|13|13|33|0%|0|0||0|1|0%|
 |PointTests|0|27|27|59|0%|0|0||0|5|0%|
 |UISuite|0|17|17|39|0%|0|0||0|1|0%|
 |Weight|0|33|33|74|0%|0|0||0|5|0%|
-|**Unity.AI.Navigation.Samples**|**10**|**479**|**489**|**938**|**2%**|**0**|**0**|****|**2**|**59**|**3.3%**|
+|**Unity.AI.Navigation.Samples**|**0**|**489**|**489**|**938**|**0%**|**0**|**0**|****|**0**|**59**|**0%**|
 |AgentSpeedController|0|34|34|64|0%|0|0||0|4|0%|
-|Unity.AI.Navigation.Samples.AgentLinkMover|10|44|54|87|18.5%|0|0||2|5|40%|
+|Unity.AI.Navigation.Samples.AgentLinkMover|0|54|54|87|0%|0|0||0|5|0%|
 |Unity.AI.Navigation.Samples.ClickToMove|0|12|12|30|0%|0|0||0|3|0%|
 |Unity.AI.Navigation.Samples.Despawner|0|3|3|17|0%|0|0||0|1|0%|
 |Unity.AI.Navigation.Samples.DestroyOnTrigger|0|5|5|18|0%|0|0||0|2|0%|

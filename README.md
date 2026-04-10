@@ -48,5 +48,5 @@
 - Câu đố được lưu trong QuestionDataSO.asset.
 - Hệ thống UI sử dụng TextMesh Pro.
 
-Chúc bạn chơi vui!</content>
+Chúc bạn phát triển và kiểm thử hiệu quả!</content>
 <parameter name="filePath">e:\Project\Unity_Project\Game3D_Coban\README.md
