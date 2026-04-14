@@ -19,18 +19,11 @@ public class GameLogic_PlayMode_Tests
     public IEnumerator TC_HUD_01_PointUpdate_ReflectsInUI()
     {
         UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
-
         var ui = Object.FindFirstObjectByType<UI_Manager>();
-        // Giả lập thay đổi điểm số trực tiếp vào PlayerManager
         ui.playerManager.currpoint = 50; 
-        
-        // Đợi 1 frame để UI_Manager thực hiện Update() text
         yield return null; 
         
-        // Kiểm tra kết quả
         Assert.AreEqual("50", ui.point.text, "UI Point không cập nhật đúng giá trị hiển thị!");
-        
-        // Trả lại trạng thái mặc định cho LogAssert
         UnityEngine.TestTools.LogAssert.ignoreFailingMessages = false;
     }
 
@@ -39,7 +32,7 @@ public class GameLogic_PlayMode_Tests
     {
 
         var ui = Object.FindFirstObjectByType<UI_Manager>();
-        ui.UpdateProgressUI(2); // Giả lập trả lời đúng 2 câu
+        ui.UpdateProgressUI(2);
         
         yield return null;
         
