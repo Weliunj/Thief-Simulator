@@ -7,12 +7,12 @@ public class LockpickMinigame : MonoBehaviour
 {
     [Header("⚙️ UI Components")]
     public GameObject panelRoot;
-    public RectTransform trackRect;         // Khung thanh chạy (Track container)
-    public RectTransform targetZoneRect;    // Vùng xanh lá (Target / Success Zone)
-    public RectTransform indicatorRect;     // Thanh vạch chạy qua lại (Moving Bar)
-    public TextMeshProUGUI stageText;       // Hiển thị "Lần bẻ khóa: 1/3"
-    public TextMeshProUGUI statusText;      // Thông báo trạng thái (Bấm SPACE / Click!)
-    public CanvasGroup targetZoneCanvasGroup; // Để nhấp nháy visual khi trúng/trượt
+    public RectTransform trackRect;         // Track container
+    public RectTransform targetZoneRect;    // Target / Success Zone
+    public RectTransform indicatorRect;     // Moving Bar
+    public TextMeshProUGUI stageText;       // Display "Stage: 1/3"
+    public TextMeshProUGUI statusText;      // Status text (Press SPACE / Click!)
+    public CanvasGroup targetZoneCanvasGroup; // Flash visual effect on hit/miss
 
     [Header("🎮 Audio (Optional)")]
     public AudioSource audioSource;
@@ -22,10 +22,10 @@ public class LockpickMinigame : MonoBehaviour
 
     [Header("📈 Difficulty Settings")]
     public int totalStages = 3;
-    public float baseSpeed = 400f;                  // Tốc độ ban đầu (pixel/sec)
-    public float speedMultiplierPerStage = 1.5f;    // Tăng tốc mỗi màn
-    public float baseTargetWidth = 140f;            // Độ rộng vùng xanh ban đầu
-    public float targetWidthReductionPerStage = 30f;// Thu nhỏ vùng xanh mỗi màn
+    public float baseSpeed = 400f;                  // Base speed (pixel/sec)
+    public float speedMultiplierPerStage = 1.5f;    // Speed multiplier per stage
+    public float baseTargetWidth = 140f;            // Initial target width
+    public float targetWidthReductionPerStage = 30f;// Target width reduction per stage
 
     // Dynamic State
     public bool isPlaying { get; private set; } = false;
@@ -34,6 +34,7 @@ public class LockpickMinigame : MonoBehaviour
     private float movingDirection = 1f; // 1: Right, -1: Left
     private float trackWidth;
     private float indicatorWidth;
+    private float lastIndicatorX; // Stores previous frame's indicator position for low-FPS swept hit detection
 
     private Action onSuccessCallback;
     private Action onFailedCallback;
@@ -53,6 +54,7 @@ public class LockpickMinigame : MonoBehaviour
         isPlaying = true;
 
         if (panelRoot != null) panelRoot.SetActive(true);
+        if (statusText != null) statusText.text = "Press SPACE / Click / E";
 
         SetupStage(currentStage);
         UpdateUI();
@@ -71,21 +73,22 @@ public class LockpickMinigame : MonoBehaviour
         trackWidth = trackRect.rect.width;
         indicatorWidth = indicatorRect.rect.width;
 
-        // Tính toán tốc độ và độ rộng vùng mục tiêu theo Cấp độ (càng cao càng nhanh, càng hẹp)
+        // Calculate speed & target width per stage
         currentSpeed = baseSpeed * Mathf.Pow(speedMultiplierPerStage, stage - 1);
         float targetWidth = Mathf.Max(40f, baseTargetWidth - (targetWidthReductionPerStage * (stage - 1)));
 
-        // Cập nhật size vùng xanh (Target Zone)
+        // Update target zone size
         targetZoneRect.sizeDelta = new Vector2(targetWidth, targetZoneRect.sizeDelta.y);
 
-        // Đặt ngẫu nhiên vị trí vùng xanh trên thanh track (tránh rìa quá sát)
+        // Randomize target zone position on track
         float maxOffset = (trackWidth / 2f) - (targetWidth / 2f) - 20f;
         float randomX = UnityEngine.Random.Range(-maxOffset, maxOffset);
         targetZoneRect.anchoredPosition = new Vector2(randomX, targetZoneRect.anchoredPosition.y);
 
-        // Đặt lại vị trí thanh vạch ở bên trái track
+        // Reset indicator position to left side of track
         float startX = -(trackWidth / 2f) + (indicatorWidth / 2f);
         indicatorRect.anchoredPosition = new Vector2(startX, indicatorRect.anchoredPosition.y);
+        lastIndicatorX = startX;
         movingDirection = 1f;
 
         if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 0.7f;
@@ -95,10 +98,10 @@ public class LockpickMinigame : MonoBehaviour
     {
         if (!isPlaying) return;
 
-        // 1. Di chuyển thanh indicator qua lại (Bounce Back & Forth)
+        // 1. Move indicator bar back and forth
         MoveIndicator();
 
-        // 2. Nhận nút ấn từ người chơi (Space, Chuột Trái, hoặc phím E)
+        // 2. Receive player input (Space, Left Click, or E)
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.E))
         {
             AttemptUnlock();
@@ -109,6 +112,8 @@ public class LockpickMinigame : MonoBehaviour
     {
         float minX = -(trackWidth / 2f) + (indicatorWidth / 2f);
         float maxX = (trackWidth / 2f) - (indicatorWidth / 2f);
+
+        lastIndicatorX = indicatorRect.anchoredPosition.x;
 
         Vector2 pos = indicatorRect.anchoredPosition;
         pos.x += movingDirection * currentSpeed * Time.deltaTime;
@@ -129,49 +134,50 @@ public class LockpickMinigame : MonoBehaviour
 
     private void AttemptUnlock()
     {
-        // Tính toán phạm vi (Left -> Right) của cả Indicator và Target Zone
         float indicatorHalfWidth = indicatorRect.rect.width / 2f;
         float targetHalfWidth = targetZoneRect.rect.width / 2f;
 
-        float indicatorMin = indicatorRect.anchoredPosition.x - indicatorHalfWidth;
-        float indicatorMax = indicatorRect.anchoredPosition.x + indicatorHalfWidth;
+        // Swept bounds over frame step to ensure accurate detection on low FPS
+        float currentX = indicatorRect.anchoredPosition.x;
+        float indicatorMin = Mathf.Min(lastIndicatorX, currentX) - indicatorHalfWidth;
+        float indicatorMax = Mathf.Max(lastIndicatorX, currentX) + indicatorHalfWidth;
 
         float targetMin = targetZoneRect.anchoredPosition.x - targetHalfWidth;
         float targetMax = targetZoneRect.anchoredPosition.x + targetHalfWidth;
 
-        // Trúng (Hit) khi có bất kỳ phần giao nhau nào giữa Indicator và Target Zone
+        // Hit condition: overlap between swept indicator bounds and target zone bounds
         bool isHit = (indicatorMin <= targetMax) && (indicatorMax >= targetMin);
 
         if (isHit)
         {
-            // Trúng mục tiêu!
+            // Hit!
             if (audioSource != null && hitSound != null) audioSource.PlayOneShot(hitSound);
             StartCoroutine(FlashTarget(1f));
 
             currentStage++;
             if (currentStage > totalStages)
             {
-                // Thắng Mini game (Thành công cả 3 lần)
+                // Victory (All stages cleared)
                 if (audioSource != null && victorySound != null) audioSource.PlayOneShot(victorySound);
-                statusText.text = "<color=green>BẺ KHÓA THÀNH CÔNG!</color>";
+                if (statusText != null) statusText.text = "<color=green>UNLOCK SUCCESSFUL!</color>";
                 
                 StartCoroutine(CompleteMinigameCoroutine(true));
             }
             else
             {
-                // Qua màn tiếp theo (Khó hơn & Nhanh hơn)
-                statusText.text = $"<color=yellow>CHÍNH XÁC! Tăng tốc độ ({currentStage}/{totalStages})</color>";
+                // Advance to next stage
+                if (statusText != null) statusText.text = $"<color=yellow>SUCCESS! Speed increased ({currentStage}/{totalStages})</color>";
                 SetupStage(currentStage);
                 UpdateUI();
             }
         }
         else
         {
-            // Trượt mục tiêu! Reset lại màn 1
+            // Missed! Reset to stage 1
             if (audioSource != null && missSound != null) audioSource.PlayOneShot(missSound);
             StartCoroutine(FlashTarget(0.2f));
 
-            statusText.text = "<color=red>TRƯỢT RỒI! Làm lại từ đầu!</color>";
+            if (statusText != null) statusText.text = "<color=red>MISSED! Try again!</color>";
             currentStage = 1;
             SetupStage(currentStage);
             UpdateUI();
@@ -184,7 +190,7 @@ public class LockpickMinigame : MonoBehaviour
     {
         if (stageText != null)
         {
-            stageText.text = $"Tiến độ: {currentStage}/{totalStages}";
+            stageText.text = $"Stage: {currentStage}/{totalStages}";
         }
     }
 
@@ -198,7 +204,12 @@ public class LockpickMinigame : MonoBehaviour
 
     private IEnumerator CompleteMinigameCoroutine(bool isWin)
     {
-        yield return new WaitForSeconds(0.3f);
+        float delay = 1.0f;
+        if (isWin && victorySound != null)
+        {
+            delay = Mathf.Max(1.0f, victorySound.length);
+        }
+        yield return new WaitForSeconds(delay);
         CloseMinigame();
 
         if (isWin && onSuccessCallback != null)

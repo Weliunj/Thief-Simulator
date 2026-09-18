@@ -1,12 +1,13 @@
+using System.Collections;
 using UnityEngine;
 
 public class LockpickDoor : MonoBehaviour
 {
     [Header("🚪 Lock Settings")]
-    public string doorName = "Cửa gỗ bẻ khóa";
+    public string doorName = "Wooden Locked Door";
     public int rewardPoints = 10;
     public bool destroyOnUnlock = true;
-    public GameObject doorModel; // Mô hình cửa (nếu muốn ẩn thay vì destroy cả GameObject)
+    public GameObject doorModel; // Door model (if hiding mesh instead of destroying entire GameObject)
     
     [Header("🔊 Audio")]
     public AudioSource audioSource;
@@ -58,19 +59,19 @@ public class LockpickDoor : MonoBehaviour
         }
         else
         {
-            Debug.LogError("UI_Manager không tìm thấy trong Scene!");
+            Debug.LogError("UI_Manager not found in Scene!");
         }
     }
 
     public void OnUnlockSuccess()
     {
         isUnlocked = true;
-        Debug.Log($"<color=green>Đã mở thành công cửa: {doorName}!</color>");
+        Debug.Log($"<color=green>Successfully unlocked door: {doorName}!</color>");
 
         if (uiManager != null && uiManager.playerManager != null)
         {
             uiManager.playerManager.currpoint += rewardPoints;
-            Debug.Log($"Cộng {rewardPoints} điểm. Tổng điểm hiện tại: {uiManager.playerManager.currpoint}");
+            Debug.Log($"Added {rewardPoints} points. Current total: {uiManager.playerManager.currpoint}");
         }
 
         if (audioSource != null && unlockSound != null)
@@ -80,14 +81,48 @@ public class LockpickDoor : MonoBehaviour
 
         if (destroyOnUnlock)
         {
-            if (doorModel != null)
+            StartCoroutine(DestroyDoorWithDelay(1.0f));
+        }
+    }
+
+    private IEnumerator DestroyDoorWithDelay(float delay)
+    {
+        if (audioSource != null && unlockSound != null)
+        {
+            delay = Mathf.Max(delay, unlockSound.length);
+        }
+
+        // Disable colliders immediately so player can walk through without waiting
+        Collider mainCollider = GetComponent<Collider>();
+        if (mainCollider != null) mainCollider.enabled = false;
+        foreach (var c in GetComponentsInChildren<Collider>())
+        {
+            c.enabled = false;
+        }
+
+        // Hide door visuals immediately
+        if (doorModel != null)
+        {
+            doorModel.SetActive(false);
+        }
+        else
+        {
+            foreach (var r in GetComponentsInChildren<Renderer>())
             {
-                doorModel.SetActive(false);
+                r.enabled = false;
             }
-            else
-            {
-                gameObject.SetActive(false);
-            }
+        }
+
+        // Wait for audio playback to finish
+        yield return new WaitForSeconds(delay);
+
+        if (doorModel != null)
+        {
+            Destroy(gameObject);
+        }
+        else
+        {
+            gameObject.SetActive(false);
         }
     }
 
