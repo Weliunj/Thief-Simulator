@@ -5,8 +5,8 @@ using UnityEngine.Rendering.Universal;
 public class PostProcess : MonoBehaviour
 {
     public Volume myVolume;
-    public StarterAssets.ThirdPersonController controller; 
-    
+    public StarterAssets.ThirdPersonController controller;
+
     private Vignette _vignette;
     private DepthOfField _depthOfField;
     private ChromaticAberration _chromatic; // Sửa tên cho gọn
@@ -19,6 +19,7 @@ public class PostProcess : MonoBehaviour
 
     void Start()
     {
+        controller = FindAnyObjectByType<StarterAssets.ThirdPersonController>();
         if (myVolume != null && myVolume.profile != null)
         {
             myVolume.profile.TryGet(out _vignette);
@@ -41,7 +42,7 @@ public class PostProcess : MonoBehaviour
             HandleVignette();
             HandleChromaticAberration(); // Chỉ chạy khi còn sống
         }
-        
+
         HandleDepthOfField();
     }
 
@@ -56,7 +57,10 @@ public class PostProcess : MonoBehaviour
     {
         if (_depthOfField == null) return;
         float currentWeight = controller.player.currweight;
-        float targetFocal = (currentWeight < 50f) ? 1f : Mathf.Lerp(30f, 130f, Mathf.InverseLerp(50f, 100f, currentWeight));
+        
+        // Trọng lượng từ 25kg -> 75kg sẽ tương ứng tính Focal Length từ 0 -> 50
+        float t = Mathf.InverseLerp(25f, 75f, currentWeight);
+        float targetFocal = Mathf.Lerp(0f, 50f, t);
 
         _depthOfField.focalLength.value = Mathf.SmoothDamp(_depthOfField.focalLength.value, targetFocal, ref _dofVelocity, 0.1f);
     }
@@ -71,9 +75,9 @@ public class PostProcess : MonoBehaviour
         float targetIntensity = isSprinting ? 0.25f : 0f;
 
         _chromatic.intensity.value = Mathf.SmoothDamp(
-            _chromatic.intensity.value, 
-            targetIntensity, 
-            ref _sprintVelocity, 
+            _chromatic.intensity.value,
+            targetIntensity,
+            ref _sprintVelocity,
             0.2f // Thời gian làm mượt khi bắt đầu chạy
         );
     }

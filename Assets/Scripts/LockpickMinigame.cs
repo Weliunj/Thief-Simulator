@@ -129,12 +129,18 @@ public class LockpickMinigame : MonoBehaviour
 
     private void AttemptUnlock()
     {
-        // Check nếu indicator nằm hoàn toàn hoặc một phần trong target zone
-        float indicatorX = indicatorRect.anchoredPosition.x;
-        float targetX = targetZoneRect.anchoredPosition.x;
+        // Tính toán phạm vi (Left -> Right) của cả Indicator và Target Zone
+        float indicatorHalfWidth = indicatorRect.rect.width / 2f;
         float targetHalfWidth = targetZoneRect.rect.width / 2f;
 
-        bool isHit = (indicatorX >= targetX - targetHalfWidth) && (indicatorX <= targetX + targetHalfWidth);
+        float indicatorMin = indicatorRect.anchoredPosition.x - indicatorHalfWidth;
+        float indicatorMax = indicatorRect.anchoredPosition.x + indicatorHalfWidth;
+
+        float targetMin = targetZoneRect.anchoredPosition.x - targetHalfWidth;
+        float targetMax = targetZoneRect.anchoredPosition.x + targetHalfWidth;
+
+        // Trúng (Hit) khi có bất kỳ phần giao nhau nào giữa Indicator và Target Zone
+        bool isHit = (indicatorMin <= targetMax) && (indicatorMax >= targetMin);
 
         if (isHit)
         {

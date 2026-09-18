@@ -151,6 +151,7 @@ namespace StarterAssets
             Cursor.visible = false;
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
             characterController = GetComponent<CharacterController>();
+            deathHandler = GetComponent<PlayerDeathHandler>();
             ui = FindFirstObjectByType<UI_Manager>();
             StartCenter = characterController.center;
             StartHeight = characterController.height;
@@ -192,12 +193,19 @@ namespace StarterAssets
         public float dropHeight = 1.5f; // Độ cao spawn items trên đầu player
         public ItemSpawner itemSpawner; // Optional spawner to use scene spawn points
         
+        [HideInInspector] public PlayerDeathHandler deathHandler;
+
         private void Update()
         {   
-            if(player.currentTime <= 0f){player.isDied = true;}
+            if (player.currentTime <= 0f) { player.isDied = true; }
+
             if (player.isDied)
             {
-                if (!die)
+                if (deathHandler != null)
+                {
+                    deathHandler.TriggerDeath();
+                }
+                else if (!die)
                 {
                     if (_animator != null) { _animator.SetTrigger("Die"); }
                     Debug.Log($"Player died. Dropping {heldItem.Count} held items.");
@@ -223,7 +231,7 @@ namespace StarterAssets
 
                 return;
             }
-            else if(player.currpoint == player.totalpoint)
+            else if (player.currpoint == player.totalpoint)
             {
                 return;
             }
@@ -576,27 +584,17 @@ namespace StarterAssets
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
-            // normalise input direction
+            // Player luôn xoay mặt theo góc Y của Camera (kể cả khi đứng yên hay di chuyển)
+            _targetRotation = _mainCamera != null ? _mainCamera.transform.eulerAngles.y : transform.eulerAngles.y;
+            float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
+            transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
+
+            // Tính hướng di chuyển tương đối theo góc nhìn Camera khi bấm W, A, S, D
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
-
-            // note: Vector2's != operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is a move input rotate player when the player is moving
-            if (_input.move != Vector2.zero)
-            {
-                _targetRotation = Mathf.Atan2(inputDirection.x, inputDirection.z) * Mathf.Rad2Deg +
-                                  _mainCamera.transform.eulerAngles.y;
-                float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity,
-                    RotationSmoothTime);
-
-                // rotate to face input direction relative to camera position
-                transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
-            }
-
-
-            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
+            Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * inputDirection;
 
             // move the player
-            _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
+            _controller.Move(targetDirection * (_speed * Time.deltaTime) +
                              new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 
             // update animator if using character
@@ -712,6 +710,12 @@ namespace StarterAssets
             // Vẽ gizmos phạm vi tương tác
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(transform.position, rangeInteract);
+        }
+
+        // ⭐ HÀM PUBLIC ĐỂ PLAYERDEATHHANDLER GỌI KHI PLAYER CHẾT
+        public void DropItemsOnDeathPublic()
+        {
+            DropItemsOnDeath();
         }
 
         // ⭐ HÀM SPAWN ITEMS KHI PLAYER CHẾT
