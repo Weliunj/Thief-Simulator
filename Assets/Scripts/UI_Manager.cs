@@ -1,10 +1,6 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq; 
 
 public class UI_Manager : MonoBehaviour
 {
@@ -13,26 +9,10 @@ public class UI_Manager : MonoBehaviour
     public PlayerManager playerManager;
     public GameObject GuidePanel;
     public static bool isSolving = false;
-    [HideInInspector]public bool toggleGuide = false;
+    [HideInInspector] public bool toggleGuide = false;
     
     public GameObject diedPanel;
     public GameObject WinPanel;
-
-    [Header("Math UI")]
-    [HideInInspector] public CanvasGroup solveCanvasGroup;
-    public GameObject SolvePanel;
-    public TextMeshProUGUI content;
-    public TextMeshProUGUI[] c; // c1 2 3 4
-    
-    [Header("Progress Slider")]
-    public Slider progressSlider; // Slider hiển thị tiến độ
-    public TextMeshProUGUI progressText; // Text hiển thị "1/3", "2/3", "3/3"
-
-    [HideInInspector] public DoorMath activeDoor; // Cánh cửa đang được giải
-
-    // BIẾN NỘI BỘ
-    [HideInInspector] public QuestionData currentQuestion;
-    private List<string> solvedQuestionContents = new List<string>(); 
 
     [Header("🔋 Stamina UI")]
     public TextMeshProUGUI currStamina; 
@@ -58,22 +38,15 @@ public class UI_Manager : MonoBehaviour
     [Header("⏰ Time UI")]
     public TextMeshProUGUI timeText; // Text hiển thị thời gian còn lại
     public AudioSource alarm;
+    [Header("🔑 Lockpick Minigame UI")]
+    public LockpickMinigame lockpickMinigame;
+
     // =========================================================================
 
     void Start()
     {
-        // ⭐ RESET DANH SÁCH CÂU HỎI ĐÃ GIẢI KHI BẮT ĐẦU SCENE MỚI (REPLAY)
-        solvedQuestionContents.Clear();
-        Debug.Log("Đã reset danh sách câu hỏi đã giải. Tất cả câu hỏi sẽ hiện lại khi replay.");
-        
-        solveCanvasGroup = SolvePanel.GetComponent<CanvasGroup>();
-        if (solveCanvasGroup == null)
-        {
-            Debug.LogWarning("SolvePanel thiếu component Canvas Group. Vui lòng thêm vào để kiểm soát tương tác.");
-        }
-        diedPanel.SetActive(false);
-        WinPanel.SetActive(false);
-        SolvePanel.SetActive(false);
+        if (diedPanel != null) diedPanel.SetActive(false);
+        if (WinPanel != null) WinPanel.SetActive(false);
 
         if (playerManager == null)
         {
@@ -92,39 +65,15 @@ public class UI_Manager : MonoBehaviour
         {
             playerManager.currentTime = playerManager.MaxTime;
         }
-        
-        // Thiết lập Slider tiến độ
-        if (progressSlider != null)
-        {
-            progressSlider.minValue = 0f;
-            progressSlider.maxValue = 3f;
-            progressSlider.value = 0f;
-        }
-        UpdateProgressUI(0);
-
-        // Gán Listener cho các nút đáp án (Sử dụng cách tìm kiếm chính xác)
-        for (int i = 0; i < c.Length; i++)
-        {
-            Transform parentTransform = c[i].transform.parent;
-            if (parentTransform != null)
-            {
-                Button btn = parentTransform.GetComponent<Button>();
-                if (btn != null)
-                {
-                    int index = i;
-                    btn.onClick.RemoveAllListeners(); 
-                    btn.onClick.AddListener(() => ChooseAnswer(c[index].text));
-                }
-            }
-        }
     }
 
     void Update()
     {
         if (playerManager == null) return;
-        if( playerManager.currentTime <= 0f)
+
+        if (playerManager.currentTime <= 0f)
         {
-            if (!alarm.isPlaying)
+            if (alarm != null && !alarm.isPlaying)
             {
                 alarm.loop = true;
                 alarm.Play();
@@ -132,34 +81,27 @@ public class UI_Manager : MonoBehaviour
         }
         
         // --- CẬP NHẬT THỜI GIAN ---
-        // ⭐ CHỈ ĐẾM THỜI GIAN KHI CHƯA CHẾT VÀ CHƯA WIN
         if (!playerManager.isDied && playerManager.currpoint < playerManager.totalpoint)
         {
-            // Giảm thời gian mỗi frame
             playerManager.currentTime -= Time.deltaTime;
             
-            // Kiểm tra hết thời gian
             if (playerManager.currentTime <= 0.3f)
             {
                 playerManager.currentTime = 0f;
                 Debug.Log("HẾT THỜI GIAN! Game Over (tạm thời chỉ debug)");
-                // TODO: Thêm logic game over khi hết thời gian
             }
         }
-        // ⭐ KHI WIN: DỪNG THỜI GIAN (không cần làm gì, thời gian sẽ tự động dừng vì điều kiện trên)
         
         // --- CẬP NHẬT UI ĐỘNG ---
         if (currStamina != null) 
         { 
             currStamina.text = $"{playerManager._stamina:F1}"; 
-            // set color: low stamina -> alertColor. When normalized stamina <= warnThreshold start lerping to alert at 0.
             if (playerManager.MaxStamina > 0f)
             {
                 float sNorm = Mathf.Clamp01(playerManager._stamina / playerManager.MaxStamina);
                 Color sColor = normalColor;
                 if (sNorm <= warnThreshold)
                 {
-                    // t = 0 at warnThreshold, t = 1 at 0 (fully depleted)
                     float t = Mathf.InverseLerp(warnThreshold, 0f, sNorm);
                     sColor = Color.Lerp(normalColor, alertColor, t);
                 }
@@ -185,7 +127,6 @@ public class UI_Manager : MonoBehaviour
 
         if (point != null) { point.text = $"{playerManager.currpoint}"; }
         
-        // Cập nhật UI thời gian
         if (timeText != null)
         {
             int minutes = Mathf.FloorToInt(playerManager.currentTime / 60f);
@@ -196,222 +137,94 @@ public class UI_Manager : MonoBehaviour
         // --- XỬ LÝ TRẠNG THÁI GAME ---
         if (playerManager.isDied)
         {
-            if (isSolving) 
-            {
-                Clodetab(); // Gọi hàm này để ẩn SolvePanel và reset isSolving
-            }
-            diedPanel.SetActive(true); 
-            WinPanel.SetActive(false);
-            Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
+            if (isSolving) CancelLockpicking();
+            if (diedPanel != null) diedPanel.SetActive(true); 
+            if (WinPanel != null) WinPanel.SetActive(false);
+            Cursor.lockState = CursorLockMode.None; 
+            Cursor.visible = true;
         } 
-        else if(playerManager.currpoint >= playerManager.totalpoint) // ⭐ SỬA: >= thay vì == để tránh lỗi nếu vượt quá
+        else if (playerManager.currpoint >= playerManager.totalpoint)
         {
-            diedPanel.SetActive(false); WinPanel.SetActive(true);
-            Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
-            // ⭐ THỜI GIAN ĐÃ TỰ ĐỘNG DỪNG (vì điều kiện trên không thỏa mãn)
+            if (isSolving) CancelLockpicking();
+            if (diedPanel != null) diedPanel.SetActive(false); 
+            if (WinPanel != null) WinPanel.SetActive(true);
+            Cursor.lockState = CursorLockMode.None; 
+            Cursor.visible = true;
             Debug.Log($"WIN! Đã đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
         }
         
-        // --- XỬ LÝ GUIDE & ESCAPE ---
+        // --- XỬ LÝ GUIDE & CANCEL ---
         if (Input.GetKeyDown(KeyCode.H) && !isSolving) { toggleGuide = !toggleGuide; }
-        GuidePanel.SetActive(toggleGuide);
-        
-        if (Input.GetKeyDown(KeyCode.Escape) && isSolving) { Clodetab(); }
+        if (GuidePanel != null) { GuidePanel.SetActive(toggleGuide); }
+
+        if (Input.GetKeyDown(KeyCode.Escape) && isSolving)
+        {
+            CancelLockpicking();
+        }
     }
 
     // =========================================================================
-    //                            LOGIC CÂU HỎI
+    //                       LOCKPICK MINIGAME API
     // =========================================================================
-    
-    public List<QuestionData> GetAvailableQuestions(Questions questionList)
+
+    public void StartLockpicking(LockpickDoor door)
     {
-        return questionList.allQuestions
-            .Where(q => !solvedQuestionContents.Contains(q.questionContent))
-            .ToList();
-    }
-    
-    public QuestionData GetRandomAvailableQuestion(Questions questionList)
-    {
-        List<QuestionData> available = GetAvailableQuestions(questionList);
-        if (available.Count == 0) return null;
-        int randomIndex = Random.Range(0, available.Count);
-        return available[randomIndex];
-    }
-    
-    public void DisplayQuestion(QuestionData q)
-    {
-        content.text = q.questionContent;
-        List<string> answers = new List<string>();
-        answers.Add(q.correctAnswer);
-        answers.AddRange(q.incorrectAnswers);
-        
-        // Xáo trộn đáp án
-        int n = answers.Count;
-        while (n > 1)
+        if (lockpickMinigame == null)
         {
-            n--;
-            int k = Random.Range(0, n + 1);
-            string value = answers[k];
-            answers[k] = answers[n];
-            answers[n] = value;
-        }
-        
-        for (int i = 0; i < c.Length; i++)
-        {
-            c[i].text = (i < answers.Count) ? answers[i] : "";
-        }
-    }
-    
-    // Trong UI_Manager.cs
-// Trong UI_Manager.cs
-public void ChooseAnswer(string chosenAnswer)
-{
-    if (currentQuestion == null) return;
-    
-    if (chosenAnswer == currentQuestion.correctAnswer)
-    {
-        Debug.Log("Đáp án Đúng!");
-        
-        // ⭐ QUAN TRỌNG: Đánh dấu câu hỏi này đã được giải đúng (không lặp lại)
-        if (!solvedQuestionContents.Contains(currentQuestion.questionContent))
-        {
-            solvedQuestionContents.Add(currentQuestion.questionContent);
-            Debug.Log($"Đã đánh dấu câu hỏi: {currentQuestion.questionContent}");
-        }
-        
-        // 1. Ghi nhận câu trả lời đúng (activeDoor.AnswerCorrect() sẽ TĂNG ĐẾM và HỦY CỬA nếu đạt 3/3)
-        if (activeDoor != null) 
-        {
-            activeDoor.AnswerCorrect(); 
+            lockpickMinigame = FindFirstObjectByType<LockpickMinigame>(FindObjectsInactive.Include);
         }
 
-        // ⭐ KIỂM TRA ĐỦ 3 CÂU ĐÚNG TRƯỚC KHI HIỂN THỊ CÂU HỎI MỚI
-        if (activeDoor != null && activeDoor.currentCorrectAnswers >= activeDoor.requiredCorrectAnswers)
+        if (lockpickMinigame == null)
         {
-            // ⭐ CẬP NHẬT SLIDER ĐẾN 3/3
-            UpdateProgressUI(activeDoor.currentCorrectAnswers);
-            Debug.Log("Đã đủ 3 câu đúng! Cửa sẽ được mở sau 1 giây.");
-            
-            // Đợi 1 giây để slider chạy hết, sau đó đóng tab
-            StartCoroutine(CloseTabAfterDelay(1f));
+            Debug.LogError("LockpickMinigame chưa được gán hoặc không tìm thấy trong Canvas UI!");
             return;
         }
-        
-        // ⭐ CẬP NHẬT SLIDER TIẾN ĐỘ
-        if (activeDoor != null)
-        {
-            UpdateProgressUI(activeDoor.currentCorrectAnswers);
-        }
-        
-        // ⭐ NẾU CHƯA ĐỦ 3 CÂU → HIỂN THỊ CÂU HỎI MỚI (KHÔNG ĐÓNG TAB)
-        if (activeDoor != null)
-        {
-            Debug.Log($"Trả lời đúng! Còn {activeDoor.requiredCorrectAnswers - activeDoor.currentCorrectAnswers} câu nữa. Tiếp tục với câu hỏi mới.");
-            
-            // Tải câu hỏi mới từ danh sách chưa giải
-            QuestionData nextQuestion = GetRandomAvailableQuestion(activeDoor.questionList);
-            
-            if (nextQuestion != null)
+
+        isSolving = true;
+        lockpickMinigame.StartMinigame(
+            onSuccess: () =>
             {
-                currentQuestion = nextQuestion;
-                DisplayQuestion(nextQuestion);
-            }
-            else
+                isSolving = false;
+                if (door != null) door.OnUnlockSuccess();
+            },
+            onFailed: () =>
             {
-                // Trường hợp hiếm: Hết câu hỏi nhưng chưa đủ 3 câu 
-                Debug.LogWarning("Không còn câu hỏi nào để giải! Đóng panel.");
-                Clodetab();
-                activeDoor = null;
+                if (door != null) door.OnUnlockFailed();
             }
-        }
+        );
     }
-    else // Đáp án Sai
+
+    public void CancelLockpicking()
     {
-        Debug.Log("Đáp án Sai! Reset đếm, gọi AI và đóng Panel.");
-        
-        // KÍCH HOẠT SỰ KIỆN GỌI AI VÀ RESET ĐẾM
-        if (activeDoor != null) { activeDoor.AnswerFailed(); }
-        
-        // Đóng Panel và đặt lại activeDoor
-        Clodetab(); 
-        activeDoor = null;
+        isSolving = false;
+        if (lockpickMinigame != null)
+        {
+            lockpickMinigame.CloseMinigame();
+        }
     }
-}
 
     // =========================================================================
-    //                            LOGIC UI CƠ BẢN
+    //                            LOGIC UI CƠ BẢN
     // =========================================================================
 
     public void Replay()
-{
-    // ⭐ Reset các trạng thái quan trọng của PlayerManager trước khi load lại
-    if (playerManager != null)
     {
-        playerManager.isDied = false;
-        playerManager.currweight = 0;
-        playerManager.currpoint = 0;
-        playerManager.currentTime = playerManager.MaxTime;
-        playerManager._stamina = playerManager.MaxStamina;
-    }
+        if (playerManager != null)
+        {
+            playerManager.isDied = false;
+            playerManager.currweight = 0;
+            playerManager.currpoint = 0;
+            playerManager.currentTime = playerManager.MaxTime;
+            playerManager._stamina = playerManager.MaxStamina;
+        }
 
-    Time.timeScale = 1f; 
-    SceneManager.LoadScene("Lv1");
-}
+        Time.timeScale = 1f; 
+        SceneManager.LoadScene("Lv1");
+    }
     
     public void Menu()
     {
-        Time.timeScale = 1f; SceneManager.LoadScene("HomeMenu");
-    }
-    
-    public void Clodetab()
-    {
-        isSolving = false;
-        SolvePanel.SetActive(false);
-        
-        // Vô hiệu hóa tương tác Raycast
-        if (solveCanvasGroup != null)
-        {
-            solveCanvasGroup.interactable = false;
-            solveCanvasGroup.blocksRaycasts = false;
-        }
-
-        Cursor.lockState = CursorLockMode.Locked; 
-        Cursor.visible = false;
-        currentQuestion = null;
-        
-        // ⭐ RESET TIẾN TRÌNH GIẢI KHI ĐÓNG TAB (trừ khi đã đủ 3 câu và cửa đang được destroy)
-        if (activeDoor != null)
-        {
-            activeDoor.currentCorrectAnswers = 0;
-            Debug.Log("Đã reset tiến trình giải về 0 khi đóng tab.");
-        }
-        
-        // Reset slider khi đóng tab
-        UpdateProgressUI(0);
-        
-        // Reset activeDoor
-        activeDoor = null;
-    }
-    
-    // ⭐ HÀM CẬP NHẬT SLIDER TIẾN ĐỘ
-    public void UpdateProgressUI(int correctCount)
-    {
-        if (progressSlider != null)
-        {
-            progressSlider.value = correctCount;
-        }
-        
-        if (progressText != null)
-        {
-            progressText.text = $"{correctCount}/3";
-        }
-    }
-    
-    // ⭐ COROUTINE ĐỢI 1 GIÂY TRƯỚC KHI ĐÓNG TAB (KHI ĐỦ 3 CÂU)
-    private IEnumerator CloseTabAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        Clodetab();
-        activeDoor = null;
+        Time.timeScale = 1f; 
+        SceneManager.LoadScene("HomeMenu");
     }
 }

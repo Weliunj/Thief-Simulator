@@ -1974,7 +1974,6 @@ Transform:
   - {fileID: 963471959}
   - {fileID: 712108253}
   - {fileID: 1928993772}
-  - {fileID: 607722552}
   - {fileID: 755024786}
   - {fileID: 802289467}
   - {fileID: 1507339294}
@@ -7275,99 +7274,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!1 &607722551
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 607722552}
-  - component: {fileID: 607722554}
-  - component: {fileID: 607722553}
-  m_Layer: 0
-  m_Name: Terrain (1)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &607722552
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 607722551}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -508.40002, y: -0.63, z: -526.1}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 153527011}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!154 &607722553
-TerrainCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 607722551}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_TerrainData: {fileID: 15600000, guid: 3b7b6c2db3f496342a4bdac7139185fb, type: 2}
-  m_EnableTreeColliders: 1
---- !u!218 &607722554
-Terrain:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 607722551}
-  m_Enabled: 1
-  serializedVersion: 6
-  m_TerrainData: {fileID: 15600000, guid: 3b7b6c2db3f496342a4bdac7139185fb, type: 2}
-  m_TreeDistance: 5000
-  m_TreeBillboardDistance: 50
-  m_TreeCrossFadeLength: 5
-  m_TreeMaximumFullLODCount: 50
-  m_DetailObjectDistance: 80
-  m_DetailObjectDensity: 1
-  m_HeightmapPixelError: 5
-  m_SplatMapDistance: 1000
-  m_HeightmapMinimumLODSimplification: 0
-  m_HeightmapMaximumLOD: 0
-  m_ShadowCastingMode: 2
-  m_DrawHeightmap: 1
-  m_DrawInstanced: 0
-  m_DrawTreesAndFoliage: 1
-  m_StaticShadowCaster: 0
-  m_IgnoreQualitySettings: 0
-  m_ReflectionProbeUsage: 1
-  m_MaterialTemplate: {fileID: 2100000, guid: 594ea882c5a793440b60ff72d896021e, type: 2}
-  m_BakeLightProbesForTrees: 1
-  m_PreserveTreePrototypeLayers: 0
-  m_DeringLightProbesForTrees: 1
-  m_ReceiveGI: 1
-  m_ScaleInLightmap: 0.0256
-  m_LightmapParameters: {fileID: 15203, guid: 0000000000000000f000000000000000, type: 0}
-  m_GroupingID: 0
-  m_RenderingLayerMask: 1
-  m_AllowAutoConnect: 1
-  m_EnableHeightmapRayTracing: 1
-  m_EnableTreesAndDetailsRayTracing: 0
-  m_TreeMotionVectorModeOverride: 3
 --- !u!1001 &631613567
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8349,15 +8255,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -627.5986
+      value: -12.598572
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.02
+      value: -0.65
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -22.44
+      value: -136.44
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalRotation.w
@@ -8365,15 +8271,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8085793654713421504, guid: 4e90a33f5b1393648906ce1be40f2c30, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -8716,7 +8622,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2496671267302702964, guid: f9be95d7f56731f4b97c4011e28edaab, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.0018903136
+      value: 0.0018903017
       objectReference: {fileID: 0}
     - target: {fileID: 2496671267302702964, guid: f9be95d7f56731f4b97c4011e28edaab, type: 3}
       propertyPath: m_LocalPosition.z
@@ -8728,7 +8634,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2496671267302702964, guid: f9be95d7f56731f4b97c4011e28edaab, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 2496671267302702964, guid: f9be95d7f56731f4b97c4011e28edaab, type: 3}
       propertyPath: m_LocalRotation.y
@@ -22095,7 +22001,12 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 1
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
+    are already bound by a Humanoid avatar. These transforms can only be changed
+    by Humanoid clips.\n\tTransform 'Foot.L'\n\tTransform 'UpperArm.R'\n\tTransform
+    'Hip.L'\n\tTransform 'UpperArm.L'\n\tTransform 'UpperLeg.L'\n\tTransform 'UpperLeg.R'\n\tTransform
+    'Head'\n\tTransform 'LowerLeg.L'\n\tTransform 'Hand.R'\n\tTransform 'LowerArm.L'\n\tand
+    more ..."
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -22393,15 +22304,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -626.429
+      value: -11.429016
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.0000019073486
+      value: -0.6300019
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -22.599785
+      value: -136.5998
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -22409,15 +22320,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4797605776506193498, guid: 7ab456b87d847a94ca9a43844bda4a6a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -24447,7 +24358,7 @@ TerrainCollider:
   m_ProvidesContacts: 0
   m_Enabled: 0
   serializedVersion: 2
-  m_TerrainData: {fileID: 15600000, guid: 52b45449693d81248bb48ebe3c9ad938, type: 2}
+  m_TerrainData: {fileID: 15600000, guid: ed5f7a1980ffa72468f3b15a29e2f084, type: 2}
   m_EnableTreeColliders: 1
 --- !u!218 &1928993774
 Terrain:
@@ -24456,9 +24367,9 @@ Terrain:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1928993771}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 6
-  m_TerrainData: {fileID: 0}
+  m_TerrainData: {fileID: 15600000, guid: ed5f7a1980ffa72468f3b15a29e2f084, type: 2}
   m_TreeDistance: 5000
   m_TreeBillboardDistance: 50
   m_TreeCrossFadeLength: 5
@@ -26413,15 +26324,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -628.40216
+      value: -13.402161
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.63
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -22.041
+      value: -136.041
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalRotation.w
@@ -26429,15 +26340,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1356401782610545712, guid: 79d0c604612fad54c934936f094ec850, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -26585,7 +26496,7 @@ SceneRoots:
   - {fileID: 414419024}
   - {fileID: 37536207}
   - {fileID: 153527011}
+  - {fileID: 2141634178}
   - {fileID: 722872196}
   - {fileID: 684974096}
-  - {fileID: 2141634178}
   - {fileID: 1778337159}

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
@@ -423,8 +423,9 @@ namespace StarterAssets
         }
         private void LateUpdate()
         {
-            CameraRotation();
+            HandleCameraInput();
         }
+
         private void AssignAnimationIDs()
         {
             _animIDSpeed = Animator.StringToHash("Speed");
@@ -433,6 +434,7 @@ namespace StarterAssets
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
         }
+
         private void GroundedCheck()
         {
             // set sphere position, with offset
@@ -448,35 +450,54 @@ namespace StarterAssets
             }
         }
 
-        private void CameraRotation()
+        /// <summary>
+        /// Hàm xử lý riêng cho Input và xoay Camera
+        /// </summary>
+        public void HandleCameraInput()
         {
-            if(UI_Manager.isSolving || player.currpoint == player.totalpoint)
+            // Kiểm tra trạng thái giải đố bẻ khóa, chết hoặc thắng game -> tạm dừng xoay camera
+            if (UI_Manager.isSolving || (player != null && (player.isDied || player.currpoint >= player.totalpoint)))
             {
                 return;
             }
-            // if there is an input and camera position is not fixed
+
+            if (CinemachineCameraTarget == null) return;
+
+            // Xử lý góc xoay camera từ tín hiệu đầu vào mouse/look
             if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
-                //Don't multiply mouse input by Time.deltaTime;
                 float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
 
                 _cinemachineTargetYaw += _input.look.x * deltaTimeMultiplier;
                 _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
             }
 
-            // clamp our rotations so our values are limited 360 degrees
+            // Giới hạn góc xoay 360 độ cho Yaw và Pitch
             _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
             _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
-            // Cinemachine will follow this target
-            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride,
-                _cinemachineTargetYaw, 0.0f);
+            // Cập nhật góc xoay cho đối tượng theo dõi Cinemachine
+            CinemachineCameraTarget.transform.rotation = Quaternion.Euler(
+                _cinemachineTargetPitch + CameraAngleOverride,
+                _cinemachineTargetYaw, 
+                0.0f
+            );
         }
 
         [HideInInspector] public bool Crouching = false;
         private void Move()
         {
-            
+            if (UI_Manager.isSolving || (player != null && player.currpoint == player.totalpoint))
+            {
+                _speed = 0f;
+                if (_hasAnimator)
+                {
+                    _animator.SetFloat(_animIDSpeed, 0f);
+                    _animator.SetFloat(_animIDMotionSpeed, 1f);
+                }
+                return;
+            }
+
             // 1. Cập nhật trạng thái Crouching
             bool isCrouchInput = Input.GetKey(KeyCode.LeftControl);
             if (isCrouchInput && Grounded)
@@ -588,6 +609,11 @@ namespace StarterAssets
 
         private void JumpAndGravity()
         {
+            if (UI_Manager.isSolving)
+            {
+                _input.jump = false;
+            }
+
             // NGĂN NHẢY KHI ĐANG CÚI
             if (Crouching) 
             {

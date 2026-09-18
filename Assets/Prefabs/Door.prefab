@@ -84,6 +84,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &2821532721264275247
 MonoBehaviour:
@@ -143,6 +144,7 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
@@ -245,6 +247,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!212 &6157381359857307131
 SpriteRenderer:
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -290,6 +293,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_Sprite: {fileID: -1526265185, guid: 043449634cd54aa45a2980e5dcc8f479, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.98039216}
   m_FlipX: 1
@@ -299,7 +303,6 @@ SpriteRenderer:
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!1 &7941440039728474496
 GameObject:
@@ -350,7 +353,9 @@ MonoBehaviour:
   Pivot: {fileID: 7941440039728474496}
   Radius: 1.14
   InRange: 0
+  Name: 
   NameDisplay: {fileID: 2821532721264275247}
+  infItem: {fileID: 0}
   Center: {fileID: 4542066442621584435}
   E_icon: {fileID: 5742255181267016816}
   NameColor: {r: 1, g: 1, b: 1, a: 1}
@@ -366,11 +371,11 @@ GameObject:
   - component: {fileID: 6443057855363665650}
   - component: {fileID: 6439336120222017849}
   - component: {fileID: 1799935899007365018}
-  - component: {fileID: 6292277310016189970}
   - component: {fileID: 2252996109531099229}
   - component: {fileID: 3329072219907102854}
+  - component: {fileID: 4201365758413010162}
   m_Layer: 0
-  m_Name: "B\u1EBB kh\xF3a"
+  m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -447,6 +452,7 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &1799935899007365018
 BoxCollider:
@@ -469,23 +475,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.3922844, y: 2.1082928, z: 0.1}
   m_Center: {x: 0.66402817, y: 0.11868155, z: 0.05212736}
---- !u!114 &6292277310016189970
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8577628722364368169}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdbe6c8ef9f613844a8e8189f09221b3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DoorMath
-  callRange: 13.2
-  uiManager: {fileID: 0}
-  requiredCorrectAnswers: 3
-  currentCorrectAnswers: 0
-  questionList: {fileID: 11400000, guid: 0171fd7bfe52fc247a991381230d578a, type: 2}
 --- !u!82 &2252996109531099229
 AudioSource:
   m_ObjectHideFlags: 0
@@ -603,3 +592,24 @@ MonoBehaviour:
   m_IgnoreFromBuild: 1
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
+--- !u!114 &4201365758413010162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8577628722364368169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dd8ff9eb177071438baa5a33bd46b45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PlayerTest::LockpickDoor
+  doorName: "C\u1EEDa g\u1ED7 b\u1EBB kh\xF3a"
+  rewardPoints: 10
+  destroyOnUnlock: 1
+  doorModel: {fileID: 0}
+  audioSource: {fileID: 0}
+  unlockSound: {fileID: 0}
+  interactRadius: 3
+  interactPivot: {fileID: 0}
+  isUnlocked: 0
