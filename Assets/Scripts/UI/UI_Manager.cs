@@ -51,6 +51,8 @@ public class UI_Manager : MonoBehaviour
     {
         Time.timeScale = 1f;
         isPaused = false;
+        isSolving = false;
+
         if (diedPanel != null) diedPanel.SetActive(false);
         if (WinPanel != null) WinPanel.SetActive(false);
         if (settingPanel != null) settingPanel.SetActive(false);
@@ -61,17 +63,18 @@ public class UI_Manager : MonoBehaviour
             enabled = false;
             return;
         }
-        
+
+        // Tự động Reset dữ liệu PlayerManager khi vừa vào Scene mới
+        playerManager.isDied = false;
+        playerManager.currweight = 0;
+        playerManager.currpoint = 0;
+        playerManager._stamina = playerManager.MaxStamina;
+        playerManager.currentTime = playerManager.MaxTime;
+
         // Thiết lập giá trị Max/Target Point cố định
         if (Stamina != null) { Stamina.text = $"{playerManager.MaxStamina:F0}"; }
         if (kg != null) { kg.text = $"{playerManager.Maxweight}"; }
         if (targetPoint != null) { targetPoint.text = $"{playerManager.totalpoint}"; }
-        
-        // Thiết lập thời gian ban đầu
-        if (playerManager != null)
-        {
-            playerManager.currentTime = playerManager.MaxTime;
-        }
     }
 
     void Update()

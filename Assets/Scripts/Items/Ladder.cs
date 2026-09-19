@@ -6,6 +6,7 @@ public class Ladder : MonoBehaviour
     private ThirdPersonController thirdPersonController;
     private Range_Interaction ROI;
     private StarterAssetsInputs starterAssetsInputs;
+    private MobileActionButtons mobileActions;
     
     public GameObject B;
     public GameObject A;
@@ -25,12 +26,15 @@ public class Ladder : MonoBehaviour
             Debug.LogError("Range_Interaction script not found in children of " + gameObject.name);
         }
         starterAssetsInputs = thirdPersonController.GetComponent<StarterAssetsInputs>();
+        mobileActions = FindFirstObjectByType<MobileActionButtons>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.E) && ROI.InRange && thirdPersonController.Grounded
+        bool interactInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.interactPressed);
+
+        if(interactInput && ROI.InRange && thirdPersonController.Grounded
         && !thirdPersonController.isClimbingLadder  && !thirdPersonController.Crouching)
         {
             thirdPersonController.isClimbingLadder = true;

@@ -100,6 +100,9 @@ namespace StarterAssets
         public float rangeInteract = 2f;
         private List<GameObject> heldItem = new List<GameObject>();
 
+        [Header("📱 Mobile Action Buttons")]
+        public MobileActionButtons mobileActions;
+
         private CharacterController characterController;
         private Vector3 StartCenter;
         private float StartHeight;
@@ -323,7 +326,8 @@ namespace StarterAssets
             }
 
             //Nhat item
-            if (Input.GetKeyDown(KeyCode.E) && !isTaking)
+            bool pickupInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.interactPressed);
+            if (pickupInput && !isTaking)
             {
                 Collider[] hitColliders = Physics.OverlapSphere(transform.position, rangeInteract);
                 
@@ -362,7 +366,8 @@ namespace StarterAssets
 
             
             //Drop Item
-            if (Input.GetKeyDown(KeyCode.Q) && heldItem .Count > 0 && !isTaking)
+            bool dropInput = Input.GetKeyDown(KeyCode.Q) || (mobileActions != null && mobileActions.dropPressed);
+            if (dropInput && heldItem .Count > 0 && !isTaking)
             { 
                 // Lấy item để drop (chọn item cuối cùng trong list)
                 int lastindex = heldItem.Count - 1;
@@ -506,8 +511,11 @@ namespace StarterAssets
                 return;
             }
 
-            // 1. Cập nhật trạng thái Crouching
+            // 1. Cập nhật trạng thái Crouching (Keyboard + Mobile)
             bool isCrouchInput = Input.GetKey(KeyCode.LeftControl);
+            if (mobileActions != null && mobileActions.crouchHeld)
+                isCrouchInput = true;
+
             if (isCrouchInput && Grounded)
             {
                 // Kích hoạt Crouch

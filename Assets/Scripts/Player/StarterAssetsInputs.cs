@@ -22,7 +22,55 @@ namespace StarterAssets
         
         // --- THAY ĐỔI 1: Thêm biến chỉnh độ nhạy ---
         [Tooltip("Điều chỉnh tốc độ chuột/camera")]
-        public float lookSensitivity = 1.0f; 
+        public float lookSensitivity = 1.0f;
+
+        [Header("🕹️ Mobile Touch Controls")]
+        public DynamicJoystick dynamicJoystick;
+        public TouchLookZone touchLookZone;
+        public MobileActionButtons mobileActions;
+
+        private void Update()
+        {
+            // --- Mobile Joystick: Di chuyển ---
+            if (dynamicJoystick != null)
+            {
+                if (dynamicJoystick.IsPressed)
+                {
+                    MoveInput(dynamicJoystick.Direction);
+                }
+                else
+                {
+                    // Khi thả tay → reset movement về zero để nhân vật dừng lại
+                    MoveInput(Vector2.zero);
+                }
+            }
+
+            // --- Mobile Touch: Xoay camera ---
+            if (touchLookZone != null)
+            {
+                if (touchLookZone.IsTouching)
+                {
+                    LookInput(touchLookZone.LookDelta);
+                }
+                else
+                {
+                    LookInput(Vector2.zero);
+                }
+            }
+
+            // --- Mobile Action Buttons: Jump & Sprint ---
+            if (mobileActions != null)
+            {
+                // Jump: bấm 1 lần → set true (ThirdPersonController sẽ tự reset)
+                if (mobileActions.jumpPressed)
+                {
+                    JumpInput(true);
+                }
+
+                // Sprint: giữ = true, thả = false
+                SprintInput(mobileActions.sprintHeld);
+            }
+        }
 
 #if ENABLE_INPUT_SYSTEM
         public void OnMove(InputValue value)
