@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class LockpickMinigame : MonoBehaviour
 {
@@ -13,6 +15,7 @@ public class LockpickMinigame : MonoBehaviour
     public TextMeshProUGUI stageText;       // Display "Stage: 1/3"
     public TextMeshProUGUI statusText;      // Status text (Press SPACE / Click!)
     public CanvasGroup targetZoneCanvasGroup; // Flash visual effect on hit/miss
+    public Button closeButton;              // Close button to cancel lockpicking
 
     [Header("🎮 Audio (Optional)")]
     public AudioSource audioSource;
@@ -43,6 +46,23 @@ public class LockpickMinigame : MonoBehaviour
     {
         if (panelRoot != null) panelRoot.SetActive(false);
         if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 0.7f;
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(OnCloseButtonClicked);
+        }
+    }
+
+    public void OnCloseButtonClicked()
+    {
+        UI_Manager uiManager = FindFirstObjectByType<UI_Manager>();
+        if (uiManager != null)
+        {
+            uiManager.CancelLockpicking();
+        }
+        else
+        {
+            CloseMinigame();
+        }
     }
 
     public void StartMinigame(Action onSuccess, Action onFailed = null)
@@ -104,6 +124,12 @@ public class LockpickMinigame : MonoBehaviour
         // 2. Receive player input (Space, Left Click, or E)
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.E))
         {
+            // Ignore click if clicking on UI elements like Close Button
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            {
+                return;
+            }
+
             AttemptUnlock();
         }
     }

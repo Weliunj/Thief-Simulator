@@ -14,6 +14,10 @@ public class UI_Manager : MonoBehaviour
     public GameObject diedPanel;
     public GameObject WinPanel;
 
+    [Header("⚙️ Settings UI")]
+    public GameObject settingPanel;
+    [HideInInspector] public bool isPaused = false;
+
     [Header("🔋 Stamina UI")]
     public TextMeshProUGUI currStamina; 
     public TextMeshProUGUI Stamina; 
@@ -45,8 +49,11 @@ public class UI_Manager : MonoBehaviour
 
     void Start()
     {
+        Time.timeScale = 1f;
+        isPaused = false;
         if (diedPanel != null) diedPanel.SetActive(false);
         if (WinPanel != null) WinPanel.SetActive(false);
+        if (settingPanel != null) settingPanel.SetActive(false);
 
         if (playerManager == null)
         {
@@ -153,13 +160,51 @@ public class UI_Manager : MonoBehaviour
             Debug.Log($"WIN! Đã đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
         }
         
-        // --- XỬ LÝ GUIDE & CANCEL ---
+        // --- XỬ LÝ GUIDE & SETTINGS ---
         if (Input.GetKeyDown(KeyCode.H) && !isSolving) { toggleGuide = !toggleGuide; }
         if (GuidePanel != null) { GuidePanel.SetActive(toggleGuide); }
 
-        if (Input.GetKeyDown(KeyCode.Escape) && isSolving)
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
-            CancelLockpicking();
+            ToggleSettings();
+        }
+    }
+
+    // =========================================================================
+    //                       SETTINGS & PAUSE LOGIC
+    // =========================================================================
+
+    public void ToggleSettings()
+    {
+        if (isPaused)
+        {
+            ResumeGame();
+        }
+        else
+        {
+            PauseGame();
+        }
+    }
+
+    public void PauseGame()
+    {
+        isPaused = true;
+        Time.timeScale = 0f;
+        if (settingPanel != null) settingPanel.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    public void ResumeGame()
+    {
+        isPaused = false;
+        Time.timeScale = 1f;
+        if (settingPanel != null) settingPanel.SetActive(false);
+
+        if (!isSolving && (playerManager == null || (!playerManager.isDied && playerManager.currpoint < playerManager.totalpoint)))
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
     }
 
@@ -181,10 +226,15 @@ public class UI_Manager : MonoBehaviour
         }
 
         isSolving = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         lockpickMinigame.StartMinigame(
             onSuccess: () =>
             {
                 isSolving = false;
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
                 if (door != null) door.OnUnlockSuccess();
             },
             onFailed: () =>
@@ -197,6 +247,8 @@ public class UI_Manager : MonoBehaviour
     public void CancelLockpicking()
     {
         isSolving = false;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         if (lockpickMinigame != null)
         {
             lockpickMinigame.CloseMinigame();
@@ -209,6 +261,8 @@ public class UI_Manager : MonoBehaviour
 
     public void Replay()
     {
+        Time.timeScale = 1f;
+        isPaused = false;
         if (playerManager != null)
         {
             playerManager.isDied = false;
@@ -218,13 +272,13 @@ public class UI_Manager : MonoBehaviour
             playerManager._stamina = playerManager.MaxStamina;
         }
 
-        Time.timeScale = 1f; 
         SceneManager.LoadScene("Lv1");
     }
     
     public void Menu()
     {
-        Time.timeScale = 1f; 
+        Time.timeScale = 1f;
+        isPaused = false;
         SceneManager.LoadScene("HomeMenu");
     }
 }
