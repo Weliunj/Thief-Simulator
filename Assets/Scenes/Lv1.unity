@@ -738,8 +738,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 96653225}
-  - component: {fileID: 96653224}
   - component: {fileID: 96653226}
+  - component: {fileID: 96653227}
   m_Layer: 0
   m_Name: Global Volume
   m_TagString: Untagged
@@ -747,23 +747,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &96653224
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 96653223}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
-  m_IsGlobal: 1
-  priority: 0
-  blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 4b6665f9732b4054c95488ab07a559ca, type: 2}
 --- !u!4 &96653225
 Transform:
   m_ObjectHideFlags: 0
@@ -791,8 +774,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 786d97893e7b6e84ebb61d3124d1a102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PostProcess
-  myVolume: {fileID: 96653224}
+  myVolume: {fileID: 0}
   controller: {fileID: 0}
+--- !u!114 &96653227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 96653223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
+  m_IsGlobal: 1
+  priority: 0
+  blendDistance: 0
+  weight: 1
+  sharedProfile: {fileID: 11400000, guid: 4b6665f9732b4054c95488ab07a559ca, type: 2}
 --- !u!4 &98663444 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1104408896108065713, guid: c6d94c152c7fac54394741f1c9fa6bc3, type: 3}
