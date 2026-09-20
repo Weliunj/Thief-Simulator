@@ -16,4 +16,21 @@ public class ChapterSO : ScriptableObject
     [Header("🔒 Lock & Completion Status")]
     public bool isUnlocked = true;
     public bool isCompleted = false;        // Đánh dấu màn chơi đã hoàn thành hay chưa
+
+    [Header("⏰ Chapter Objectives & Time")]
+    [Tooltip("Thời gian tối đa (giây) cho màn chơi")]
+    public float maxTime = 300f;
+    [Tooltip("Điểm mục tiêu cần đạt để qua màn")]
+    public int targetPoint = 400;
+
+    [Header("📍 Spawn Settings")]
+    [Tooltip("Vị trí xuất hiện của nhân vật trong màn chơi")]
+    public GameObject playerSpawnPosition;
+
+    [Tooltip("Danh sách các tọa độ (Vector3) xuất hiện Item trong bản đồ của Chapter")]
+    public System.Collections.Generic.List<Vector3> itemSpawnPositions = new System.Collections.Generic.List<Vector3>();
+
+    [Header("🎁 Spawnable Items")]
+    [Tooltip("Danh sách các Prefab vật phẩm có thể xuất hiện trong Chapter này")]
+    public System.Collections.Generic.List<GameObject> spawnableItems = new System.Collections.Generic.List<GameObject>();
 }

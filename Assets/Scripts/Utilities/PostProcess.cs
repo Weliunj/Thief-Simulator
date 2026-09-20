@@ -6,7 +6,7 @@ public class PostProcess : MonoBehaviour
 {
     [Header("🎬 Volume & Controller")]
     public Volume myVolume;
-    public StarterAssets.ThirdPersonController controller;
+    public StarterAssets.PlayerController controller;
 
     [Header("🌑 Vignette Settings")]
     [Range(0f, 1f)] public float defaultVignette = 0.2f;  // Viền tối khi đi bộ / đứng bình thường
@@ -27,10 +27,10 @@ public class PostProcess : MonoBehaviour
 
     void Start()
     {
-        // 1. Tự động tìm ThirdPersonController nếu chưa gán
+        // 1. Tự động tìm Controller nếu chưa gán
         if (controller == null)
         {
-            controller = FindAnyObjectByType<StarterAssets.ThirdPersonController>();
+            controller = FindAnyObjectByType<StarterAssets.PlayerController>();
         }
 
         // 2. Tự động bật Allow Dynamic Resolution trên Camera bằng code
@@ -112,7 +112,7 @@ public class PostProcess : MonoBehaviour
 
         // Chuyển đổi độ phân giải mượt mà
         _currentResolutionScale = Mathf.SmoothDamp(_currentResolutionScale, targetScale, ref _resolutionVelocity, 0.2f);
-        
+
         // 1. Dành cho URP (Hoạt động ngay lập tức 100% cả trong Unity Editor lẫn APK)
         var urpAsset = QualitySettings.renderPipeline as UniversalRenderPipelineAsset ?? GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
         if (urpAsset != null)

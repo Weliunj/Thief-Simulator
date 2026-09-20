@@ -31,6 +31,19 @@ namespace StarterAssets
 
         private void Start()
         {
+            if (touchLookZone == null)
+            {
+                touchLookZone = FindFirstObjectByType<TouchLookZone>(FindObjectsInactive.Include);
+            }
+            if (dynamicJoystick == null)
+            {
+                dynamicJoystick = FindFirstObjectByType<DynamicJoystick>(FindObjectsInactive.Include);
+            }
+            if (mobileActions == null)
+            {
+                mobileActions = FindFirstObjectByType<MobileActionButtons>(FindObjectsInactive.Include);
+            }
+
             UpdateSensitivity(SettingsManager.Instance != null ? SettingsManager.Instance.Sensitivity : lookSensitivity);
         }
 

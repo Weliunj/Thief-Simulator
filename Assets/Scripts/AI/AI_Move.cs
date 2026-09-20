@@ -8,60 +8,60 @@ public class AI_Move_NavMesh : MonoBehaviour
 
     // =========================================================================
     // BIẾN STATIC TOÀN CỤC CHO NHẠC CHASE (QUAN TRỌNG: Đảm bảo chỉ 1 AudioSource phát)
-    public static bool isChaseMusicPlaying = false; 
+    public static bool isChaseMusicPlaying = false;
     // =========================================================================
 
     [Header("🤖 AI Core Components")]
     private Animator animator;
-    private string currAnimState; 
+    private string currAnimState;
     private NavMeshAgent agent;
-    private ThirdPersonController player; 
+    private PlayerController player;
     public PlayerManager playerManager;
     public Light flashlight;
-    
+
     // BIẾN THEO DÕI NỘI BỘ
 
     [Header("🏃 Movement Settings")]
     public AudioSource[] audioSources; // 0: Bước chân, 1: Phát hiện, 2: Chase Music
-    private bool isWalkSoundPlaying = false; 
-    public float walkSpeed = 1.5f;   
-    public float runSpeed = 3f;      
-    public float stoppingDistanceThreshold = 0.5f; 
+    private bool isWalkSoundPlaying = false;
+    public float walkSpeed = 1.5f;
+    public float runSpeed = 3f;
+    public float stoppingDistanceThreshold = 0.5f;
 
     [Header("👀 Detection & Chase")]
-    public float raycastRangePublic = 15f; 
+    public float raycastRangePublic = 15f;
     private float raycastRange = 15f;
-    public float raycastAngle = 30f;     
-    public Vector2 chaseDurationPublic = new Vector2(5f, 10f); 
+    public float raycastAngle = 30f;
+    public Vector2 chaseDurationPublic = new Vector2(5f, 10f);
     [HideInInspector] public bool targetDetected = false;
     public float chaseDuration = 0f;
 
     [Header("🚶 Normal Movement States")]
-    public MovementState currentMovementState = MovementState.RandomMove; 
-    public float targetRadius = 20f; 
-    public Vector2 minMaxIdleTime = new Vector2(2f, 5f); 
+    public MovementState currentMovementState = MovementState.RandomMove;
+    public float targetRadius = 20f;
+    public Vector2 minMaxIdleTime = new Vector2(2f, 5f);
     private float IdleTime = 0f;
-    
+
     [Header("🔎 Stationary Scan")]
-    public float scanDuration = 1f; 
+    public float scanDuration = 1f;
     private float scanTimer = 0f;
-    private Quaternion targetScanRotation; 
-    
+    private Quaternion targetScanRotation;
+
     [Header("📍 Patrol Points (Chỉ dùng cho chế độ Patrol)")]
-    public Transform[] patrolPoints; 
-    private int currentPatrolIndex = 0; 
+    public Transform[] patrolPoints;
+    private int currentPatrolIndex = 0;
 
     [Header("🏡 AI Stay Area")]
-    public float maxChaseRadius = 30f;   
-    public float returnSpeed = 2f;       
-    private Vector3 initialPosition;      
-    private Quaternion initialRotation;    
-    private bool isReturningToStayArea = false; 
+    public float maxChaseRadius = 30f;
+    public float returnSpeed = 2f;
+    private Vector3 initialPosition;
+    private Quaternion initialRotation;
+    private bool isReturningToStayArea = false;
 
     [Header("🎨 Appearance Settings")]
-    public Material[] availableMaterials; 
-    private Renderer aiRenderer;         
-    
+    public Material[] availableMaterials;
+    private Renderer aiRenderer;
+
     private float raycastTimer = 0f;
     private const float RAYCAST_INTERVAL = 0.15f; // Tối ưu: Raycast ~6 lần/giây
     // =========================================================================
@@ -71,24 +71,24 @@ public class AI_Move_NavMesh : MonoBehaviour
         // ... (Khởi tạo Component & Material) ...
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-        player = FindAnyObjectByType<ThirdPersonController>(); 
-        
-        aiRenderer = GetComponentInChildren<Renderer>(); 
+        player = FindAnyObjectByType<PlayerController>();
+
+        aiRenderer = GetComponentInChildren<Renderer>();
         if (availableMaterials.Length > 0 && aiRenderer != null)
         {
             int randomIndex = Random.Range(0, availableMaterials.Length);
             aiRenderer.material = availableMaterials[randomIndex];
             Debug.Log($"Đã gán Material: {availableMaterials[randomIndex].name}");
         }
-        
+
         if (agent == null) { Debug.LogError("NavMeshAgent component không được tìm thấy."); enabled = false; return; }
         if (player == null) { Debug.LogWarning("Không tìm thấy ThirdPersonController (Player)."); }
-        
+
         // ⭐ Đảm bảo NavMeshAgent.stoppingDistance thấp (ví dụ: 0.1 trong Inspector)
         agent.speed = walkSpeed;
         initialPosition = transform.position;
         initialRotation = transform.rotation;
-        
+
         InitializeMovementState();
     }
 
@@ -109,11 +109,11 @@ public class AI_Move_NavMesh : MonoBehaviour
         // 2. Xử lý trạng thái CHASE / QUAY VỀ (Ưu tiên cao nhất)
         if (targetDetected)
         {
-            isReturningToStayArea = false; 
+            isReturningToStayArea = false;
             Chase();
-            return; 
+            return;
         }
-        
+
         if (isReturningToStayArea)
         {
             ReturnToStayArea();
@@ -143,10 +143,10 @@ public class AI_Move_NavMesh : MonoBehaviour
     {
         IdleTime = Random.Range(minMaxIdleTime.x, minMaxIdleTime.y);
         agent.speed = walkSpeed;
-        
+
         // Thiết lập Scan ban đầu cho RandomMove và Stationary
-        targetScanRotation = initialRotation; 
-        SetRandomScanRotation(); 
+        targetScanRotation = initialRotation;
+        SetRandomScanRotation();
 
         if (currentMovementState == MovementState.RandomMove)
         {
@@ -154,13 +154,13 @@ public class AI_Move_NavMesh : MonoBehaviour
         }
         else if (currentMovementState == MovementState.Patrol)
         {
-             if (patrolPoints != null && patrolPoints.Length > 0)
+            if (patrolPoints != null && patrolPoints.Length > 0)
             {
                 agent.SetDestination(patrolPoints[currentPatrolIndex].position);
             }
         }
     }
-    
+
     // --- Hàm tìm và thiết lập điểm đến ngẫu nhiên ---
     private void SetRandomDestination()
     {
@@ -193,24 +193,24 @@ public class AI_Move_NavMesh : MonoBehaviour
     private void HandleRandomMove()
     {
         // Kiểm tra xem AI đã đến gần đích chưa
-        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold )
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
         {
             // Đã đến đích, bắt đầu thời gian idle/quét
-            
+
             if (IdleTime > 0f)
             {
                 SetAnimation("idle");
                 IdleTime -= Time.deltaTime;
-                
+
                 // Xử lý Quét (Scan) trong thời gian Idle
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetScanRotation, Time.deltaTime * 3f);
                 scanTimer -= Time.deltaTime;
-                
+
                 if (scanTimer <= 0f)
                 {
-                    SetRandomScanRotation(); 
+                    SetRandomScanRotation();
                 }
-                return; 
+                return;
             }
             else
             {
@@ -233,7 +233,7 @@ public class AI_Move_NavMesh : MonoBehaviour
     {
         if (agent.hasPath) { agent.SetDestination(transform.position); }
         SetAnimation("idle");
-        
+
         if (!targetDetected && !isReturningToStayArea)
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, targetScanRotation, Time.deltaTime * 3f);
@@ -270,17 +270,17 @@ public class AI_Move_NavMesh : MonoBehaviour
         }
         else
         {
-             agent.speed = walkSpeed;
-             SetAnimation("walk");
+            agent.speed = walkSpeed;
+            SetAnimation("walk");
         }
     }
-    
+
     // --- Hàm hỗ trợ tìm kiếm điểm ngẫu nhiên trên NavMesh ---
     private bool GetRandomPoint(Vector3 center, float range, out Vector3 result)
     {
         Vector3 randomDirection = Random.insideUnitSphere * range;
         randomDirection += center;
-        
+
         NavMeshHit hit;
         if (NavMesh.SamplePosition(randomDirection, out hit, range, NavMesh.AllAreas))
         {
@@ -299,8 +299,8 @@ public class AI_Move_NavMesh : MonoBehaviour
 
     public void RayCastHitTarget()
     {
-        if (player == null) return; 
-        
+        if (player == null) return;
+
         raycastRange = (player.Crouching) ? raycastRangePublic / 2.2f : raycastRangePublic;
         flashlight.range = (player.Crouching) ? 8f : 27f;
         Vector3 rayStart = transform.position + Vector3.up;
@@ -322,8 +322,8 @@ public class AI_Move_NavMesh : MonoBehaviour
                 Debug.DrawLine(rayStart, hit.point, Color.red);
                 if (hit.collider.CompareTag("Player") && !playerManager.isDied)
                 {
-                    PlayDetectionSound(); 
-                    HandleChaseMusic(true); 
+                    PlayDetectionSound();
+                    HandleChaseMusic(true);
                     chaseDuration = Random.Range(chaseDurationPublic.x, chaseDurationPublic.y);
                     targetDetected = true;
                     return; // Thoát ngay khi tìm thấy player
@@ -334,9 +334,9 @@ public class AI_Move_NavMesh : MonoBehaviour
                 Debug.DrawLine(rayStart, rayStart + dir * raycastRange, Color.green);
             }
         }
-        
+
         // Cập nhật Chase Duration/Lost Target Timer
-        if(targetDetected && chaseDuration > 0f)
+        if (targetDetected && chaseDuration > 0f)
         {
             chaseDuration -= Time.deltaTime;
         }
@@ -348,18 +348,18 @@ public class AI_Move_NavMesh : MonoBehaviour
             isReturningToStayArea = true;
             agent.SetDestination(initialPosition);
             agent.speed = returnSpeed;
-            SetAnimation("walk"); 
-            HandleChaseMusic(false); 
+            SetAnimation("walk");
+            HandleChaseMusic(false);
         }
     }
 
     public void Chase()
     {
         if (player == null) return;
-        
+
         // 1. Kiểm tra thời gian Chase & Bán kính tối đa
         float distanceToInitial = Vector3.Distance(transform.position, initialPosition);
-        
+
         if (distanceToInitial > maxChaseRadius || chaseDuration <= 0f)
         {
             // Hết thời gian Chase HOẶC ra khỏi bán kính cho phép -> Bắt đầu quay về
@@ -367,7 +367,7 @@ public class AI_Move_NavMesh : MonoBehaviour
             isReturningToStayArea = true;
             agent.SetDestination(initialPosition);
             agent.speed = returnSpeed;
-            SetAnimation("walk"); 
+            SetAnimation("walk");
             HandleChaseMusic(false);
             return;
         }
@@ -375,19 +375,19 @@ public class AI_Move_NavMesh : MonoBehaviour
         // 2. Thực hiện Chase
         agent.speed = runSpeed;
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
-        if(distanceToPlayer > agent.stoppingDistance + stoppingDistanceThreshold) 
+        if (distanceToPlayer > agent.stoppingDistance + stoppingDistanceThreshold)
         {
-            SetAnimation("run"); 
+            SetAnimation("run");
             agent.SetDestination(player.transform.position);
         }
         else // Đã chạm tới/rất gần Player
         {
             // Dừng AI và bắt đầu quá trình quay về
-            targetDetected = false; 
+            targetDetected = false;
             isReturningToStayArea = true;
             agent.SetDestination(initialPosition);
             agent.speed = returnSpeed;
-            SetAnimation("idle"); 
+            SetAnimation("idle");
             HandleChaseMusic(false);
         }
     }
@@ -397,7 +397,7 @@ public class AI_Move_NavMesh : MonoBehaviour
         // LOGIC ĐÁNH BẠI PLAYER
         if (playerManager != null && playerManager.isDied == false && other.CompareTag("Player"))
         {
-            playerManager.isDied = true; 
+            playerManager.isDied = true;
             Debug.Log(other.gameObject.name);
         }
     }
@@ -405,43 +405,43 @@ public class AI_Move_NavMesh : MonoBehaviour
     {
         // ... (Logic ReturnToStayArea giữ nguyên) ...
         agent.speed = returnSpeed;
-        SetAnimation("walk"); 
+        SetAnimation("walk");
 
         // Nếu đã đến gần vị trí ban đầu
         if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
         {
             // Khôi phục góc quay ban đầu mượt mà
             transform.rotation = Quaternion.Slerp(transform.rotation, initialRotation, Time.deltaTime * 5f);
-            
+
             // Kiểm tra xem đã quay gần đúng góc quay ban đầu chưa (ngưỡng 5 độ)
             if (Quaternion.Angle(transform.rotation, initialRotation) < 5f)
             {
                 isReturningToStayArea = false;
                 agent.SetDestination(transform.position); // Dừng hẳn
-                
+
                 // Khởi tạo lại trạng thái di chuyển thông thường ban đầu
-                InitializeMovementState(); 
-                SetAnimation("idle"); 
+                InitializeMovementState();
+                SetAnimation("idle");
             }
         }
     }
-    
+
     // ... (Logic âm thanh và Gizmos giữ nguyên) ...
     // (HandleWalkSound, PlayDetectionSound, HandleChaseMusic, SetAnimation, OnDrawGizmosSelected)
     private void SetAnimation(string name)
     {
         if (animator == null || currAnimState == name) return;
-        
+
         animator.SetTrigger(name);
         currAnimState = name;
-        
+
         if (name == "walk" || name == "run")
         {
-             HandleWalkSound(true);
+            HandleWalkSound(true);
         }
         else
         {
-             HandleWalkSound(false);
+            HandleWalkSound(false);
         }
     }
     private void HandleWalkSound(bool shouldPlay)
@@ -488,11 +488,11 @@ public class AI_Move_NavMesh : MonoBehaviour
                 Debug.Log("Chase Music Started by: " + gameObject.name);
             }
         }
-        else 
+        else
         {
-             audioSources[2].Stop();
-             isChaseMusicPlaying = false; 
-             Debug.Log("Chase Music Stopped by: " + gameObject.name);
+            audioSources[2].Stop();
+            isChaseMusicPlaying = false;
+            Debug.Log("Chase Music Stopped by: " + gameObject.name);
         }
     }
     private void OnDrawGizmosSelected()
@@ -501,15 +501,15 @@ public class AI_Move_NavMesh : MonoBehaviour
         Vector3 position = transform.position;
 
         // 1. VẼ VÙNG HOẠT ĐỘNG TỐI ĐA (MAX CHASE RADIUS)
-        Gizmos.color = Color.yellow * 0.5f; 
-        
+        Gizmos.color = Color.yellow * 0.5f;
+
         Vector3 centerPosition = (Application.isPlaying && initialPosition != Vector3.zero) ? initialPosition : position;
         Gizmos.DrawWireSphere(centerPosition, maxChaseRadius);
-        
+
         Gizmos.color = Color.yellow;
         Gizmos.DrawSphere(centerPosition, 0.2f);
-        
-        
+
+
         // 2. VẼ TẦM NHÌN (RAYCAST RANGE)
         Gizmos.color = Color.green;
         Vector3 rayStart = position + Vector3.up;
@@ -523,16 +523,16 @@ public class AI_Move_NavMesh : MonoBehaviour
              Quaternion.AngleAxis(raycastAngle, transform.right) * forward,
              Quaternion.AngleAxis(-raycastAngle, transform.right) * forward
         };
-        
+
         float currentRange = Application.isPlaying ? raycastRange : raycastRangePublic;
 
         foreach (Vector3 dir in detectionDirections)
         {
             Gizmos.DrawRay(rayStart, dir * currentRange);
         }
-        
+
         // 3. VẼ LOGIC THEO TỪNG ENUM/TRẠNG THÁI ƯU TIÊN
-        
+
         if (targetDetected && player != null)
         {
             Gizmos.color = Color.red;
@@ -540,22 +540,22 @@ public class AI_Move_NavMesh : MonoBehaviour
             Gizmos.DrawWireSphere(player.transform.position, 0.5f);
             return;
         }
-        
+
         if (isReturningToStayArea)
         {
-            Gizmos.color = Color.Lerp(Color.red, Color.yellow, 0.5f); 
+            Gizmos.color = Color.Lerp(Color.red, Color.yellow, 0.5f);
             Gizmos.DrawLine(position, centerPosition);
             Gizmos.DrawWireSphere(centerPosition, 0.5f);
             return;
         }
-        
+
         // VẼ CHO CÁC TRẠNG THÁI DI CHUYỂN THÔNG THƯỜNG
         switch (currentMovementState)
         {
             case MovementState.RandomMove:
                 Gizmos.color = Color.blue;
-                Gizmos.DrawWireSphere(position, targetRadius); 
-                
+                Gizmos.DrawWireSphere(position, targetRadius);
+
                 if (agent != null && agent.hasPath)
                 {
                     Gizmos.color = Color.cyan;
@@ -566,13 +566,13 @@ public class AI_Move_NavMesh : MonoBehaviour
 
             case MovementState.Stationary:
                 Gizmos.color = Color.white;
-                Gizmos.DrawWireSphere(position, 0.5f); 
+                Gizmos.DrawWireSphere(position, 0.5f);
 
                 Gizmos.color = Color.magenta;
-                if (Application.isPlaying && targetScanRotation != Quaternion.identity) 
+                if (Application.isPlaying && targetScanRotation != Quaternion.identity)
                 {
                     Vector3 scanDirection = targetScanRotation * Vector3.forward;
-                    Gizmos.DrawRay(rayStart, scanDirection * 3f); 
+                    Gizmos.DrawRay(rayStart, scanDirection * 3f);
                 }
                 break;
 
@@ -586,7 +586,7 @@ public class AI_Move_NavMesh : MonoBehaviour
                         if (currentPoint == null) continue;
 
                         Gizmos.DrawWireSphere(currentPoint.position, 0.4f);
-                        
+
                         if (patrolPoints.Length > 1)
                         {
                             Transform nextPoint = patrolPoints[(i + 1) % patrolPoints.Length];
@@ -596,7 +596,7 @@ public class AI_Move_NavMesh : MonoBehaviour
                             }
                         }
                     }
-                    
+
                     if (agent != null && agent.hasPath && currentPatrolIndex >= 0 && currentPatrolIndex < patrolPoints.Length)
                     {
                         Gizmos.color = Color.cyan;

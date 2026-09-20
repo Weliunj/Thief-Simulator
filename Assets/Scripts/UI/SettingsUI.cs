@@ -53,7 +53,7 @@ public class SettingsUI : MonoBehaviour
         if (sensitivitySlider != null)
         {
             sensitivitySlider.minValue = 1.0f;
-            sensitivitySlider.maxValue = 5.0f;
+            sensitivitySlider.maxValue = 10.0f;
             sensitivitySlider.wholeNumbers = false;
             sensitivitySlider.onValueChanged.AddListener(OnSliderValueChanged);
         }
@@ -128,7 +128,7 @@ public class SettingsUI : MonoBehaviour
     {
         // Bước 0.5: nhân đôi, làm tròn, rồi chia đôi
         float snapped = Mathf.Round(value * 2f) / 2f;
-        return Mathf.Clamp(snapped, 1.0f, 5.0f);
+        return Mathf.Clamp(snapped, 1.0f, 10.0f);
     }
 
     private void UpdateValueDisplay(float value)

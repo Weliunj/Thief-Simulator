@@ -72,20 +72,20 @@ public class LockpickMinigame : MonoBehaviour
     private Action onSuccessCallback;
     private Action onFailedCallback;
 
-    void Start()
+    void Awake()
     {
-        if (panelRoot != null) panelRoot.SetActive(false);
-        
         // Không làm mờ Target Image: Giữ alpha luôn là 1.0 (rõ nét 100%)
         if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 1.0f;
         
         if (closeButton != null)
         {
+            closeButton.onClick.RemoveListener(OnCloseButtonClicked);
             closeButton.onClick.AddListener(OnCloseButtonClicked);
         }
 
         if (lockpickButton != null)
         {
+            lockpickButton.onClick.RemoveListener(OnLockpickButtonPressed);
             lockpickButton.onClick.AddListener(OnLockpickButtonPressed);
         }
 
@@ -154,6 +154,11 @@ public class LockpickMinigame : MonoBehaviour
     void SetupStage(int stage)
     {
         if (trackRect == null || indicatorRect == null || targetZoneRect == null) return;
+
+        if (trackRect.rect.width <= 0)
+        {
+            Canvas.ForceUpdateCanvases();
+        }
 
         trackWidth = trackRect.rect.width;
         indicatorWidth = indicatorRect.rect.width;

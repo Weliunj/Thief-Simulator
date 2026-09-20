@@ -14,7 +14,7 @@ public class Range_Interaction : MonoBehaviour
     [Header("Display & Locking")]
     // Đã thay đổi từ TextMesh sang TMPro.TextMeshPro
     public string Name;
-    public TextMeshPro NameDisplay; 
+    public TextMeshPro NameDisplay;
     private Item item;
     public TextMeshPro infItem;
 
@@ -24,15 +24,15 @@ public class Range_Interaction : MonoBehaviour
 
     private GameObject _target;
     // Third Person Controller Reference
-    private ThirdPersonController _thirdPersonController;
+    private PlayerController _thirdPersonController;
 
     void Start()
     {
         E_icon.SetActive(false);
-        
+
         // 1. Khởi tạo TextMeshPro
         if (NameDisplay != null)
-        { 
+        {
             NameDisplay.text = Name;
             // Áp dụng màu sắc
             NameDisplay.color = NameColor;
@@ -46,7 +46,7 @@ public class Range_Interaction : MonoBehaviour
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {
-            _thirdPersonController = player.GetComponent<ThirdPersonController>();
+            _thirdPersonController = player.GetComponent<PlayerController>();
             if (_thirdPersonController == null)
             {
                 Debug.LogError("ThirdPersonController not found on Player");
@@ -63,7 +63,7 @@ public class Range_Interaction : MonoBehaviour
             Debug.LogError("MainCamera GameObject with tag 'MainCamera' not found.");
         }
         item = GetComponentInParent<Item>();
-        if(item != null)
+        if (item != null)
         {
             infItem.text = $"Price: {item.Price.ToString("F0")}    Kg: {item.kg}";
             infItem.color = Color.yellow;
@@ -93,7 +93,7 @@ public class Range_Interaction : MonoBehaviour
         //     Debug.Log("Player interacted with: " + transform.parent.gameObject.name);
         // }
     }
-    
+
     // --- Các hàm hỗ trợ ---
 
     private void CheckPlayerInRange()
@@ -115,14 +115,14 @@ public class Range_Interaction : MonoBehaviour
     {
         E_icon.SetActive(true);
     }
-    
+
     public void LookAtObject()
     {
         if (Center == null || _target == null) return;
-        
+
         // Tính vector hướng từ Center đến Camera (target)
         Vector3 direc = _target.transform.position - Center.transform.position;
-        
+
         // Xoay Center để nhìn vào Camera
         Center.transform.rotation = Quaternion.LookRotation(direc);
     }

@@ -15,7 +15,7 @@ public class PlayerManager : ScriptableObject
     public float StaminaRegenRate = 2.0f;     // Tốc độ hồi phục Stamina (VD: 2f/giây)
     public float StaminaRegenCooldown = 1.0f; // Thời gian chờ trước khi hồi phục (1 giây)
 
-    [Header("Time Settings")]
+    [Header("⏰ Runtime Session Data (Khởi tạo từ Chapter)")]
     public float MaxTime = 300f; // Thời gian tối đa (giây) - Mặc định 5 phút
     public float currentTime = 300f; // Thời gian hiện tại còn lại
 
@@ -29,8 +29,28 @@ public class PlayerManager : ScriptableObject
 
     private void OnEnable()
     {
-        _stamina = MaxStamina; // Đảm bảo stamina được thiết lập lại khi khởi động (trong Editor)
-        currentTime = MaxTime; // Đảm bảo thời gian được thiết lập lại khi khởi động
+        _stamina = MaxStamina;
+        currentTime = MaxTime;
+        currweight = 0;
+        currpoint = 0;
+        isDied = false;
     }
- 
+
+    /// <summary>
+    /// Nạp dữ liệu màn chơi từ ChapterSO vào PlayerManager
+    /// </summary>
+    public void InitializeChapter(ChapterSO chapter)
+    {
+        if (chapter != null)
+        {
+            MaxTime = chapter.maxTime;
+            totalpoint = chapter.targetPoint;
+        }
+
+        currentTime = MaxTime;
+        _stamina = MaxStamina;
+        currweight = 0;
+        currpoint = 0;
+        isDied = false;
+    }
 }

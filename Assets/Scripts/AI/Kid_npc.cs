@@ -9,7 +9,7 @@ public class Kid : MonoBehaviour
     private Animator animator;
     private string currAnimState;
     private NavMeshAgent agent;
-    private ThirdPersonController player;
+    private PlayerController player;
 
     public float walkSpeed = 1.5f; // Tốc độ đi bộ
     public float runSpeed = 3f;  // Tốc độ chạy
@@ -17,7 +17,7 @@ public class Kid : MonoBehaviour
     // Biến để quản lý trạng thái
     public float targetRadius = 20f; // Bán kính tìm kiếm điểm đến ngẫu nhiên
     public float stoppingDistanceThreshold = 0.5f; // Ngưỡng dừng để chuyển hoạt ảnh từ đi sang đứng
-    
+
     private float IdleTime = 0f;
     public Vector2 minMaxIdleTime = new Vector2(2f, 5f); // Thời gian đứng yên ngẫu nhiên (Min/Max)
 
@@ -28,7 +28,7 @@ public class Kid : MonoBehaviour
     private bool targetDetected = false;
 
     public Vector2 callDurationPublic = new Vector2(5f, 10f); // Thời gian theo đuổi mục tiêu
-    private float callDuration = 0f;  
+    private float callDuration = 0f;
     public float callRanger = 20f;
 
     private float raycastTimer = 0f;
@@ -43,7 +43,7 @@ public class Kid : MonoBehaviour
         // 1. Lấy Component
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-        player = FindAnyObjectByType<ThirdPersonController>();
+        player = FindAnyObjectByType<PlayerController>();
 
         // LẤY RENDERER VÀ GÁN MATERIAL NGẪU NHIÊN
         aiRenderer = GetComponentInChildren<Renderer>(); // Tìm Renderer trên GameObject hoặc con
@@ -56,7 +56,7 @@ public class Kid : MonoBehaviour
         {
             // Chọn ngẫu nhiên một chỉ mục trong mảng
             int randomIndex = Random.Range(0, availableMaterials.Length);
-            
+
             // Gán material đã chọn cho Renderer
             aiRenderer.material = availableMaterials[randomIndex];
             Debug.Log($"Đã gán Material: {availableMaterials[randomIndex].name}");
@@ -93,17 +93,17 @@ public class Kid : MonoBehaviour
 
         // 2. Kiểm tra trạng thái NavMeshAgent
         // Agent.hasPath là true nếu nó đang tính toán hoặc di chuyển đến đích
-        
+
         RayCastHitTarget();
-        if(targetDetected)  { return; }
+        if (targetDetected) { return; }
         // Kiểm tra xem AI đã gần đến đích chưa (dựa trên stoppingDistance đã được thiết lập)
-        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold )
+        if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
         {
             // Đã đến đích hoặc gần đến đích
             // Chuyển sang hoạt ảnh Đứng (Set IsWalking = false)
             SetAnimation("idle");
-            
-            if(IdleTime > 0f)
+
+            if (IdleTime > 0f)
             {
                 IdleTime -= Time.deltaTime;
                 return; // Chờ cho đến khi hết thời gian đứng yên
@@ -128,12 +128,12 @@ public class Kid : MonoBehaviour
     }
     public void RayCastHitTarget()
     {
-        if(player.Crouching) { raycastRange = raycastRangePublic / 2f; }
+        if (player.Crouching) { raycastRange = raycastRangePublic / 2f; }
         else { raycastRange = raycastRangePublic; }
 
         Vector3 rayStart = transform.position + Vector3.up;
         var center = Physics.Raycast(rayStart, transform.forward, out RaycastHit hit, raycastRange);
-        
+
         Vector3 leftDirection = Quaternion.AngleAxis(-raycastAngle, Vector3.up) * transform.forward;
         var left = Physics.Raycast(rayStart, leftDirection, out RaycastHit hitLeft, raycastRange);
         Vector3 rightDirection = Quaternion.AngleAxis(raycastAngle, Vector3.up) * transform.forward;
@@ -144,10 +144,10 @@ public class Kid : MonoBehaviour
         Vector3 downDirection = Quaternion.AngleAxis(-raycastAngle, Vector3.right) * transform.forward;
         var down = Physics.Raycast(rayStart, downDirection, out RaycastHit hitDown, raycastRange);
 
-        if(center)
+        if (center)
         {
             Debug.DrawLine(rayStart, hit.point, Color.red);
-            if(hit.collider.CompareTag("Player"))
+            if (hit.collider.CompareTag("Player"))
             {
                 targetDetected = true;
                 callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
@@ -157,23 +157,23 @@ public class Kid : MonoBehaviour
         {
             Debug.DrawLine(rayStart, rayStart + transform.forward * raycastRange, Color.green);
         }
-        if(left)
+        if (left)
         {
             Debug.DrawLine(rayStart, hitLeft.point, Color.red);
-            if(hitLeft.collider.CompareTag("Player"))
+            if (hitLeft.collider.CompareTag("Player"))
             {
                 targetDetected = true;
-                callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y)  ; // Reset thời gian theo đuổi
+                callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
             }
         }
         else
         {
             Debug.DrawLine(rayStart, rayStart + leftDirection * raycastRange, Color.green);
         }
-        if(right)
+        if (right)
         {
             Debug.DrawLine(rayStart, hitRight.point, Color.red);
-            if(hitRight.collider.CompareTag("Player"))
+            if (hitRight.collider.CompareTag("Player"))
             {
                 targetDetected = true;
                 callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
@@ -183,10 +183,10 @@ public class Kid : MonoBehaviour
         {
             Debug.DrawLine(rayStart, rayStart + rightDirection * raycastRange, Color.green);
         }
-        if(up)
+        if (up)
         {
             Debug.DrawLine(rayStart, hitUp.point, Color.red);
-            if(hitUp.collider.CompareTag("Player"))
+            if (hitUp.collider.CompareTag("Player"))
             {
                 targetDetected = true;
                 callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
@@ -196,10 +196,10 @@ public class Kid : MonoBehaviour
         {
             Debug.DrawLine(rayStart, rayStart + upDirection * raycastRange, Color.green);
         }
-        if(down)
+        if (down)
         {
             Debug.DrawLine(rayStart, hitDown.point, Color.red);
-            if(hitDown.collider.CompareTag("Player"))
+            if (hitDown.collider.CompareTag("Player"))
             {
                 targetDetected = true;
                 callDuration = Random.Range(callDurationPublic.x, callDurationPublic.y); // Reset thời gian theo đuổi
@@ -213,40 +213,40 @@ public class Kid : MonoBehaviour
     }
     public void Call()
     {
-        if(callDuration > 0f)
+        if (callDuration > 0f)
         {
             callDuration -= Time.deltaTime;
         }
 
-        if(targetDetected && callDuration > 0f)
+        if (targetDetected && callDuration > 0f)
         {
             Debug.Log("true");
             agent.speed = runSpeed;
             SetAnimation("run");
-            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold )
+            if (!agent.pathPending && agent.remainingDistance <= agent.stoppingDistance + stoppingDistanceThreshold)
             {
                 SetRandomDestination();
             }
             Collider[] colliders = Physics.OverlapSphere(transform.position, callRanger);
-                foreach (var collider in colliders)
+            foreach (var collider in colliders)
+            {
+                if (collider.CompareTag("adult"))
                 {
-                    if(collider.CompareTag("adult"))
+                    AI_Move_NavMesh adultNpc = collider.GetComponent<AI_Move_NavMesh>();
+                    if (adultNpc != null)
                     {
-                        AI_Move_NavMesh adultNpc = collider.GetComponent<AI_Move_NavMesh>();
-                        if(adultNpc != null)
-                        {
-                            adultNpc.PlayDetectionSound(); 
-                            adultNpc.HandleChaseMusic(true);
-                            adultNpc.targetDetected = true;
-                            adultNpc.chaseDuration = Random.Range(
-                                adultNpc.chaseDurationPublic.x, 
-                                adultNpc.chaseDurationPublic.y);
-                        }
+                        adultNpc.PlayDetectionSound();
+                        adultNpc.HandleChaseMusic(true);
+                        adultNpc.targetDetected = true;
+                        adultNpc.chaseDuration = Random.Range(
+                            adultNpc.chaseDurationPublic.x,
+                            adultNpc.chaseDurationPublic.y);
                     }
                 }
-            
+            }
+
         }
-        else if(callDuration <= 0f)
+        else if (callDuration <= 0f)
         {
             targetDetected = false;     //idle 2 giay sau do lai di nhu npc
         }
@@ -265,7 +265,7 @@ public class Kid : MonoBehaviour
     private void SetRandomDestination()
     {
         Vector3 randomPoint;
-        
+
         // Sử dụng hàm tiện ích để tìm điểm ngẫu nhiên trên NavMesh
         if (GetRandomPoint(transform.position, targetRadius, out randomPoint))
         {
@@ -284,7 +284,7 @@ public class Kid : MonoBehaviour
     {
         Vector3 randomDirection = Random.insideUnitSphere * range;
         randomDirection += center;
-        
+
         NavMeshHit hit;
         // Kiểm tra xem điểm ngẫu nhiên có nằm trên NavMesh không
         if (NavMesh.SamplePosition(randomDirection, out hit, range, NavMesh.AllAreas))
@@ -299,12 +299,11 @@ public class Kid : MonoBehaviour
 
     public void OnDrawGizmos()
     {
-        if(targetDetected && callDuration > 0f)
+        if (targetDetected && callDuration > 0f)
         {
             Gizmos.DrawWireSphere(transform.position, callRanger);
         }
     }
 }
-    
 
-    
+

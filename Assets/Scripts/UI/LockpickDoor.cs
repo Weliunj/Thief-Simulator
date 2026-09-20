@@ -1,14 +1,15 @@
 using System.Collections;
+using StarterAssets;
 using UnityEngine;
 
-public class LockpickDoor : MonoBehaviour
+public class LockpickDoor : MonoBehaviour, IInteractable
 {
     [Header("🚪 Lock Settings")]
     public string doorName = "Wooden Locked Door";
     public int rewardPoints = 10;
     public bool destroyOnUnlock = true;
     public GameObject doorModel; // Door model (if hiding mesh instead of destroying entire GameObject)
-    
+
     [Header("🔊 Audio")]
     public AudioSource audioSource;
     public AudioClip unlockSound;
@@ -16,7 +17,7 @@ public class LockpickDoor : MonoBehaviour
     [Header("📍 Interaction Settings")]
     public float interactRadius = 3f;
     public Transform interactPivot;
-    
+
     [HideInInspector] public bool isUnlocked = false;
     private bool playerInRange = false;
     private GameObject playerObj;
@@ -146,31 +147,31 @@ public class LockpickDoor : MonoBehaviour
                 audioSource.Play();
             }
         }
-        
+
         Debug.Log($"Trò chơi thất bại! Đang kêu gọi AdultNPC trong phạm vi {callRange}m.");
 
         // 1. Tìm tất cả colliders trong phạm vi callRange
         Collider[] colliders = Physics.OverlapSphere(transform.position, callRange);
-        
+
         int adultCount = 0;
-        
+
         foreach (var collider in colliders)
         {
             // 2. Kiểm tra Tag "adult"
-            if (collider.CompareTag("adult")) 
+            if (collider.CompareTag("adult"))
             {
                 AI_Move_NavMesh adultNpc = collider.GetComponent<AI_Move_NavMesh>();
-                
+
                 if (adultNpc != null)
                 {
                     // 3. Kích hoạt chế độ đuổi (chase) trên AdultNPC
-                    adultNpc.PlayDetectionSound(); 
+                    adultNpc.PlayDetectionSound();
                     adultNpc.HandleChaseMusic(true);
-                    adultNpc.targetDetected = true; 
-                    
+                    adultNpc.targetDetected = true;
+
                     // Thiết lập thời gian theo đuổi ngẫu nhiên
                     adultNpc.chaseDuration = Random.Range(
-                        adultNpc.chaseDurationPublic.x, 
+                        adultNpc.chaseDurationPublic.x,
                         adultNpc.chaseDurationPublic.y);
 
                     adultCount++;
@@ -178,7 +179,7 @@ public class LockpickDoor : MonoBehaviour
                 }
             }
         }
-        
+
         if (adultCount == 0)
         {
             Debug.Log("Không tìm thấy AdultNPC nào trong phạm vi.");
@@ -193,5 +194,39 @@ public class LockpickDoor : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(p.position, callRange);
+    }
+
+    // =========================================================================
+    //                       IINTERACTABLE IMPLEMENTATION
+    // =========================================================================
+
+    public string GetInteractableName() => string.IsNullOrEmpty(doorName) ? "Locked Door" : doorName;
+    public string GetActionPrompt() => "Pick Lock";
+    public int GetPrice() => 0;
+    public int GetWeight() => 0;
+    public bool IsLootItem() => false;
+
+    public bool CanInteract(PlayerController player, out string failReason)
+    {
+        if (isUnlocked)
+        {
+            failReason = "Already Unlocked";
+            return false;
+        }
+        if (UI_Manager.isSolving)
+        {
+            failReason = "";
+            return false;
+        }
+        failReason = "";
+        return true;
+    }
+
+    public void Interact(PlayerController player)
+    {
+        if (!isUnlocked && !UI_Manager.isSolving)
+        {
+            StartLockpicking();
+        }
     }
 }

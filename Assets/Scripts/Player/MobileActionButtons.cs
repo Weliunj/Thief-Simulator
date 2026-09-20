@@ -42,7 +42,10 @@ public class MobileActionButtons : MonoBehaviour
             jumpButton.onClick.AddListener(OnJumpTap);
 
         if (interactButton != null)
+        {
             interactButton.onClick.AddListener(OnInteractTap);
+            interactButton.gameObject.SetActive(false);
+        }
 
         if (dropButton != null)
             dropButton.onClick.AddListener(OnDropTap);

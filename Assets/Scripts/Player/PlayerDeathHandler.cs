@@ -5,7 +5,7 @@ using StarterAssets;
 public class PlayerDeathHandler : MonoBehaviour
 {
     [Header("⚙️ References")]
-    public ThirdPersonController playerController;
+    public PlayerController playerController;
     public PlayerManager playerManager;
     public Animator animator;
 
@@ -27,12 +27,12 @@ public class PlayerDeathHandler : MonoBehaviour
     [Header("🔊 Audio & Effects")]
     [Tooltip("AudioSource 1: Âm thanh phát ngay khi Player chết")]
     public AudioSource deathAudioSource;
-    
+
     [Tooltip("AudioSource 2: Còi cảnh sát (Police Siren)")]
     public AudioSource policeSirenAudioSource;
     [Tooltip("Hoặc kéo thả AudioClip còi cảnh sát vào đây nếu dùng chung AudioSource")]
     public AudioClip policeSirenClip;
-    
+
     [Tooltip("Thời gian chờ trước khi còi cảnh sát hú (mặc định 3 giây)")]
     public float policeSirenDelay = 3.0f;
 
@@ -44,7 +44,7 @@ public class PlayerDeathHandler : MonoBehaviour
 
     void Start()
     {
-        if (playerController == null) playerController = GetComponent<ThirdPersonController>();
+        if (playerController == null) playerController = GetComponent<PlayerController>();
         if (animator == null && playerController != null) animator = playerController.GetComponent<Animator>();
         if (cameraTarget == null && playerController != null && playerController.CinemachineCameraTarget != null)
         {

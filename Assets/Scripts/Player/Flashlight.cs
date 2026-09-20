@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Flashlight : MonoBehaviour
 {
-    private ThirdPersonController player;
+    private PlayerController player;
     public PlayerManager playerManager;
     public MobileActionButtons mobileActions;
 
@@ -16,7 +16,7 @@ public class Flashlight : MonoBehaviour
 
     void Start()
     {
-        player = FindAnyObjectByType<ThirdPersonController>();
+        player = FindAnyObjectByType<PlayerController>();
         flashlight = GetComponent<Light>();
         toggleF = false;
 

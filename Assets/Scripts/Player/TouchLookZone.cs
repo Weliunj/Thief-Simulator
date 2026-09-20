@@ -53,7 +53,8 @@ public class TouchLookZone : MonoBehaviour, IPointerDownHandler, IDragHandler, I
     public void OnDrag(PointerEventData eventData)
     {
         Vector2 currentPosition = eventData.position;
-        Vector2 delta = (currentPosition - lastPointerPosition) * sensitivity;
+        // Hệ số nhạy chuẩn cho màn hình cảm ứng:
+        Vector2 delta = (currentPosition - lastPointerPosition) * (sensitivity * 0.15f);
         // Đảo trục Y: vuốt lên → camera nhìn lên (không bị invert)
         delta.y = -delta.y;
         LookDelta = delta;

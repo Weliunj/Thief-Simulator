@@ -113,9 +113,9 @@ public class SettingsManager : MonoBehaviour
 
     public void SetSensitivity(float value)
     {
-        // Clamp between 1.0 and 5.0 in steps of 0.5
+        // Clamp between 1.0 and 10.0 in steps of 0.5
         float snappedValue = Mathf.Round(value * 2f) / 2f;
-        snappedValue = Mathf.Clamp(snappedValue, 1.0f, 5.0f);
+        snappedValue = Mathf.Clamp(snappedValue, 1.0f, 10.0f);
 
         settingsData.sensitivity = snappedValue;
         SaveSettings();

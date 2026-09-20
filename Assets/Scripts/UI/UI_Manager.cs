@@ -44,6 +44,10 @@ public class UI_Manager : MonoBehaviour
     [Header("⏰ Time UI")]
     public TextMeshProUGUI timeText; // Text hiển thị thời gian còn lại
     public AudioSource alarm;
+    [Header("📖 Chapter Data")]
+    public ChapterSO currentChapter;
+    public ChapterSO nextChapter;
+
     [Header("🔑 Lockpick Minigame UI")]
     public LockpickMinigame lockpickMinigame;
 
@@ -60,6 +64,15 @@ public class UI_Manager : MonoBehaviour
         if (WinPanel != null) WinPanel.SetActive(false);
         if (settingPanel != null) settingPanel.SetActive(false);
 
+        if (lockpickMinigame == null)
+        {
+            lockpickMinigame = FindFirstObjectByType<LockpickMinigame>(FindObjectsInactive.Include);
+        }
+        if (lockpickMinigame != null)
+        {
+            lockpickMinigame.CloseMinigame();
+        }
+
         if (playerManager == null)
         {
             Debug.LogError("PlayerManager ScriptableObject chưa được gán.");
@@ -67,12 +80,19 @@ public class UI_Manager : MonoBehaviour
             return;
         }
 
-        // Tự động Reset dữ liệu PlayerManager khi vừa vào Scene mới
-        playerManager.isDied = false;
-        playerManager.currweight = 0;
-        playerManager.currpoint = 0;
-        playerManager._stamina = playerManager.MaxStamina;
-        playerManager.currentTime = playerManager.MaxTime;
+        // Khởi tạo thông số từ ChapterSO nếu có, hoặc reset mặc định
+        if (currentChapter != null)
+        {
+            playerManager.InitializeChapter(currentChapter);
+        }
+        else
+        {
+            playerManager.isDied = false;
+            playerManager.currweight = 0;
+            playerManager.currpoint = 0;
+            playerManager._stamina = playerManager.MaxStamina;
+            playerManager.currentTime = playerManager.MaxTime;
+        }
 
         // Thiết lập giá trị Max/Target Point cố định
         if (Stamina != null) { Stamina.text = $"{playerManager.MaxStamina:F0}"; }
@@ -187,7 +207,18 @@ public class UI_Manager : MonoBehaviour
                 if (WinPanel != null) WinPanel.SetActive(true);
                 Cursor.lockState = CursorLockMode.None; 
                 Cursor.visible = true;
-                Debug.Log($"WIN! Đã đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
+
+                // Tự động tích hoàn thành Chapter hiện tại và mở khóa Chapter tiếp theo
+                if (currentChapter != null)
+                {
+                    currentChapter.isCompleted = true;
+                }
+                if (nextChapter != null)
+                {
+                    nextChapter.isUnlocked = true;
+                }
+
+                Debug.Log($"WIN! Đã hoàn thành '{currentChapter?.chapterTitle ?? "Chapter"}' - Đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
             }
         }
     }

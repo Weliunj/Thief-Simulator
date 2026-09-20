@@ -1,31 +1,111 @@
-using Unity.VisualScripting;
+using StarterAssets;
 using UnityEngine;
 
-public class Item : MonoBehaviour
+public class Item : MonoBehaviour, IInteractable
 {
-    public float MinPrice, MaxPrice;
-    public float Price = 0f;
+    [Header("📦 ScriptableObject Data")]
+    public ItemSO itemData;
 
-    public int MinKg, MaxKg;
+    [Header("📊 Current Stats (Generated at Runtime)")]
+    public string itemName = "";
+    public float Price = 0f;
     public int kg = 0;
-    private Range_Interaction ROI;
+
+    [Header("⚙️ Fallback Settings (Nếu không gắn ItemSO)")]
+    public float MinPrice = 10f;
+    public float MaxPrice = 100f;
+    public int MinKg = 1;
+    public int MaxKg = 10;
+
     public PlayerManager playerManagerl;
+
     void Awake()
     {
-        MaxKg = MaxKg <= MinKg ? MinKg + 10 : MaxKg;
-        MaxPrice = MaxPrice <= MinPrice ? MinPrice + 10 : MaxPrice;
-        ROI = GetComponentInChildren<Range_Interaction>();
-        kg = Random.Range(MinKg, MaxKg);
-        Price = Random.Range(MinPrice, MaxPrice);   
+        InitializeStats();
     }
+
+    /// <summary>
+    /// Khởi tạo và ngẫu nhiên hóa chỉ số mỗi khi màn chơi bắt đầu
+    /// </summary>
+    public void InitializeStats()
+    {
+        if (itemData != null)
+        {
+            var stats = itemData.GenerateRandomStats();
+            Price = stats.price;
+            kg = stats.kg;
+            itemName = string.IsNullOrEmpty(itemData.itemName) ? gameObject.name : itemData.itemName;
+        }
+        else
+        {
+            // Fallback nếu item chưa được gán ItemSO
+            MaxKg = MaxKg <= MinKg ? MinKg + 10 : MaxKg;
+            MaxPrice = MaxPrice <= MinPrice ? MinPrice + 10 : MaxPrice;
+            kg = Random.Range(MinKg, MaxKg);
+            Price = Random.Range(MinPrice, MaxPrice);
+            if (string.IsNullOrEmpty(itemName))
+            {
+                itemName = gameObject.name.Replace("(Clone)", "").Trim();
+            }
+        }
+    }
+
     public void OnTriggerEnter(Collider other)
     {
         if (other != null && other.CompareTag("home"))
         {
-            playerManagerl.currpoint += (int)Price;
-            Debug.Log($"Curr: {playerManagerl.currpoint} / {playerManagerl.totalpoint}");
+            if (playerManagerl == null)
+            {
+                UI_Manager ui = FindFirstObjectByType<UI_Manager>();
+                if (ui != null) playerManagerl = ui.playerManager;
+            }
+
+            if (playerManagerl != null)
+            {
+                playerManagerl.currpoint += (int)Price;
+                Debug.Log($"Đã giao vật phẩm! Điểm hiện tại: {playerManagerl.currpoint} / {playerManagerl.totalpoint}");
+            }
             Destroy(gameObject);
         }
     }
 
+    // =========================================================================
+    //                       IINTERACTABLE IMPLEMENTATION
+    // =========================================================================
+
+    public string GetInteractableName() => string.IsNullOrEmpty(itemName) ? gameObject.name : itemName;
+
+    public string GetActionPrompt() => "Pick Up";
+
+    public int GetPrice() => Mathf.RoundToInt(Price);
+
+    public int GetWeight() => kg;
+
+    public bool IsLootItem() => true;
+
+    public bool CanInteract(PlayerController player, out string failReason)
+    {
+        if (player == null || player.player == null)
+        {
+            failReason = "";
+            return false;
+        }
+
+        if (player.player.currweight + kg > player.player.Maxweight)
+        {
+            failReason = "Too Heavy! (Overweight)";
+            return false;
+        }
+
+        failReason = "";
+        return true;
+    }
+
+    public void Interact(PlayerController player)
+    {
+        if (player != null)
+        {
+            player.TryPickupItem(gameObject, kg);
+        }
+    }
 }

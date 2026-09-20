@@ -155,4 +155,41 @@ public class ItemSpawner : MonoBehaviour
         }
         Debug.Log($"ItemSpawner: Spawned {positions.Count} prefabs at provided positions.");
     }
+
+    /// <summary>
+    /// Tự động sinh vật phẩm từ dữ liệu của ChapterSO (ưu tiên tọa độ Vector3 trong SO)
+    /// </summary>
+    public void SpawnFromChapter(ChapterSO chapter)
+    {
+        if (chapter == null) return;
+        if (chapter.spawnableItems == null || chapter.spawnableItems.Count == 0)
+        {
+            Debug.LogWarning("ItemSpawner: Chapter chưa có spawnableItems.");
+            return;
+        }
+
+        // 1. Nếu ChapterSO có danh sách tọa độ Vector3:
+        if (chapter.itemSpawnPositions != null && chapter.itemSpawnPositions.Count > 0)
+        {
+            foreach (Vector3 spawnPos in chapter.itemSpawnPositions)
+            {
+                GameObject prefab = chapter.spawnableItems[Random.Range(0, chapter.spawnableItems.Count)];
+                if (prefab != null)
+                {
+                    Vector3 pos = spawnPos + new Vector3(
+                        Random.Range(-randomOffset, randomOffset), 
+                        0f, 
+                        Random.Range(-randomOffset, randomOffset)
+                    );
+                    Instantiate(prefab, pos, Quaternion.identity);
+                }
+            }
+            Debug.Log($"ItemSpawner: Đã sinh thành công {chapter.itemSpawnPositions.Count} vật phẩm từ tọa độ Vector3 trong ChapterSO.");
+        }
+        // 2. Nếu chưa điền Vector3 trong SO thì dùng các spawnPoints có sẵn trong Scene
+        else if (spawnPoints != null && spawnPoints.Length > 0)
+        {
+            SpawnRandomPrefabs(chapter.spawnableItems.ToArray(), spawnPoints.Length);
+        }
+    }
 }
