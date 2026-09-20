@@ -59,6 +59,10 @@ namespace StarterAssets
         [Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
         public GameObject CinemachineCameraTarget;
 
+        [Tooltip("Độ hạ thấp vị trí Camera Target khi đang cúi (Crouching)")]
+        public float crouchCameraYOffset = -0.45f;
+        private Vector3 _startCameraTargetLocalPos;
+
         [Tooltip("How far in degrees can you move the camera up")]
         public float TopClamp = 70.0f;
 
@@ -153,6 +157,10 @@ namespace StarterAssets
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
+            if (CinemachineCameraTarget != null)
+            {
+                _startCameraTargetLocalPos = CinemachineCameraTarget.transform.localPosition;
+            }
             characterController = GetComponent<CharacterController>();
             deathHandler = GetComponent<PlayerDeathHandler>();
             ui = FindFirstObjectByType<UI_Manager>();
@@ -535,6 +543,16 @@ namespace StarterAssets
                 characterController.center = new Vector3(StartCenter.x, 0.77f, StartCenter.z);
                 characterController.height = 1.46f;
 
+                if (CinemachineCameraTarget != null)
+                {
+                    Vector3 crouchTargetPos = _startCameraTargetLocalPos + new Vector3(0f, crouchCameraYOffset, 0f);
+                    CinemachineCameraTarget.transform.localPosition = Vector3.Lerp(
+                        CinemachineCameraTarget.transform.localPosition,
+                        crouchTargetPos,
+                        Time.deltaTime * 8f
+                    );
+                }
+
                 _animator.SetBool("Crouch", true); // Dùng SetBool thay vì SetTrigger
                 targetSpeed = (_input.move == Vector2.zero) ? 0.0f : player._MoveSpeed / 1.5f; // Tốc độ di chuyển khi cúi
                 if(targetSpeed < 0.1f)
@@ -550,6 +568,16 @@ namespace StarterAssets
             {
                 characterController.center = new Vector3(StartCenter.x, StartCenter.y, StartCenter.z);
                 characterController.height = StartHeight;
+
+                if (CinemachineCameraTarget != null)
+                {
+                    CinemachineCameraTarget.transform.localPosition = Vector3.Lerp(
+                        CinemachineCameraTarget.transform.localPosition,
+                        _startCameraTargetLocalPos,
+                        Time.deltaTime * 8f
+                    );
+                }
+
                 _animator.SetBool("IsCrouching", false);
                 _animator.SetBool("Crouch", false); // Dùng SetBool thay vì ResetTrigger
 

@@ -333,9 +333,9 @@ TextureImporter:
       name: line5
       rect:
         serializedVersion: 2
-        x: 213
+        x: 216
         y: 143
-        width: 25
+        width: 24
         height: 7
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
@@ -712,7 +712,7 @@ TextureImporter:
         width: 20
         height: 20
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -734,7 +734,7 @@ TextureImporter:
         width: 20
         height: 20
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -756,7 +756,7 @@ TextureImporter:
         width: 20
         height: 20
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -765,6 +765,72 @@ TextureImporter:
       bones: []
       spriteID: d3192fe44c4e7654aabaf8e72df38421
       internalID: -1974193115
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiniDot1
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 225
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f8f2619aad6db9b419989c5bdbd78a12
+      internalID: -653191431
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiniDot2
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 234
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 96a624efae6719b4381850236407f665
+      internalID: -586245066
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: MiniDot3
+      rect:
+        serializedVersion: 2
+        x: 188
+        y: 243
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 90457b3b583a5554c822b5a55a66376d
+      internalID: -1210201943
       vertices: []
       indices: 
       edges: []
@@ -806,6 +872,9 @@ TextureImporter:
       Dot3: -1974193115
       Exit: 1126309441
       Locked: -362155400
+      MiniDot1: -653191431
+      MiniDot2: -586245066
+      MiniDot3: -1210201943
       Off: 1800938218
       On: -822902027
       Panel1: -1720750896

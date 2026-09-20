@@ -630,6 +630,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flashlight
   playerManager: {fileID: 11400000, guid: 3745f85ce46b18b4d954cdfa3e6ace6d, type: 2}
+  mobileActions: {fileID: 0}
   audioSources:
   - {fileID: 46091846893374827}
   - {fileID: 337309182088208589}
@@ -1674,12 +1675,14 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   CinemachineCameraTarget: {fileID: 2485425070362818435}
-  TopClamp: 60
-  BottomClamp: -60
+  crouchCameraYOffset: -0.8
+  TopClamp: 70
+  BottomClamp: -70
   CameraAngleOverride: 0
   LockCameraPosition: 0
   targetSpeed: 0
   rangeInteract: 1.4
+  mobileActions: {fileID: 0}
   lightD: {fileID: 3738911389034916266}
   audioSource:
   - {fileID: 6561774101880650058}
@@ -1725,9 +1728,12 @@ MonoBehaviour:
   jump: 0
   sprint: 0
   analogMovement: 0
-  cursorLocked: 1
+  cursorLocked: 0
   cursorInputForLook: 1
   lookSensitivity: 1.8
+  dynamicJoystick: {fileID: 0}
+  touchLookZone: {fileID: 0}
+  mobileActions: {fileID: 0}
 --- !u!114 &7195796152396599206
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -21,12 +21,14 @@ public class LockpickDoor : MonoBehaviour
     private bool playerInRange = false;
     private GameObject playerObj;
     private UI_Manager uiManager;
+    private MobileActionButtons mobileActions;
 
     void Start()
     {
         if (interactPivot == null) interactPivot = transform;
         playerObj = GameObject.FindGameObjectWithTag("Player");
         uiManager = FindFirstObjectByType<UI_Manager>();
+        mobileActions = FindFirstObjectByType<MobileActionButtons>();
     }
 
     void Update()
@@ -36,7 +38,8 @@ public class LockpickDoor : MonoBehaviour
 
         CheckPlayerDistance();
 
-        if (playerInRange && Input.GetKeyDown(KeyCode.E))
+        bool isInteractInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.interactPressed);
+        if (playerInRange && isInteractInput)
         {
             StartLockpicking();
         }

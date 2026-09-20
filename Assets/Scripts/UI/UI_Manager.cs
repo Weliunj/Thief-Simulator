@@ -7,12 +7,14 @@ public class UI_Manager : MonoBehaviour
     // =========================================================================
     [Header("⚙️ References")]
     public PlayerManager playerManager;
-    public GameObject GuidePanel;
     public static bool isSolving = false;
-    [HideInInspector] public bool toggleGuide = false;
     
     public GameObject diedPanel;
     public GameObject WinPanel;
+
+    [Header("📱 Main HUD & Mobile Controls")]
+    [Tooltip("Panel chứa HUD game chính & các nút điều khiển mobile (tự động tắt khi vào Minigame)")]
+    public GameObject mainHUDPanel;
 
     [Header("⚙️ Settings UI")]
     public GameObject settingPanel;
@@ -163,10 +165,6 @@ public class UI_Manager : MonoBehaviour
             Debug.Log($"WIN! Đã đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
         }
         
-        // --- XỬ LÝ GUIDE & SETTINGS ---
-        if (Input.GetKeyDown(KeyCode.H) && !isSolving) { toggleGuide = !toggleGuide; }
-        if (GuidePanel != null) { GuidePanel.SetActive(toggleGuide); }
-
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             ToggleSettings();
@@ -229,6 +227,7 @@ public class UI_Manager : MonoBehaviour
         }
 
         isSolving = true;
+        if (mainHUDPanel != null) mainHUDPanel.SetActive(false);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -236,12 +235,17 @@ public class UI_Manager : MonoBehaviour
             onSuccess: () =>
             {
                 isSolving = false;
+                if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
                 if (door != null) door.OnUnlockSuccess();
             },
             onFailed: () =>
             {
+                isSolving = false;
+                if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
                 if (door != null) door.OnUnlockFailed();
             }
         );
@@ -250,6 +254,7 @@ public class UI_Manager : MonoBehaviour
     public void CancelLockpicking()
     {
         isSolving = false;
+        if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         if (lockpickMinigame != null)

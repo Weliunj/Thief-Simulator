@@ -24,12 +24,16 @@ public class MobileActionButtons : MonoBehaviour
     [Header("🧎 Crouch Button (Toggle)")]
     public Button crouchButton;
 
+    [Header("🔦 Flashlight Button (Toggle)")]
+    public Button flashlightButton;
+
     // --- Trạng thái public để ThirdPersonController và StarterAssetsInputs đọc ---
     [HideInInspector] public bool jumpPressed = false;
     [HideInInspector] public bool sprintHeld = false;
     [HideInInspector] public bool crouchHeld = false;
     [HideInInspector] public bool interactPressed = false;
     [HideInInspector] public bool dropPressed = false;
+    [HideInInspector] public bool flashlightPressed = false;
 
     void Start()
     {
@@ -49,6 +53,9 @@ public class MobileActionButtons : MonoBehaviour
 
         if (crouchButton != null)
             crouchButton.onClick.AddListener(OnCrouchToggle);
+
+        if (flashlightButton != null)
+            flashlightButton.onClick.AddListener(OnFlashlightTap);
     }
 
     // =========================================================================
@@ -68,6 +75,11 @@ public class MobileActionButtons : MonoBehaviour
     private void OnDropTap()
     {
         dropPressed = true;
+    }
+
+    private void OnFlashlightTap()
+    {
+        flashlightPressed = true;
     }
 
     // =========================================================================
@@ -110,5 +122,6 @@ public class MobileActionButtons : MonoBehaviour
         jumpPressed = false;
         interactPressed = false;
         dropPressed = false;
+        flashlightPressed = false;
     }
 }

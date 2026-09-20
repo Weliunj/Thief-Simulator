@@ -5,43 +5,75 @@ public class Flashlight : MonoBehaviour
 {
     private ThirdPersonController player;
     public PlayerManager playerManager;
+    public MobileActionButtons mobileActions;
 
-    private
-    Light flashlight;
+    private Light flashlight;
     private bool toggleF;
     public AudioSource[] audioSources;
 
     public int range;
     public int intensity;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void Start()
     {
         player = FindAnyObjectByType<ThirdPersonController>();
         flashlight = GetComponent<Light>();
         toggleF = false;
-        flashlight.range = range;
+
+        if (flashlight != null)
+        {
+            flashlight.range = range;
+        }
+
+        if (mobileActions == null)
+        {
+            mobileActions = FindFirstObjectByType<MobileActionButtons>();
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (playerManager.isDied)
+        if (playerManager != null && playerManager.isDied)
         {
-            flashlight.intensity = 0;
+            if (flashlight != null) flashlight.intensity = 0;
             return;
         }
 
-        flashlight.range = range;
-        if (Input.GetKeyDown(KeyCode.F))
+        if (flashlight != null)
         {
-            toggleF = !toggleF;
-
-            int type = toggleF ? 0 : 1;
-            if(type == 0) { audioSources[0].Stop(); audioSources[0].PlayOneShot(audioSources[0].clip); }
-            else { audioSources[1].Stop(); audioSources[1].PlayOneShot(audioSources[1].clip); }
+            flashlight.range = range;
         }
 
-        int isOn = toggleF ? intensity :  0 ;
-        flashlight.intensity = isOn;
+        // Bật/tắt bằng phím F (PC) hoặc nút Flashlight trên Mobile HUD
+        bool isTriggered = Input.GetKeyDown(KeyCode.F);
+        if (mobileActions != null && mobileActions.flashlightPressed)
+        {
+            isTriggered = true;
+        }
+
+        if (isTriggered)
+        {
+            ToggleFlashlight();
+        }
+
+        if (flashlight != null)
+        {
+            flashlight.intensity = toggleF ? intensity : 0;
+        }
+    }
+
+    public void ToggleFlashlight()
+    {
+        toggleF = !toggleF;
+
+        int type = toggleF ? 0 : 1;
+        if (audioSources != null && audioSources.Length > type && audioSources[type] != null)
+        {
+            audioSources[type].Stop();
+            if (audioSources[type].clip != null)
+            {
+                audioSources[type].PlayOneShot(audioSources[type].clip);
+            }
+        }
     }
 }

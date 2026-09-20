@@ -3593,7 +3593,7 @@ Terrain:
   m_SplatMapDistance: 1000
   m_HeightmapMinimumLODSimplification: 0
   m_HeightmapMaximumLOD: 0
-  m_ShadowCastingMode: 2
+  m_ShadowCastingMode: 0
   m_DrawHeightmap: 1
   m_DrawInstanced: 0
   m_DrawTreesAndFoliage: 1
@@ -7825,33 +7825,17 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!1 &691211067 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1507370415313517908, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
+--- !u!114 &691211069 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3406099052555559845, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
   m_PrefabInstance: {fileID: 4144241035758971618}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &691211069
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 691211067}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7caad65dcef794c4f9c654c1e285523f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MobileActionButtons
-  jumpButton: {fileID: 1184031334}
-  pickupButton: {fileID: 1887843720}
-  dropButton: {fileID: 2029461668}
-  sprintButton: {fileID: 935696222}
-  crouchButton: {fileID: 1179905825}
-  jumpPressed: 0
-  sprintHeld: 0
-  crouchHeld: 0
-  pickupPressed: 0
-  dropPressed: 0
 --- !u!1001 &692116265
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10464,17 +10448,6 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!114 &935696222 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7065096932799011042, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-  m_PrefabInstance: {fileID: 4144241035758971618}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &940844624
 GameObject:
   m_ObjectHideFlags: 0
@@ -12699,28 +12672,6 @@ AudioSource:
   m_CorrespondingSourceObject: {fileID: 4551562288031646330, guid: 6915b9120b67e154bbd641f54dbe987b, type: 3}
   m_PrefabInstance: {fileID: 201793231}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1179905825 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1348252825363779421, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-  m_PrefabInstance: {fileID: 4144241035758971618}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!114 &1184031334 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1338824592664965738, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-  m_PrefabInstance: {fileID: 4144241035758971618}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1001 &1184294869
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20951,17 +20902,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3509985614647424934, guid: 1f880c5cafce520469e48424766934a8, type: 3}
   m_PrefabInstance: {fileID: 2017740234}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1887843720 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 7532725224664300779, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-  m_PrefabInstance: {fileID: 4144241035758971618}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &1891891899
 GameObject:
   m_ObjectHideFlags: 0
@@ -22732,17 +22672,6 @@ CapsuleCollider:
   m_Height: 1.229625
   m_Direction: 1
   m_Center: {x: 0, y: 0.6148125, z: -0.0000038146973}
---- !u!114 &2029461668 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8349168770023825415, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-  m_PrefabInstance: {fileID: 4144241035758971618}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1 &2032012636 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6837851722584385958, guid: 6f6bcaf7c26b34b4c8ad9e2c5fb26ac0, type: 3}
@@ -25316,22 +25245,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ui
       objectReference: {fileID: 0}
-    - target: {fileID: 1507370415313517908, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-      propertyPath: m_Name
-      value: MobileActionButtons
-      objectReference: {fileID: 0}
     - target: {fileID: 3532931234833485685, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 2001481548}
-    - target: {fileID: 3852263089018551948, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-      propertyPath: m_Name
-      value: InteractBtn
-      objectReference: {fileID: 0}
-    - target: {fileID: 5902267932166499520, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: -2099054245, guid: f83ec73400f1d2343862250d134c32af, type: 3}
     - target: {fileID: 7176486146439439115, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -25415,10 +25332,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1507370415313517908, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 691211069}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ee0c52a26f0e665448e624c5f3a05c75, type: 3}
 --- !u!1001 &4452591895375909004
 PrefabInstance:
@@ -25435,10 +25349,6 @@ PrefabInstance:
     - target: {fileID: 1135611554684011679, guid: 4b064078ab1af474b8767a3379c9fa1b, type: 3}
       propertyPath: m_Name
       value: PlayerManager
-      objectReference: {fileID: 0}
-    - target: {fileID: 5324671272105864876, guid: 4b064078ab1af474b8767a3379c9fa1b, type: 3}
-      propertyPath: cursorLocked
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5324671272105864876, guid: 4b064078ab1af474b8767a3379c9fa1b, type: 3}
       propertyPath: mobileActions

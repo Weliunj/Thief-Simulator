@@ -9,13 +9,38 @@ public class LockpickMinigame : MonoBehaviour
 {
     [Header("⚙️ UI Components")]
     public GameObject panelRoot;
-    public RectTransform trackRect;         // Track container
-    public RectTransform targetZoneRect;    // Target / Success Zone
-    public RectTransform indicatorRect;     // Moving Bar
-    public TextMeshProUGUI stageText;       // Display "Stage: 1/3"
-    public TextMeshProUGUI statusText;      // Status text (Press SPACE / Click!)
-    public CanvasGroup targetZoneCanvasGroup; // Flash visual effect on hit/miss
-    public Button closeButton;              // Close button to cancel lockpicking
+    public RectTransform trackRect;         // Khung thanh chạy
+    public RectTransform targetZoneRect;    // Vùng Target cần bấm trúng
+    public Image targetImage;               // Image của Target để thay đổi hình theo stage
+    public RectTransform indicatorRect;     // Vạch chạy qua lại
+    public TextMeshProUGUI statusText;      // Text hiển thị câu nói nhảm khi thành công
+    public CanvasGroup targetZoneCanvasGroup; // CanvasGroup của Target Zone
+    public Button closeButton;              // Nút đóng minigame
+    [Tooltip("Nút bấm bẻ khóa riêng trên màn hình Mobile (nằm trong Panel Minigame)")]
+    public Button lockpickButton;           // Nút bấm bẻ khóa trên Mobile
+
+    [Header("🖼️ Target Stage Sprites (3 Ảnh Target đổi theo tiến trình)")]
+    [Tooltip("Ảnh 1 (Mặc định Stage 1), Ảnh 2 (Khi đạt 1/3 - Stage 2), Ảnh 3 (Khi đạt 2/3 - Stage 3)")]
+    public Sprite[] stageSprites = new Sprite[3];
+
+    [Header("📍 Stage Progress Icons (3 Ảnh xếp cạnh nhau báo tiến độ)")]
+    [Tooltip("3 GameObject ảnh xếp cạnh nhau: Trúng 1 hiện ảnh 1, trúng 2 hiện thêm ảnh 2, trúng 3 hiện nốt ảnh 3")]
+    public GameObject[] progressIcons = new GameObject[3];
+
+    [Header("💬 Random Success Dialogues")]
+    [Tooltip("Random funny / encouraging lockpicking dialogues on hit")]
+    public string[] successMessages = new string[]
+    {
+        "Almost there! Just one more pin!",
+        "Master lockpicker in the making!",
+        "Click! Music to my ears!",
+        "Almost unlocked, keep it steady!",
+        "Smooth like butter!",
+        "Pro thief vibes right here!",
+        "Spot on! Perfect timing!",
+        "Good loot awaits inside!",
+        "Clean pick! Stay focused!"
+    };
 
     [Header("🎮 Audio (Optional)")]
     public AudioSource audioSource;
@@ -23,21 +48,26 @@ public class LockpickMinigame : MonoBehaviour
     public AudioClip missSound;
     public AudioClip victorySound;
 
-    [Header("📈 Difficulty Settings")]
+    [Header("📈 Difficulty & Transition Settings")]
     public int totalStages = 3;
-    public float baseSpeed = 400f;                  // Base speed (pixel/sec)
-    public float speedMultiplierPerStage = 1.5f;    // Speed multiplier per stage
-    public float baseTargetWidth = 140f;            // Initial target width
-    public float targetWidthReductionPerStage = 30f;// Target width reduction per stage
+    public float baseSpeed = 400f;                  // Tốc độ ban đầu
+    public float speedMultiplierPerStage = 1.5f;    // Tăng tốc mỗi stage
+    public float targetScaleReductionPerStage = 0.15f; // Tỉ lệ thu nhỏ target mỗi stage
+    [Tooltip("Thời gian chờ (giây) trước khi bắt đầu di chuyển sang stage tiếp theo")]
+    public float stageTransitionDelay = 1.0f;       // Delay 1s trước khi sang stage tiếp theo
+    [Tooltip("Tự động đóng Minigame khi bấm trượt/sai để người chơi chạy trốn NPC")]
+    public bool closeOnFail = true;
+    public float failCloseDelay = 0.4f;
 
     // Dynamic State
     public bool isPlaying { get; private set; } = false;
+    private bool isWaitingNextStage = false;
     private int currentStage = 1;
     private float currentSpeed;
-    private float movingDirection = 1f; // 1: Right, -1: Left
+    private float movingDirection = 1f; // 1: Phải, -1: Trái
     private float trackWidth;
     private float indicatorWidth;
-    private float lastIndicatorX; // Stores previous frame's indicator position for low-FPS swept hit detection
+    private float lastIndicatorX;
 
     private Action onSuccessCallback;
     private Action onFailedCallback;
@@ -45,10 +75,33 @@ public class LockpickMinigame : MonoBehaviour
     void Start()
     {
         if (panelRoot != null) panelRoot.SetActive(false);
-        if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 0.7f;
+        
+        // Không làm mờ Target Image: Giữ alpha luôn là 1.0 (rõ nét 100%)
+        if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 1.0f;
+        
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(OnCloseButtonClicked);
+        }
+
+        if (lockpickButton != null)
+        {
+            lockpickButton.onClick.AddListener(OnLockpickButtonPressed);
+        }
+
+        if (targetImage == null && targetZoneRect != null)
+        {
+            targetImage = targetZoneRect.GetComponent<Image>();
+            if (targetImage == null)
+            {
+                targetImage = targetZoneRect.GetComponentInChildren<Image>();
+            }
+        }
+
+        // Tự động bật preserveAspect để giữ nguyên tỉ lệ ảnh Target, không bị dãn 2 bên
+        if (targetImage != null)
+        {
+            targetImage.preserveAspect = true;
         }
     }
 
@@ -65,6 +118,14 @@ public class LockpickMinigame : MonoBehaviour
         }
     }
 
+    public void OnLockpickButtonPressed()
+    {
+        if (isPlaying && !isWaitingNextStage)
+        {
+            AttemptUnlock();
+        }
+    }
+
     public void StartMinigame(Action onSuccess, Action onFailed = null)
     {
         onSuccessCallback = onSuccess;
@@ -72,17 +133,21 @@ public class LockpickMinigame : MonoBehaviour
 
         currentStage = 1;
         isPlaying = true;
+        isWaitingNextStage = false;
 
         if (panelRoot != null) panelRoot.SetActive(true);
-        if (statusText != null) statusText.text = "Press SPACE / Click / E";
+        if (statusText != null) statusText.text = "Hit the target zone to pick the lock!";
 
         SetupStage(currentStage);
-        UpdateUI();
+        UpdateStageVisual();
+        UpdateProgressIcons(0); // Lúc đầu: cả 3 ảnh tiến độ đều ẩn
     }
 
     public void CloseMinigame()
     {
         isPlaying = false;
+        isWaitingNextStage = false;
+        StopAllCoroutines();
         if (panelRoot != null) panelRoot.SetActive(false);
     }
 
@@ -93,38 +158,37 @@ public class LockpickMinigame : MonoBehaviour
         trackWidth = trackRect.rect.width;
         indicatorWidth = indicatorRect.rect.width;
 
-        // Calculate speed & target width per stage
+        // Tính toán tốc độ tăng dần theo stage (Kích thước Target giữ nguyên 100%)
         currentSpeed = baseSpeed * Mathf.Pow(speedMultiplierPerStage, stage - 1);
-        float targetWidth = Mathf.Max(40f, baseTargetWidth - (targetWidthReductionPerStage * (stage - 1)));
+        targetZoneRect.localScale = Vector3.one;
 
-        // Update target zone size
-        targetZoneRect.sizeDelta = new Vector2(targetWidth, targetZoneRect.sizeDelta.y);
+        float currentTargetWidth = targetZoneRect.rect.width;
 
-        // Randomize target zone position on track
-        float maxOffset = (trackWidth / 2f) - (targetWidth / 2f) - 20f;
+        // Random vị trí target trên thanh trượt
+        float maxOffset = (trackWidth / 2f) - (currentTargetWidth / 2f) - 20f;
         float randomX = UnityEngine.Random.Range(-maxOffset, maxOffset);
         targetZoneRect.anchoredPosition = new Vector2(randomX, targetZoneRect.anchoredPosition.y);
 
-        // Reset indicator position to left side of track
+        // Đặt lại vị trí ban đầu của thanh chạy
         float startX = -(trackWidth / 2f) + (indicatorWidth / 2f);
         indicatorRect.anchoredPosition = new Vector2(startX, indicatorRect.anchoredPosition.y);
         lastIndicatorX = startX;
         movingDirection = 1f;
 
-        if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 0.7f;
+        // Giữ ảnh target luôn rõ nét 100%
+        if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 1.0f;
     }
 
     void Update()
     {
-        if (!isPlaying) return;
+        if (!isPlaying || isWaitingNextStage) return;
 
-        // 1. Move indicator bar back and forth
+        // 1. Di chuyển thanh chạy qua lại
         MoveIndicator();
 
-        // 2. Receive player input (Space, Left Click, or E)
+        // 2. Nhận tương tác người chơi (Phím Space, Click chuột, Phím E)
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.E))
         {
-            // Ignore click if clicking on UI elements like Close Button
             if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {
                 return;
@@ -160,10 +224,9 @@ public class LockpickMinigame : MonoBehaviour
 
     private void AttemptUnlock()
     {
-        float indicatorHalfWidth = indicatorRect.rect.width / 2f;
-        float targetHalfWidth = targetZoneRect.rect.width / 2f;
+        float indicatorHalfWidth = (indicatorRect.rect.width * indicatorRect.localScale.x) / 2f;
+        float targetHalfWidth = (targetZoneRect.rect.width * targetZoneRect.localScale.x) / 2f;
 
-        // Swept bounds over frame step to ensure accurate detection on low FPS
         float currentX = indicatorRect.anchoredPosition.x;
         float indicatorMin = Mathf.Min(lastIndicatorX, currentX) - indicatorHalfWidth;
         float indicatorMax = Mathf.Max(lastIndicatorX, currentX) + indicatorHalfWidth;
@@ -171,61 +234,146 @@ public class LockpickMinigame : MonoBehaviour
         float targetMin = targetZoneRect.anchoredPosition.x - targetHalfWidth;
         float targetMax = targetZoneRect.anchoredPosition.x + targetHalfWidth;
 
-        // Hit condition: overlap between swept indicator bounds and target zone bounds
         bool isHit = (indicatorMin <= targetMax) && (indicatorMax >= targetMin);
 
         if (isHit)
         {
-            // Hit!
+            // Bấm trúng!
             if (audioSource != null && hitSound != null) audioSource.PlayOneShot(hitSound);
             StartCoroutine(FlashTarget(1f));
 
             currentStage++;
             if (currentStage > totalStages)
             {
-                // Victory (All stages cleared)
+                // Trúng lần 3 (Hoàn thành) -> Hiện đủ cả 3 ảnh và đóng panel
+                isWaitingNextStage = true;
+                UpdateProgressIcons(totalStages);
+
                 if (audioSource != null && victorySound != null) audioSource.PlayOneShot(victorySound);
-                if (statusText != null) statusText.text = "<color=green>UNLOCK SUCCESSFUL!</color>";
+                if (statusText != null) statusText.text = "<color=green>LOCK PICKED SUCCESSFULLY!</color>";
                 
                 StartCoroutine(CompleteMinigameCoroutine(true));
             }
             else
             {
-                // Advance to next stage
-                if (statusText != null) statusText.text = $"<color=yellow>SUCCESS! Speed increased ({currentStage}/{totalStages})</color>";
-                SetupStage(currentStage);
-                UpdateUI();
+                // Trúng lần 1 (hiện 1 ảnh) hoặc trúng lần 2 (hiện 2 ảnh) -> Delay 1s rồi sang stage tiếp theo
+                UpdateProgressIcons(currentStage - 1);
+                StartCoroutine(AdvanceStageRoutine());
             }
         }
         else
         {
-            // Missed! Reset to stage 1
-            if (audioSource != null && missSound != null) audioSource.PlayOneShot(missSound);
-            StartCoroutine(FlashTarget(0.2f));
-
-            if (statusText != null) statusText.text = "<color=red>MISSED! Try again!</color>";
-            currentStage = 1;
-            SetupStage(currentStage);
-            UpdateUI();
-
-            if (onFailedCallback != null) onFailedCallback.Invoke();
+            // Bấm trượt/sai -> Kích hoạt chuỗi thất bại (Gọi NPC + Đóng minigame)
+            StartCoroutine(FailMinigameRoutine());
         }
     }
 
-    private void UpdateUI()
+    private IEnumerator AdvanceStageRoutine()
     {
-        if (stageText != null)
+        // 1. Tạm dừng di chuyển thanh chạy
+        isWaitingNextStage = true;
+
+        // 2. Cập nhật ảnh target tương ứng với stage mới
+        UpdateStageVisual();
+
+        // 3. Hiển thị câu nói nhảm ngẫu nhiên khi bấm trúng
+        ShowRandomSuccessMessage();
+
+        // 4. Chờ đúng 1 giây trước khi chuyển stage tiếp theo
+        yield return new WaitForSeconds(stageTransitionDelay);
+
+        // 5. Setup lại vị trí Target mới và tiếp tục chạy
+        SetupStage(currentStage);
+        isWaitingNextStage = false;
+    }
+
+    private IEnumerator FailMinigameRoutine()
+    {
+        isWaitingNextStage = true;
+
+        if (audioSource != null && missSound != null) audioSource.PlayOneShot(missSound);
+        StartCoroutine(FlashTarget(0.4f));
+
+        if (statusText != null) statusText.text = "<color=red>Missed! Lockpicking failed!</color>";
+        currentStage = 1;
+        UpdateStageVisual();
+        UpdateProgressIcons(0);
+
+        // 1. Kích hoạt báo động gọi NPC trong Zone truy đuổi người chơi
+        if (onFailedCallback != null)
         {
-            stageText.text = $"Stage: {currentStage}/{totalStages}";
+            onFailedCallback.Invoke();
+        }
+
+        // 2. Đóng Minigame và mở lại quyền điều khiển nhân vật
+        if (closeOnFail)
+        {
+            yield return new WaitForSeconds(failCloseDelay);
+            CloseMinigame();
+
+            UI_Manager uiManager = FindFirstObjectByType<UI_Manager>();
+            if (uiManager != null)
+            {
+                uiManager.CancelLockpicking();
+            }
+        }
+        else
+        {
+            SetupStage(currentStage);
+            isWaitingNextStage = false;
+        }
+    }
+
+    private void UpdateStageVisual()
+    {
+        if (targetImage != null && stageSprites != null && stageSprites.Length > 0)
+        {
+            int spriteIndex = Mathf.Clamp(currentStage - 1, 0, stageSprites.Length - 1);
+            if (stageSprites[spriteIndex] != null)
+            {
+                targetImage.sprite = stageSprites[spriteIndex];
+                targetImage.enabled = true;
+                targetImage.preserveAspect = true; // Bật preserveAspect để giữ nguyên tỉ lệ ảnh
+            }
+        }
+    }
+
+    /// <summary>
+    /// Bật/tắt 3 ảnh tiến độ theo số lần trúng:
+    /// 0: Tắt hết
+    /// 1: Hiện ảnh 1
+    /// 2: Hiện ảnh 1 + ảnh 2
+    /// 3: Hiện cả 3 ảnh
+    /// </summary>
+    private void UpdateProgressIcons(int count)
+    {
+        if (progressIcons == null) return;
+
+        for (int i = 0; i < progressIcons.Length; i++)
+        {
+            if (progressIcons[i] != null)
+            {
+                progressIcons[i].SetActive(i < count);
+            }
+        }
+    }
+
+    private void ShowRandomSuccessMessage()
+    {
+        if (statusText != null && successMessages != null && successMessages.Length > 0)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, successMessages.Length);
+            statusText.text = $"<color=yellow>{successMessages[randomIndex]}</color>";
         }
     }
 
     private IEnumerator FlashTarget(float flashAlpha)
     {
         if (targetZoneCanvasGroup == null) yield break;
+        // Giữ nét 100%, chỉ phản hồi hiệu ứng chớp nhẹ nếu bấm trúng/trượt
         targetZoneCanvasGroup.alpha = flashAlpha;
-        yield return new WaitForSeconds(0.15f);
-        if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 0.7f;
+        yield return new WaitForSeconds(0.12f);
+        if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 1.0f;
     }
 
     private IEnumerator CompleteMinigameCoroutine(bool isWin)
