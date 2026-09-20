@@ -9,8 +9,8 @@ using UnityEngine.EventSystems;
 public class TouchLookZone : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
 {
     [Header("⚙️ Settings")]
-    [Tooltip("Hệ số nhạy khi vuốt (càng cao xoay càng nhanh)")]
-    public float sensitivity = 0.5f;
+    [Tooltip("Hệ số nhạy khi vuốt (lấy trực tiếp từ Setting)")]
+    public float sensitivity = 2.0f;
 
     /// <summary>
     /// Delta vuốt mỗi frame — StarterAssetsInputs sẽ đọc giá trị này.
@@ -19,6 +19,27 @@ public class TouchLookZone : MonoBehaviour, IPointerDownHandler, IDragHandler, I
     public bool IsTouching { get; private set; } = false;
 
     private Vector2 lastPointerPosition;
+
+    private void Start()
+    {
+        UpdateSensitivity(SettingsManager.Instance != null ? SettingsManager.Instance.Sensitivity : 2.0f);
+    }
+
+    private void OnEnable()
+    {
+        SettingsManager.OnSensitivityChanged += UpdateSensitivity;
+    }
+
+    private void OnDestroy()
+    {
+        SettingsManager.OnSensitivityChanged -= UpdateSensitivity;
+    }
+
+    private void UpdateSensitivity(float settingValue)
+    {
+        // Gán trực tiếp giá trị từ Setting (1.0 -> 5.0)
+        sensitivity = settingValue;
+    }
 
     // 1. Chạm xuống → ghi nhận vị trí đầu tiên
     public void OnPointerDown(PointerEventData eventData)

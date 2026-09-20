@@ -534,9 +534,9 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 0.9891925, b: 0.9276729, a: 1}
-  m_Intensity: 16
-  m_Range: 68.5
-  m_SpotAngle: 100
+  m_Intensity: 20.8
+  m_Range: 24.4
+  m_SpotAngle: 67.032005
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
@@ -634,8 +634,8 @@ MonoBehaviour:
   audioSources:
   - {fileID: 46091846893374827}
   - {fileID: 337309182088208589}
-  range: 37
-  intensity: 47
+  range: 24
+  intensity: 20
 --- !u!1 &2755748452314955220
 GameObject:
   m_ObjectHideFlags: 0
@@ -1673,7 +1673,7 @@ MonoBehaviour:
   GroundedRadius: 0.15
   GroundLayers:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 475
   CinemachineCameraTarget: {fileID: 2485425070362818435}
   crouchCameraYOffset: -0.8
   TopClamp: 70
@@ -1905,7 +1905,7 @@ GameObject:
   - component: {fileID: 9070477799331577654}
   - component: {fileID: 8842936917671099629}
   m_Layer: 0
-  m_Name: MainCamera (1)
+  m_Name: MainCamera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

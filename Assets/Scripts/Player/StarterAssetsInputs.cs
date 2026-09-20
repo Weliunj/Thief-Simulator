@@ -29,6 +29,26 @@ namespace StarterAssets
         public TouchLookZone touchLookZone;
         public MobileActionButtons mobileActions;
 
+        private void Start()
+        {
+            UpdateSensitivity(SettingsManager.Instance != null ? SettingsManager.Instance.Sensitivity : lookSensitivity);
+        }
+
+        private void OnEnable()
+        {
+            SettingsManager.OnSensitivityChanged += UpdateSensitivity;
+        }
+
+        private void OnDestroy()
+        {
+            SettingsManager.OnSensitivityChanged -= UpdateSensitivity;
+        }
+
+        private void UpdateSensitivity(float newSensitivity)
+        {
+            lookSensitivity = newSensitivity;
+        }
+
         private void Update()
         {
             // --- Mobile Joystick: Di chuyển ---
@@ -82,7 +102,7 @@ namespace StarterAssets
         {
             if(cursorInputForLook)
             {
-                LookInput(value.Get<Vector2>());
+                LookInput(value.Get<Vector2>() * lookSensitivity);
             }
         }
 
@@ -105,8 +125,7 @@ namespace StarterAssets
 
         public void LookInput(Vector2 newLookDirection)
         {
-            // --- THAY ĐỔI 2: Nhân input với độ nhạy ---
-            look = newLookDirection * lookSensitivity;
+            look = newLookDirection;
         }
 
         public void JumpInput(bool newJumpState)

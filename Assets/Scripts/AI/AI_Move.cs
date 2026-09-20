@@ -1,4 +1,4 @@
-﻿using StarterAssets;
+using StarterAssets;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -61,6 +61,9 @@ public class AI_Move_NavMesh : MonoBehaviour
     [Header("🎨 Appearance Settings")]
     public Material[] availableMaterials; 
     private Renderer aiRenderer;         
+    
+    private float raycastTimer = 0f;
+    private const float RAYCAST_INTERVAL = 0.15f; // Tối ưu: Raycast ~6 lần/giây
     // =========================================================================
 
     void Start()
@@ -95,8 +98,13 @@ public class AI_Move_NavMesh : MonoBehaviour
     {
         if (agent == null || !agent.enabled) return;
 
-        // 1. Luôn kiểm tra mục tiêu (Player)
-        RayCastHitTarget();
+        // Tối ưu Raycast: chỉ chạy 6-7 lần/giây thay vì mỗi frame (trừ khi đang chase)
+        raycastTimer += Time.deltaTime;
+        if (raycastTimer >= RAYCAST_INTERVAL || targetDetected)
+        {
+            raycastTimer = 0f;
+            RayCastHitTarget();
+        }
 
         // 2. Xử lý trạng thái CHASE / QUAY VỀ (Ưu tiên cao nhất)
         if (targetDetected)

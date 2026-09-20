@@ -9,8 +9,8 @@ using UnityEngine.Video;
 public class CutsceneManager : MonoBehaviour, IPointerClickHandler
 {
     [Header("🎬 Target Scene Settings")]
-    [Tooltip("Tên Scene tiếp theo sẽ load khi hết Cutscene hoặc bấm Skip (Mặc định: Lv1)")]
-    public string targetSceneName = "Lv1";
+    [Tooltip("Tên Scene tiếp theo sẽ load khi hết Cutscene hoặc bấm Skip (Mặc định: Chapter1)")]
+    public string targetSceneName = "Chapter1";
 
     [Header("⏳ Auto Load Settings")]
     [Tooltip("Tự động tìm và lắng nghe khi Timeline (PlayableDirector) kết thúc")]
@@ -158,7 +158,7 @@ public class CutsceneManager : MonoBehaviour, IPointerClickHandler
         if (isTransitioning) return;
 
         string nextScene = string.IsNullOrEmpty(sceneName) ? targetSceneName : sceneName;
-        if (string.IsNullOrEmpty(nextScene)) nextScene = "Lv1";
+        if (string.IsNullOrEmpty(nextScene)) nextScene = "HomeMenu";
 
         Debug.Log($"⏩ Skipping Cutscene to Scene: {nextScene}");
         LoadSceneInternal(nextScene);
@@ -170,7 +170,7 @@ public class CutsceneManager : MonoBehaviour, IPointerClickHandler
     public void LoadTargetScene()
     {
         if (isTransitioning) return;
-        LoadSceneInternal(string.IsNullOrEmpty(targetSceneName) ? "Lv1" : targetSceneName);
+        LoadSceneInternal(string.IsNullOrEmpty(targetSceneName) ? "HomeMenu" : targetSceneName);
     }
 
     private void LoadSceneInternal(string sceneName)

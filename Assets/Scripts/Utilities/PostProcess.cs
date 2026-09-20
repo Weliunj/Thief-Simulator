@@ -4,27 +4,54 @@ using UnityEngine.Rendering.Universal;
 
 public class PostProcess : MonoBehaviour
 {
+    [Header("🎬 Volume & Controller")]
     public Volume myVolume;
     public StarterAssets.ThirdPersonController controller;
 
-    private Vignette _vignette;
-    private DepthOfField _depthOfField;
-    private ChromaticAberration _chromatic; // Sửa tên cho gọn
+    [Header("🌑 Vignette Settings")]
+    [Range(0f, 1f)] public float defaultVignette = 0.2f;  // Viền tối khi đi bộ / đứng bình thường
+    [Range(0f, 1f)] public float crouchVignette = 0.45f;  // Viền tối khi cúi người (Crouching)
+    [Range(0f, 1f)] public float diedVignette = 0.35f;    // Viền tối khi chết (Died)
 
-    // Các biến Velocity phải tách biệt hoàn toàn
+    [Header("🎯 Dynamic Resolution Settings (Làm mờ thay DoF & Tăng FPS)")]
+    public bool enableDynamicResolution = true;
+    [Range(0.2f, 1f)] public float baseResolutionScale = 0.6f;          // Độ nét khi bình thường
+    [Range(0.05f, 1f)] public float heavyWeightResolutionScale = 0.3f;  // Độ nhòe khi mang đồ nặng (75kg)
+    [Range(0.2f, 1f)] public float diedResolutionScale = 0.4f;         // Độ nhòe khi bị bắt / chết
+
+    private Vignette _vignette;
     private float _vignetteVelocity;
-    private float _dofVelocity;
     private float _diedVelocity;
-    private float _sprintVelocity; // Thêm biến này cho Sprint
+    private float _currentResolutionScale = 0.85f;
+    private float _resolutionVelocity;
 
     void Start()
     {
-        controller = FindAnyObjectByType<StarterAssets.ThirdPersonController>();
+        // 1. Tự động tìm ThirdPersonController nếu chưa gán
+        if (controller == null)
+        {
+            controller = FindAnyObjectByType<StarterAssets.ThirdPersonController>();
+        }
+
+        // 2. Tự động bật Allow Dynamic Resolution trên Camera bằng code
+        Camera cam = GetComponent<Camera>();
+        if (cam == null) cam = Camera.main;
+        if (cam != null)
+        {
+            cam.allowDynamicResolution = true;
+        }
+
+        // 3. Lấy component Vignette từ Volume
         if (myVolume != null && myVolume.profile != null)
         {
             myVolume.profile.TryGet(out _vignette);
-            myVolume.profile.TryGet(out _depthOfField);
-            myVolume.profile.TryGet(out _chromatic); // Cách lấy đúng trong URP
+        }
+
+        // 4. Khởi tạo Dynamic Resolution ban đầu
+        _currentResolutionScale = baseResolutionScale;
+        if (enableDynamicResolution)
+        {
+            ScalableBufferManager.ResizeBuffers(_currentResolutionScale, _currentResolutionScale);
         }
     }
 
@@ -32,42 +59,78 @@ public class PostProcess : MonoBehaviour
     {
         if (controller == null) return;
 
-        // Ưu tiên trạng thái Chết
-        if (controller.player.isDied)
+        // 1. Trạng thái chết (Died)
+        if (controller.player != null && controller.player.isDied)
         {
-            Died();
+            HandleDied();
+            ApplyDynamicResolution(diedResolutionScale);
         }
         else
         {
-            HandleVignette();
+            // 2. Trạng thái bình thường / Cúi người / Mang vác nặng
+            HandleVignetteAndResolution();
+        }
+    }
+
+    void HandleVignetteAndResolution()
+    {
+        // --- 1. VIGNETTE: Chỉ phụ thuộc vào Cúi người hoặc Đi bộ bình thường ---
+        float targetVignette = controller.Crouching ? crouchVignette : defaultVignette;
+
+        if (_vignette != null)
+        {
+            _vignette.rounded.value = false;
+            _vignette.smoothness.value = 0.8f;
+            _vignette.intensity.value = Mathf.SmoothDamp(_vignette.intensity.value, targetVignette, ref _vignetteVelocity, 0.15f);
         }
 
-        HandleDepthOfField();
+        // --- 2. DYNAMIC RESOLUTION: Giảm độ phân giải khi mang đồ nặng (25kg -> 75kg) ---
+        float targetResolution = baseResolutionScale;
+        if (controller.player != null)
+        {
+            float currentWeight = controller.player.currweight;
+            float t = Mathf.InverseLerp(25f, 75f, currentWeight);
+            targetResolution = Mathf.Lerp(baseResolutionScale, heavyWeightResolutionScale, t);
+        }
+
+        ApplyDynamicResolution(targetResolution);
     }
 
-    void HandleVignette()
+    void HandleDied()
     {
-        if (_vignette == null) return;
-        float targetVignette = controller.Crouching ? 0.45f : 0.2f;
-        _vignette.intensity.value = Mathf.SmoothDamp(_vignette.intensity.value, targetVignette, ref _vignetteVelocity, 0.15f);
+        if (_vignette != null)
+        {
+            _vignette.rounded.value = true;
+            _vignette.smoothness.value = 0.8f;
+            _vignette.intensity.value = Mathf.SmoothDamp(_vignette.intensity.value, diedVignette, ref _diedVelocity, 1.5f);
+        }
     }
 
-    void HandleDepthOfField()
+    private void ApplyDynamicResolution(float targetScale)
     {
-        if (_depthOfField == null) return;
-        float currentWeight = controller.player.currweight;
+        if (!enableDynamicResolution) return;
 
-        // Trọng lượng từ 25kg -> 75kg sẽ tương ứng tính Focal Length từ 0 -> 50
-        float t = Mathf.InverseLerp(25f, 75f, currentWeight);
-        float targetFocal = Mathf.Lerp(0f, 50f, t);
+        // Chuyển đổi độ phân giải mượt mà
+        _currentResolutionScale = Mathf.SmoothDamp(_currentResolutionScale, targetScale, ref _resolutionVelocity, 0.2f);
+        
+        // 1. Dành cho URP (Hoạt động ngay lập tức 100% cả trong Unity Editor lẫn APK)
+        var urpAsset = QualitySettings.renderPipeline as UniversalRenderPipelineAsset ?? GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+        if (urpAsset != null)
+        {
+            urpAsset.renderScale = _currentResolutionScale;
+        }
 
-        _depthOfField.focalLength.value = Mathf.SmoothDamp(_depthOfField.focalLength.value, targetFocal, ref _dofVelocity, 0.1f);
+        // 2. Dành cho Dynamic Resolution buffer của Engine
+        ScalableBufferManager.ResizeBuffers(_currentResolutionScale, _currentResolutionScale);
     }
-    void Died()
+
+    void OnDisable()
     {
-        if (_vignette == null) return;
-        _vignette.rounded.value = true;
-        _vignette.smoothness.value = 1f;
-        _vignette.intensity.value = Mathf.SmoothDamp(_vignette.intensity.value, 0.35f, ref _diedVelocity, 1.5f);
+        // Khôi phục lại độ phân giải gốc khi dừng game hoặc tắt script
+        var urpAsset = QualitySettings.renderPipeline as UniversalRenderPipelineAsset ?? GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+        if (urpAsset != null)
+        {
+            urpAsset.renderScale = baseResolutionScale;
+        }
     }
 }

@@ -11,14 +11,22 @@ public class HomeScreen : MonoBehaviour
     [Header("🔘 Main Menu Buttons")]
     public Button playButton;
     public Button exitButton;
+    public Button optionsButton;
 
     [Header("🚪 Panels Reference")]
     public GameObject mainMenuPanel;
+    public GameObject settingPanel;
     public ChapterSelectManager chapterSelectManager;
 
     void Start()
     {
+        // Khởi động: Bật Main Menu, tắt tất cả các panel khác
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+        if (settingPanel != null) settingPanel.SetActive(false);
+        if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
+        {
+            chapterSelectManager.chapterSelectPanel.SetActive(false);
+        }
 
         if (playButton != null)
         {
@@ -28,6 +36,11 @@ public class HomeScreen : MonoBehaviour
         if (exitButton != null)
         {
             exitButton.onClick.AddListener(Exit_Clicked);
+        }
+
+        if (optionsButton != null)
+        {
+            optionsButton.onClick.AddListener(Options_Clicked);
         }
     }
 
@@ -55,7 +68,11 @@ public class HomeScreen : MonoBehaviour
     public void Options_Clicked()
     {
         PlayClickSound();
-        Debug.Log("Options");
+        Debug.Log("Options Clicked");
+        
+        // Đóng Main Menu trước đó và mở Setting
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (settingPanel != null) settingPanel.SetActive(true);
     }
 
     private void PlayClickSound()

@@ -42,14 +42,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 771964791191234344}
   m_Enabled: 1
-  serializedVersion: 11
+  serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 0.9891925, b: 0.9276729, a: 1}
   m_Intensity: 77.3
   m_Range: 10
   m_SpotAngle: 63.0039
   m_InnerSpotAngle: 32
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 0
     m_Resolution: -1
@@ -141,7 +141,6 @@ GameObject:
   - component: {fileID: 1480923577826208541}
   - component: {fileID: 6560039935702648229}
   - component: {fileID: 8742702324554866811}
-  - component: {fileID: 5573196366963855060}
   m_Layer: 0
   m_Name: normal man a 1
   m_TagString: kid
@@ -265,25 +264,6 @@ CapsuleCollider:
   m_Height: 1.87
   m_Direction: 1
   m_Center: {x: 0, y: 0.93, z: 0}
---- !u!114 &5573196366963855060
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2015363349984180196}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 03bc8063c9e95401f9a8a38bc716750d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation.Samples::Unity.AI.Navigation.Samples.AgentLinkMover
-  m_Method: 1
-  m_Curve:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!1 &4261233651119475759
 GameObject:
   m_ObjectHideFlags: 0

@@ -55,6 +55,7 @@ public class UI_Manager : MonoBehaviour
         isPaused = false;
         isSolving = false;
 
+        if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
         if (diedPanel != null) diedPanel.SetActive(false);
         if (WinPanel != null) WinPanel.SetActive(false);
         if (settingPanel != null) settingPanel.SetActive(false);
@@ -147,27 +148,47 @@ public class UI_Manager : MonoBehaviour
         }
         
         // --- XỬ LÝ TRẠNG THÁI GAME ---
-        if (playerManager.isDied)
-        {
-            if (isSolving) CancelLockpicking();
-            if (diedPanel != null) diedPanel.SetActive(true); 
-            if (WinPanel != null) WinPanel.SetActive(false);
-            Cursor.lockState = CursorLockMode.None; 
-            Cursor.visible = true;
-        } 
-        else if (playerManager.currpoint >= playerManager.totalpoint)
-        {
-            if (isSolving) CancelLockpicking();
-            if (diedPanel != null) diedPanel.SetActive(false); 
-            if (WinPanel != null) WinPanel.SetActive(true);
-            Cursor.lockState = CursorLockMode.None; 
-            Cursor.visible = true;
-            Debug.Log($"WIN! Đã đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
-        }
+        UpdateGameState();
         
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             ToggleSettings();
+        }
+    }
+
+    private bool isWinHandled = false;
+    private bool isDiedHandled = false;
+
+    void UpdateGameState()
+    {
+        if (playerManager.isDied)
+        {
+            if (!isDiedHandled)
+            {
+                isDiedHandled = true;
+                if (isSolving) CancelLockpicking();
+                if (settingPanel != null) settingPanel.SetActive(false);
+                if (mainHUDPanel != null) mainHUDPanel.SetActive(false);
+                if (WinPanel != null) WinPanel.SetActive(false);
+                if (diedPanel != null) diedPanel.SetActive(true); 
+                Cursor.lockState = CursorLockMode.None; 
+                Cursor.visible = true;
+            }
+        } 
+        else if (playerManager.totalpoint > 0 && playerManager.currpoint >= playerManager.totalpoint)
+        {
+            if (!isWinHandled)
+            {
+                isWinHandled = true;
+                if (isSolving) CancelLockpicking();
+                if (settingPanel != null) settingPanel.SetActive(false);
+                if (mainHUDPanel != null) mainHUDPanel.SetActive(false);
+                if (diedPanel != null) diedPanel.SetActive(false); 
+                if (WinPanel != null) WinPanel.SetActive(true);
+                Cursor.lockState = CursorLockMode.None; 
+                Cursor.visible = true;
+                Debug.Log($"WIN! Đã đạt {playerManager.currpoint}/{playerManager.totalpoint} điểm!");
+            }
         }
     }
 
@@ -191,6 +212,7 @@ public class UI_Manager : MonoBehaviour
     {
         isPaused = true;
         Time.timeScale = 0f;
+        if (mainHUDPanel != null) mainHUDPanel.SetActive(false);
         if (settingPanel != null) settingPanel.SetActive(true);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -202,8 +224,10 @@ public class UI_Manager : MonoBehaviour
         Time.timeScale = 1f;
         if (settingPanel != null) settingPanel.SetActive(false);
 
-        if (!isSolving && (playerManager == null || (!playerManager.isDied && playerManager.currpoint < playerManager.totalpoint)))
+        // Chỉ bật lại Main HUD nếu không ở trong Minigame và chưa Win / Lose
+        if (!isSolving && !isDiedHandled && !isWinHandled)
         {
+            if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
@@ -228,6 +252,7 @@ public class UI_Manager : MonoBehaviour
 
         isSolving = true;
         if (mainHUDPanel != null) mainHUDPanel.SetActive(false);
+        if (settingPanel != null) settingPanel.SetActive(false);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
@@ -235,17 +260,23 @@ public class UI_Manager : MonoBehaviour
             onSuccess: () =>
             {
                 isSolving = false;
-                if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                if (!isPaused && !isDiedHandled && !isWinHandled)
+                {
+                    if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
                 if (door != null) door.OnUnlockSuccess();
             },
             onFailed: () =>
             {
                 isSolving = false;
-                if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                if (!isPaused && !isDiedHandled && !isWinHandled)
+                {
+                    if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
                 if (door != null) door.OnUnlockFailed();
             }
         );
@@ -254,9 +285,12 @@ public class UI_Manager : MonoBehaviour
     public void CancelLockpicking()
     {
         isSolving = false;
-        if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (!isPaused && !isDiedHandled && !isWinHandled)
+        {
+            if (mainHUDPanel != null) mainHUDPanel.SetActive(true);
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
         if (lockpickMinigame != null)
         {
             lockpickMinigame.CloseMinigame();
@@ -280,7 +314,8 @@ public class UI_Manager : MonoBehaviour
             playerManager._stamina = playerManager.MaxStamina;
         }
 
-        SceneManager.LoadScene("Lv1");
+        // Tải lại đúng Scene hiện tại của màn chơi đang chơi
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
     
     public void Menu()

@@ -1,4 +1,4 @@
-﻿using StarterAssets;
+using StarterAssets;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -30,6 +30,9 @@ public class Kid : MonoBehaviour
     public Vector2 callDurationPublic = new Vector2(5f, 10f); // Thời gian theo đuổi mục tiêu
     private float callDuration = 0f;  
     public float callRanger = 20f;
+
+    private float raycastTimer = 0f;
+    private const float RAYCAST_INTERVAL = 0.15f; // Tối ưu: Raycast ~6 lần/giây thay vì 60 lần/giây
 
     [Header("🎨 Appearance Settings")] // Header mới để quản lý hình thức
     public Material[] availableMaterials; // Mảng chứa các vật liệu bạn muốn chọn
