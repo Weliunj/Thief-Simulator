@@ -16,7 +16,8 @@ public class AI_Move_NavMesh : MonoBehaviour
     private string currAnimState;
     private NavMeshAgent agent;
     private PlayerController player;
-    public PlayerManager playerManager;
+    public PlayerStats playerStats;
+    public PlayerStats playerManager => playerStats;
     public Light flashlight;
 
     // BIẾN THEO DÕI NỘI BỘ
@@ -72,6 +73,8 @@ public class AI_Move_NavMesh : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         player = FindAnyObjectByType<PlayerController>();
+        if (playerStats == null && player != null) playerStats = player.stats;
+        if (playerStats == null) playerStats = FindFirstObjectByType<PlayerStats>();
 
         aiRenderer = GetComponentInChildren<Renderer>();
         if (availableMaterials.Length > 0 && aiRenderer != null)

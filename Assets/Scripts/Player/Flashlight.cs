@@ -4,7 +4,8 @@ using UnityEngine;
 public class Flashlight : MonoBehaviour
 {
     private PlayerController player;
-    public PlayerManager playerManager;
+    public PlayerStats playerStats;
+    public PlayerStats playerManager => playerStats;
     public MobileActionButtons mobileActions;
 
     private Light flashlight;
@@ -17,6 +18,8 @@ public class Flashlight : MonoBehaviour
     void Start()
     {
         player = FindAnyObjectByType<PlayerController>();
+        if (playerStats == null && player != null) playerStats = player.stats;
+        if (playerStats == null) playerStats = FindFirstObjectByType<PlayerStats>();
         flashlight = GetComponent<Light>();
         toggleF = false;
 
@@ -27,7 +30,7 @@ public class Flashlight : MonoBehaviour
 
         if (mobileActions == null)
         {
-            mobileActions = FindFirstObjectByType<MobileActionButtons>();
+            mobileActions = FindFirstObjectByType<MobileActionButtons>(FindObjectsInactive.Include);
         }
     }
 

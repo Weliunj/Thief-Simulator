@@ -6,7 +6,8 @@ public class PlayerDeathHandler : MonoBehaviour
 {
     [Header("⚙️ References")]
     public PlayerController playerController;
-    public PlayerManager playerManager;
+    public PlayerStats playerStats;
+    public PlayerStats playerManager => playerStats;
     public Animator animator;
 
     [Tooltip("Mô hình 3D nhân vật (Geometry) - Đảm bảo luôn hiện khi chết")]
@@ -45,6 +46,8 @@ public class PlayerDeathHandler : MonoBehaviour
     void Start()
     {
         if (playerController == null) playerController = GetComponent<PlayerController>();
+        if (playerStats == null && playerController != null) playerStats = playerController.stats;
+        if (playerStats == null) playerStats = GetComponent<PlayerStats>();
         if (animator == null && playerController != null) animator = playerController.GetComponent<Animator>();
         if (cameraTarget == null && playerController != null && playerController.CinemachineCameraTarget != null)
         {
@@ -83,10 +86,10 @@ public class PlayerDeathHandler : MonoBehaviour
         if (isDeadProcessed) return;
         isDeadProcessed = true;
 
-        if (playerManager != null)
+        if (playerStats != null)
         {
-            playerManager.isDied = true;
-            playerManager.currweight = 0;
+            playerStats.isDied = true;
+            playerStats.currweight = 0;
         }
 
         // 1. Đảm bảo hiển thị Full Model Player (nếu trước đó đang ở POV 1)

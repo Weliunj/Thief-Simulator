@@ -652,13 +652,57 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 
 ---
 
-### [2026-09-21 16:30] — fix(interaction): use raycast hit surface contact point instead of root pivot distance
+### [2026-09-21 16:30] — fix(interaction, ui): raycast surface distance, modularize MainHUD and PauseHUD with nested Settings
 - **Tác vụ**:
   - **Sửa lỗi khoảng cách tương tác trên Cửa và các vật thể lớn ([PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs))**:
     - **Nguyên nhân**: Trước đây tính khoảng cách tới `transform.position` (tọa độ Pivot gốc của cánh cửa - thường nằm ở góc bản lề/khung cửa), khiến người chơi phải đứng áp sát vào bản lề mới hiện nút tương tác.
     - **Khắc phục**: Chuyển sang tính khoảng cách từ Player đến **điểm tiếp xúc bề mặt thực tế (`hit.point` / `ClosestPoint`)** của tia Raycast trên cánh cửa.
     - Giúp người chơi có thể đứng từ khoảng cách nhặt đồ bình thường (`maxPlayerReach = 3.5m`) và rọi tia Ray vào bất kỳ vị trí nào trên cánh cửa để bắt đầu bẻ khóa ngay lập tức.
+  - **Tách module MainHUD độc lập ([MainHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MainHUD.cs) & [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs))**:
+    - Tạo mới script `MainHUD.cs` chuyên trách hiển thị chỉ số trong trận: Thể lực (`Stamina`), Cân nặng (`Kg`), Điểm (`Point`), Thời gian đếm ngược (`Time_T`), Âm thanh cảnh báo hết giờ (`Alarm`) và nút Tạm dừng (`PauseBtn`).
+    - Hỗ trợ cơ chế `AutoFindUIElements()` tự động quét và kết nối các thành phần UI con trong cây phân cấp của `mainHUD`.
+  - **Tách module PauseHUD độc lập ([PauseHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/PauseHUD.cs) & [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs))**:
+    - Tạo mới script `PauseHUD.cs` quản lý menu tạm dừng trong trận: Nút Resume, Restart/Replay, Settings, Menu.
+    - Tự động quét và liên kết các Button con trong hierarchy (`AutoFindUIElements`).
+    - Hỗ trợ đóng mở lồng bảng `SettingsHUD`: Khi bấm nút Settings trên Pause menu -> mở SettingsHUD và ẩn PauseHUD; khi bấm Close trên SettingsHUD -> tự động đóng SettingsHUD và khôi phục lại PauseHUD.
+    - Bổ sung các phương thức `OpenSettings()` và `CloseSettings()` trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
+  - **Sửa lỗi tuần tự hóa ChapterSO và Overrides Prefab ([ChapterSO.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ChapterSO.cs) & [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs))**:
+    - **ChapterSO**: Loại bỏ hoàn toàn trường Player spawn khỏi `ChapterSO` để chuẩn bị cho kiến trúc Online/Multiplayer (tránh trùng điểm spawn nhiều người chơi và phân định rõ metadata vs scene spawn). Chỉ giữ lại thiết lập spawn vật phẩm (`itemSpawnPositions`, `spawnableItems`).
+    - **Khắc phục lỗi không Override/Apply All được Prefab Player**: Các trường UI (`dynamicJoystick`, `touchLookZone`, `mobileActions`, `itemInfoHUD`) được cấu hình tự động tìm kiếm đối tượng trong Scene lúc runtime (`FindFirstObjectByType`), giúp Prefab Asset không bị gán cứng Scene References bên ngoài, cho phép Apply All / Overrides Prefab thoải mái mà không bị Unity chặn.
+  - **Tách kiến trúc Dữ liệu tĩnh (PlayerSO) và Trạng thái động runtime (PlayerStats)**:
+    - **Tạo mới [PlayerStats.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerStats.cs)**: MonoBehaviour gắn trên Player GameObject quản lý toàn bộ trạng thái thay đổi liên tục trong trận:
+      - `currentWeight` / `maxWeight` và tự động tính toán giảm tốc độ tuyến tính (`CalculateWeightSpeedPenalty`).
+      - `currentStamina` / `maxStamina`, tiêu hao khi chạy nhanh (`sprint`), hồi phục sau `staminaRegenCooldown` (`HandleStamina`).
+      - Điểm số (`currPoint` / `totalPoint`), thời gian đếm ngược (`currentTime`), trạng thái tử vong (`isDied`).
+      - Cung cấp đầy đủ các thuộc tính tương thích ngược (`currweight`, `_stamina`, `_MoveSpeed`, `_SprintSpeed`, `isDied`, `currpoint`...) để không gây lỗi biên dịch ở bất kỳ script liên quan nào.
+    - **Tối ưu hóa [PlayerSO.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerSO.cs)**: Chỉ chứa cấu hình gốc và hồ sơ nhân vật tĩnh (`characterId`, `characterName`, `avatar`, `description`, `baseMoveSpeed`, `baseSprintSpeed`, `baseCrouchSpeed`, `baseJumpHeight`, `baseMaxStamina`, `staminaDepletionRate`, `staminaRegenRate`, `staminaRegenCooldown`, `baseMaxWeight`).
+    - **Cập nhật [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs)**: Nhận `playerData` (PlayerSO) và `stats` (PlayerStats). Tự động khởi tạo `PlayerStats` trong `Awake()` và ủy quyền tính toán Stamina, Weight sang `PlayerStats`.
+    - **Tích hợp cơ chế FPS vào hệ thống Settings và xóa bỏ GameSettings.cs**:
+      - Chuyển toàn bộ cơ chế quản lý FPS (`targetFrameRate = 60`, `vSyncCount = 0`, `ResizeBuffers`, bộ đếm FPS OnGUI góc màn hình và log console) từ `GameSettings.cs` sang **[SettingsManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Utilities/SettingsManager.cs)** (Persistent Singleton).
+      - Định dạng FPS hiển thị dạng chữ trắng cơ bản (không đổi màu phức tạp), cập nhật cố định chính xác 1 giây 1 lần (`fpsDisplayText`).
+      - Bổ sung trường `targetFPS`, `showFPSOnScreen`, `vSync`, `renderScale` vào `SettingsData` được tự động lưu và load từ `game_settings.json`.
+      - Bổ sung hỗ trợ UI (Toggle bật/tắt FPS on-screen, Dropdown chọn mức FPS 30/45/60/90/120) vào **[SettingsHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/SettingsHUD.cs)** kèm âm thanh click khi tương tác Toggle và Dropdown.
+      - Tối ưu hóa **[HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs)**: Tự động quét và liên kết AudioSource để nút Settings/Options và các nút Menu luôn phát tiếng click ổn định.
+      - Xóa bỏ hoàn toàn script riêng lẻ cũ `Assets/Scripts/Utilities/GameSettings.cs`.
 - **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerSO.cs` (New / Refactored)
+  - `Assets/Scripts/Player/PlayerStats.cs` (New)
+  - `Assets/Scripts/Player/PlayerController.cs` (Modified)
   - `Assets/Scripts/Player/PlayerInteraction.cs` (Modified)
+  - `Assets/Scripts/Player/StarterAssetsInputs.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/Player/Flashlight.cs` (Modified)
+  - `Assets/Scripts/AI/AI_Move.cs` (Modified)
+  - `Assets/Scripts/Items/Item.cs` (Modified)
+  - `Assets/Scripts/UI/ChapterSO.cs` (Modified)
+  - `Assets/Scripts/UI/MainHUD.cs` (New)
+  - `Assets/Scripts/UI/PauseHUD.cs` (New)
+  - `Assets/Scripts/UI/SettingsHUD.cs` (Renamed/Refactored)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/Utilities/SettingsManager.cs` (Modified)
+  - `Assets/Scripts/Utilities/GameSettings.cs` (Deleted)
 - **Ảnh hưởng**:
-  - Trải nghiệm tương tác mở cửa mượt mà, đồng nhất với tầm với nhặt đồ thông thường.
+  - Dễ dàng tạo nhiều nhân vật khác nhau (char_01, char_02, char_03...) bằng cách tạo asset `PlayerSO` trong Project và kéo vào PlayerController.
+  - Phân tách rõ ràng giữa cấu hình gốc (ScriptableObject không bị sửa đổi runtime gây bẩn dữ liệu Asset) và trạng thái động (MonoBehaviour gắn trên instance Player trong scene).
+  - Thống nhất toàn bộ thiết lập Game (Sensitivity, FPS, vSync, Render Scale) vào một hệ thống Settings duy nhất, lưu trữ JSON ổn định và hoạt động xuyên suốt mọi Scene.

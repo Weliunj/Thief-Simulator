@@ -23,10 +23,7 @@ public class ChapterSO : ScriptableObject
     [Tooltip("Điểm mục tiêu cần đạt để qua màn")]
     public int targetPoint = 400;
 
-    [Header("📍 Spawn Settings")]
-    [Tooltip("Vị trí xuất hiện của nhân vật trong màn chơi")]
-    public GameObject playerSpawnPosition;
-
+    [Header("📍 Item Spawn Settings")]
     [Tooltip("Danh sách các tọa độ (Vector3) xuất hiện Item trong bản đồ của Chapter")]
     public System.Collections.Generic.List<Vector3> itemSpawnPositions = new System.Collections.Generic.List<Vector3>();
 

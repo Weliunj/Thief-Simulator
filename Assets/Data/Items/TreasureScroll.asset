@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
-  m_Name: GoldTrophy
+  m_Name: TreasureScroll
   m_EditorClassIdentifier: Assembly-CSharp::ItemSO
-  itemName: Gold Tropy
-  rarity: 4
-  itemIcon: {fileID: 764106337, guid: e8c5a33e035b7994ab2b4d30053e377f, type: 3}
+  itemName: Treasure Scroll
+  rarity: 5
+  itemIcon: {fileID: 180466789, guid: ffdfdc9cc921dc04ba572ae05a152112, type: 3}
   description: A valuable item that can be stolen and sold for points.
-  basePrice: 90
-  minPrice: 60
-  maxPrice: 120
-  baseKg: 6
-  minKg: 4
-  maxKg: 8
+  basePrice: 80
+  minPrice: 50
+  maxPrice: 110
+  baseKg: 0
+  minKg: 0
+  maxKg: 0

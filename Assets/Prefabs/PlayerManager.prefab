@@ -629,7 +629,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93aed9cbc6df4114b85a65466d51c3a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Flashlight
-  playerManager: {fileID: 11400000, guid: 3745f85ce46b18b4d954cdfa3e6ace6d, type: 2}
+  playerStats: {fileID: 0}
   mobileActions: {fileID: 0}
   audioSources:
   - {fileID: 46091846893374827}
@@ -1558,6 +1558,7 @@ GameObject:
   - component: {fileID: 4203443370619810317}
   - component: {fileID: 4887488480838751301}
   - component: {fileID: 5763543555913627771}
+  - component: {fileID: 1333743372861461963}
   - component: {fileID: 320018856994620547}
   - component: {fileID: 6487387858774349113}
   - component: {fileID: 5324671272105864876}
@@ -1637,6 +1638,36 @@ CharacterController:
   m_SkinWidth: 0.02
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 0.93, z: 0}
+--- !u!114 &1333743372861461963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6973001202530683238}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 554d71e5045fa7747b859cb98cc7373c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  characterData: {fileID: 11400000, guid: 70e5be38d2d5fdb4b9b5f133b6e3d22a, type: 2}
+  currentStamina: 10
+  maxStamina: 10
+  staminaDepletionRate: 3
+  staminaRegenRate: 2
+  staminaRegenCooldown: 1
+  canSprint: 1
+  currentWeight: 0
+  maxWeight: 100
+  moveSpeed: 2
+  sprintSpeed: 7
+  crouchSpeed: 1.3
+  jumpHeight: 1.2
+  maxTime: 300
+  currentTime: 300
+  currPoint: 0
+  totalPoint: 400
+  isDied: 0
 --- !u!114 &320018856994620547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1649,7 +1680,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26e54e5a728a9234ab24fcf1460ed8a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 11400000, guid: 3745f85ce46b18b4d954cdfa3e6ace6d, type: 2}
+  playerData: {fileID: 0}
+  stats: {fileID: 0}
   RotationSmoothTime: 0.12
   SpeedChangeRate: 10
   LandingAudioClip: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
@@ -1850,7 +1882,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDeathHandler
   playerController: {fileID: 0}
-  playerManager: {fileID: 11400000, guid: 3745f85ce46b18b4d954cdfa3e6ace6d, type: 2}
+  playerStats: {fileID: 0}
   animator: {fileID: 0}
   playerModel: {fileID: 3652425402215170871}
   cameraTarget: {fileID: 0}

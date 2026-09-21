@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class SettingsUI : MonoBehaviour
+public class SettingsHUD : MonoBehaviour
 {
     [Header("🎯 Sensitivity UI Components")]
     [Tooltip("Slider điều chỉnh độ nhạy (1.0 -> 5.0)")]
@@ -11,6 +11,12 @@ public class SettingsUI : MonoBehaviour
 
     [Tooltip("Text hiển thị giá trị độ nhạy (VD: 1.5, 2.0, ...)")]
     public TextMeshProUGUI sensitivityValueText;
+
+    [Header("📊 FPS & Graphics UI Components")]
+    [Tooltip("Toggle hiển thị FPS trên màn hình")]
+    public Toggle showFPSToggle;
+    [Tooltip("Dropdown chọn mục tiêu FPS (30, 60, 90, 120)")]
+    public TMP_Dropdown fpsDropdown;
 
     [Header("🔘 Action Buttons")]
     public Button saveButton;
@@ -28,6 +34,8 @@ public class SettingsUI : MonoBehaviour
     public AudioSource clickAudioSource;
 
     private float currentPendingSensitivity = 2.0f;
+    private bool currentPendingShowFPS = true;
+    private int currentPendingFPS = 60;
     private Coroutine saveFeedbackCoroutine;
     private string originalSaveText = "Save";
 
@@ -49,6 +57,20 @@ public class SettingsUI : MonoBehaviour
             originalSaveText = saveButtonText.text;
         }
 
+        // Tự động tìm Toggle FPS nếu chưa gán
+        if (showFPSToggle == null)
+        {
+            var toggles = GetComponentsInChildren<Toggle>(true);
+            foreach (var t in toggles)
+            {
+                if (t.gameObject.name.ToLower().Contains("fps"))
+                {
+                    showFPSToggle = t;
+                    break;
+                }
+            }
+        }
+
         // Cấu hình Slider
         if (sensitivitySlider != null)
         {
@@ -56,6 +78,18 @@ public class SettingsUI : MonoBehaviour
             sensitivitySlider.maxValue = 10.0f;
             sensitivitySlider.wholeNumbers = false;
             sensitivitySlider.onValueChanged.AddListener(OnSliderValueChanged);
+        }
+
+        // Cấu hình Show FPS Toggle
+        if (showFPSToggle != null)
+        {
+            showFPSToggle.onValueChanged.AddListener(OnFPSToggleChanged);
+        }
+
+        // Cấu hình FPS Dropdown
+        if (fpsDropdown != null)
+        {
+            fpsDropdown.onValueChanged.AddListener(OnFPSDropdownChanged);
         }
 
         // Đăng ký sự kiện Buttons
@@ -107,6 +141,52 @@ public class SettingsUI : MonoBehaviour
         }
 
         UpdateValueDisplay(savedVal);
+
+        if (SettingsManager.Instance != null)
+        {
+            currentPendingShowFPS = SettingsManager.Instance.ShowFPSOnScreen;
+            currentPendingFPS = SettingsManager.Instance.TargetFPS;
+
+            if (showFPSToggle != null)
+            {
+                showFPSToggle.SetIsOnWithoutNotify(currentPendingShowFPS);
+            }
+
+            if (fpsDropdown != null)
+            {
+                // Map FPS (30, 45, 60, 90, 120) sang dropdown index
+                int index = currentPendingFPS switch
+                {
+                    30 => 0,
+                    45 => 1,
+                    60 => 2,
+                    90 => 3,
+                    120 => 4,
+                    _ => 2
+                };
+                fpsDropdown.SetValueWithoutNotify(index);
+            }
+        }
+    }
+
+    private void OnFPSToggleChanged(bool isOn)
+    {
+        currentPendingShowFPS = isOn;
+        PlayClickSound();
+    }
+
+    private void OnFPSDropdownChanged(int index)
+    {
+        currentPendingFPS = index switch
+        {
+            0 => 30,
+            1 => 45,
+            2 => 60,
+            3 => 90,
+            4 => 120,
+            _ => 60
+        };
+        PlayClickSound();
     }
 
     private void OnSliderValueChanged(float rawValue)
@@ -145,8 +225,8 @@ public class SettingsUI : MonoBehaviour
 
         if (SettingsManager.Instance != null)
         {
-            SettingsManager.Instance.SetSensitivity(currentPendingSensitivity);
-            Debug.Log($"[SettingsUI] Đã lưu Sensitivity = {currentPendingSensitivity}");
+            SettingsManager.Instance.SetAllSettings(currentPendingSensitivity, currentPendingFPS, currentPendingShowFPS);
+            Debug.Log($"[SettingsHUD] Đã lưu Settings: Sensitivity = {currentPendingSensitivity}, FPS = {currentPendingFPS}, ShowFPS = {currentPendingShowFPS}");
         }
 
         // Hiển thị 'Saved' trong 1 giây rồi quay lại 'Save'
@@ -188,6 +268,15 @@ public class SettingsUI : MonoBehaviour
 
     private void PlayClickSound()
     {
+        if (clickAudioSource == null)
+        {
+            clickAudioSource = GetComponentInChildren<AudioSource>(true);
+            if (clickAudioSource == null)
+            {
+                clickAudioSource = FindFirstObjectByType<AudioSource>();
+            }
+        }
+
         if (clickAudioSource != null)
         {
             clickAudioSource.Play();

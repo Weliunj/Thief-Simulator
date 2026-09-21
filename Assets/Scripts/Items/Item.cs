@@ -20,8 +20,6 @@ public class Item : MonoBehaviour, IInteractable
     public int MinKg = 1;
     public int MaxKg = 10;
 
-    public PlayerManager playerManagerl;
-
     void Awake()
     {
         InitializeStats();
@@ -63,16 +61,11 @@ public class Item : MonoBehaviour, IInteractable
     {
         if (other != null && other.CompareTag("home"))
         {
-            if (playerManagerl == null)
+            UI_Manager ui = FindFirstObjectByType<UI_Manager>();
+            if (ui != null && ui.playerManager != null)
             {
-                UI_Manager ui = FindFirstObjectByType<UI_Manager>();
-                if (ui != null) playerManagerl = ui.playerManager;
-            }
-
-            if (playerManagerl != null)
-            {
-                playerManagerl.currpoint += (int)Price;
-                Debug.Log($"Đã giao vật phẩm! Điểm hiện tại: {playerManagerl.currpoint} / {playerManagerl.totalpoint}");
+                ui.playerManager.currpoint += (int)Price;
+                Debug.Log($"Đã giao vật phẩm! Điểm hiện tại: {ui.playerManager.currpoint} / {ui.playerManager.totalpoint}");
             }
             Destroy(gameObject);
         }

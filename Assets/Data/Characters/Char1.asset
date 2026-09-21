@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eac8d81d51e33a74884e8e8056d5dfd4, type: 3}
+  m_Name: Char1
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSO
+  characterId: char_01
+  characterName: Shadow Rookie
+  avatar: {fileID: 0}
+  description: A rookie thief with agile footsteps and balanced stamina.
+  baseMoveSpeed: 2
+  baseSprintSpeed: 7
+  baseCrouchSpeed: 1.3
+  baseJumpHeight: 1.2
+  baseMaxStamina: 10
+  staminaDepletionRate: 3
+  staminaRegenRate: 2
+  staminaRegenCooldown: 1
+  baseMaxWeight: 20

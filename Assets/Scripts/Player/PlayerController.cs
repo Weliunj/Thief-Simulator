@@ -15,7 +15,17 @@ namespace StarterAssets
 #endif
     public class PlayerController : MonoBehaviour
     {
-        public PlayerManager player;
+        [Header("👤 Player Configuration & Runtime Stats")]
+        [Tooltip("ScriptableObject chứa hồ sơ và chỉ số gốc của nhân vật (Tên, Speed, Stamina, Weight...)")]
+        public PlayerSO playerData;
+
+        [Tooltip("Component quản lý toàn bộ chỉ số runtime đang diễn ra (Stamina, Weight, Speed...)")]
+        public PlayerStats stats;
+
+        /// <summary>
+        /// Thuộc tính tương thích ngược để các script và hàm hiện tại truy cập player.xxx không bị lỗi.
+        /// </summary>
+        public PlayerStats player => stats;
 
         [Tooltip("How fast the character turns to face movement direction")]
         [Range(0.0f, 0.3f)]
@@ -151,6 +161,22 @@ namespace StarterAssets
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
+
+            // Tự động tìm hoặc gắn component PlayerStats
+            if (stats == null)
+            {
+                stats = GetComponent<PlayerStats>();
+                if (stats == null)
+                {
+                    stats = gameObject.AddComponent<PlayerStats>();
+                }
+            }
+
+            // Nạp dữ liệu cấu hình từ PlayerSO nếu có
+            if (stats != null && playerData != null)
+            {
+                stats.InitializeFromData(playerData);
+            }
         }
 
         private void Start()
@@ -173,18 +199,18 @@ namespace StarterAssets
             StartHeight = characterController.height;
 
             lightD.SetActive(false);
-            player.isDied = false;
             die = false;
-            player.currweight = 0;
-            player._MoveSpeed = player.MoveSpeed;
-            player._SprintSpeed = player.SprintSpeed;
+
+            if (stats != null)
+            {
+                stats.isDied = false;
+                stats.currweight = 0;
+                stats.currpoint = 0;
+                stats.currentStamina = stats.MaxStamina;
+                stats.CalculateWeightSpeedPenalty();
+            }
 
             Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), false);
-            // Khởi tạo Stamina
-            player._stamina = player.MaxStamina;
-            _staminaRegenTimer = 0f; // Reset timer
-            player.currpoint = 0;
-            player.currpoint = 0;
 
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
@@ -266,66 +292,27 @@ namespace StarterAssets
             Move();
             TakeItem();
         }
-        // --- HÀM XỬ LÝ STAMINA MỚI ---
+        // --- HÀM XỬ LÝ STAMINA (Ủy quyền cho PlayerStats) ---
         private void HandleStamina()
         {
-            // 1. Kiểm tra trạng thái có được chạy không
-            _canSprint = player._stamina > 0.01f;
-
-            // 2. Sprinting: Giảm Stamina
-            if (_input.sprint && _input.move.magnitude > 0 && !Crouching)
+            if (stats != null)
             {
-                if (player._stamina > 0f)
-                {
-                    player._stamina -= player.StaminaDepletionRate * Time.deltaTime;
-                    _staminaRegenTimer = player.StaminaRegenCooldown; // Reset cooldown khi đang chạy
-
-                    // Giới hạn Stamina không xuống dưới 0
-                    player._stamina = Mathf.Max(0f, player._stamina);
-                }
+                bool isMoving = _input.move.magnitude > 0 && !Crouching;
+                stats.HandleStamina(_input.sprint, isMoving, Crouching, Time.deltaTime);
+                _canSprint = stats.canSprint;
             }
-            // 3. Regen (Hồi phục):
             else
             {
-                // a) Đếm ngược Cooldown
-                if (_staminaRegenTimer > 0f)
-                {
-                    _staminaRegenTimer -= Time.deltaTime;
-                }
-                // b) Nếu Cooldown hết và Stamina chưa đầy, bắt đầu hồi phục
-                else if (player._stamina < player.MaxStamina)
-                {
-                    player._stamina += player.StaminaRegenRate * Time.deltaTime;
-
-                    // Giới hạn Stamina không vượt quá MaxStamina
-                    player._stamina = Mathf.Min(player.MaxStamina, player._stamina);
-                }
+                _canSprint = true;
             }
-
-            // Debug.Log($"Stamina: {player._stamina:F2}, Cooldown: {_staminaRegenTimer:F2}, CanSprint: {_canSprint}");
         }
+
         public void WeightCacul()
         {
-            // Tính tỉ lệ trọng lượng đã mang (weight ratio)
-            float weightRatio = (float)player.currweight / (float)player.Maxweight;
-            float minMoveSpeed = player.MoveSpeed / 4f;
-            float minSprintSpeed = player.SprintSpeed / 4f;
-
-            weightRatio = Mathf.Clamp01(weightRatio);
-
-            // Dùng Mathf.Lerp để GIẢM tốc độ tuyến tính
-            // T = 0 (0% trọng lượng): MoveSpeed = player.MoveSpeed (2.0f)
-            // T = 1 (100% trọng lượng): MoveSpeed = minMoveSpeed (0.5f)
-
-            player._MoveSpeed = Mathf.Lerp(player.MoveSpeed, minMoveSpeed, weightRatio);
-            player._SprintSpeed = Mathf.Lerp(player.SprintSpeed, minSprintSpeed, weightRatio);
-
-            /*
-                --------------------mathf.Lerp = a + (b - a) * t
-                vd: Lerp.(2.0f, 0.5f, 0.5) => 1.25f
-                {weightRatio} = 0.5$ (Mang 50%)
-            */
-
+            if (stats != null)
+            {
+                stats.CalculateWeightSpeedPenalty();
+            }
         }
         float takeDuration = 0.5f;
         float takeTimer = 0;

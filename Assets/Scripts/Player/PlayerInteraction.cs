@@ -37,7 +37,10 @@ public class PlayerInteraction : MonoBehaviour
     void Awake()
     {
         playerController = GetComponent<PlayerController>();
-        mobileActions = FindFirstObjectByType<MobileActionButtons>();
+        if (mobileActions == null)
+        {
+            mobileActions = FindFirstObjectByType<MobileActionButtons>(FindObjectsInactive.Include);
+        }
     }
 
     void Start()
