@@ -34,11 +34,13 @@ public class MobileActionButtons : MonoBehaviour
     [HideInInspector] public bool interactPressed = false;
     [HideInInspector] public bool dropPressed = false;
     [HideInInspector] public bool flashlightPressed = false;
+    [HideInInspector] public bool flashlightHeld = false;
 
     void Start()
     {
         // Tự động tìm Button con nếu chưa kéo thả trong Inspector
         AutoFindButtons();
+        UpdateToggleVisuals();
 
         // --- Đăng ký sự kiện tap ---
         if (jumpButton != null)
@@ -72,41 +74,40 @@ public class MobileActionButtons : MonoBehaviour
 
     private void AutoFindButtons()
     {
+        Button[] allButtons = GetComponentsInChildren<Button>(true);
+
         if (jumpButton == null)
-        {
-            Transform t = transform.Find("JumpBtn") ?? transform.Find("JumpButton");
-            if (t != null) jumpButton = t.GetComponent<Button>();
-        }
+            jumpButton = FindButtonByName(allButtons, "jump");
         if (pickupButton == null)
-        {
-            Transform t = transform.Find("PickupBtn") ?? transform.Find("PickupButton");
-            if (t != null) pickupButton = t.GetComponent<Button>();
-        }
+            pickupButton = FindButtonByName(allButtons, "pickup");
         if (interactButton == null)
-        {
-            Transform t = transform.Find("InteractBtn") ?? transform.Find("InteractButton");
-            if (t != null) interactButton = t.GetComponent<Button>();
-        }
+            interactButton = FindButtonByName(allButtons, "interact");
         if (dropButton == null)
-        {
-            Transform t = transform.Find("TossBtn") ?? transform.Find("DropBtn") ?? transform.Find("DropButton");
-            if (t != null) dropButton = t.GetComponent<Button>();
-        }
+            dropButton = FindButtonByName(allButtons, "toss", "drop");
         if (sprintButton == null)
-        {
-            Transform t = transform.Find("SprintBtn") ?? transform.Find("SprintButton");
-            if (t != null) sprintButton = t.GetComponent<Button>();
-        }
+            sprintButton = FindButtonByName(allButtons, "sprint");
         if (crouchButton == null)
-        {
-            Transform t = transform.Find("CrouchBtn") ?? transform.Find("CrouchButton");
-            if (t != null) crouchButton = t.GetComponent<Button>();
-        }
+            crouchButton = FindButtonByName(allButtons, "crouch");
         if (flashlightButton == null)
+            flashlightButton = FindButtonByName(allButtons, "flasklight", "flashlight");
+    }
+
+    private Button FindButtonByName(Button[] buttons, params string[] keywords)
+    {
+        if (buttons == null) return null;
+        foreach (var b in buttons)
         {
-            Transform t = transform.Find("FlaskLightBtn") ?? transform.Find("FlashlightBtn");
-            if (t != null) flashlightButton = t.GetComponent<Button>();
+            if (b == null) continue;
+            string objName = b.gameObject.name.ToLower();
+            foreach (var kw in keywords)
+            {
+                if (objName.Contains(kw.ToLower()))
+                {
+                    return b;
+                }
+            }
         }
+        return null;
     }
 
     // =========================================================================
@@ -136,10 +137,12 @@ public class MobileActionButtons : MonoBehaviour
     private void OnFlashlightTap()
     {
         flashlightPressed = true;
+        flashlightHeld = !flashlightHeld;
+        UpdateToggleVisuals();
     }
 
     // =========================================================================
-    //                      TOGGLE HANDLERS (Sprint)
+    //                      TOGGLE HANDLERS (Sprint & Crouch)
     // =========================================================================
 
     private void OnSprintToggle()
@@ -151,11 +154,9 @@ public class MobileActionButtons : MonoBehaviour
         {
             crouchHeld = false;
         }
-    }
 
-    // =========================================================================
-    //                      TOGGLE HANDLERS (Crouch)
-    // =========================================================================
+        UpdateToggleVisuals();
+    }
 
     private void OnCrouchToggle()
     {
@@ -165,6 +166,24 @@ public class MobileActionButtons : MonoBehaviour
         if (crouchHeld && sprintHeld)
         {
             sprintHeld = false;
+        }
+
+        UpdateToggleVisuals();
+    }
+
+    private void UpdateToggleVisuals()
+    {
+        if (crouchButton != null && crouchButton.image != null)
+        {
+            crouchButton.image.color = crouchHeld ? new Color(0.9f, 0.9f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.5f);
+        }
+        if (sprintButton != null && sprintButton.image != null)
+        {
+            sprintButton.image.color = sprintHeld ? new Color(0.9f, 0.9f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.5f);
+        }
+        if (flashlightButton != null && flashlightButton.image != null)
+        {
+            flashlightButton.image.color = flashlightHeld ? new Color(0.9f, 0.9f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.5f);
         }
     }
 

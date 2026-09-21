@@ -661,6 +661,12 @@ public class HotbarManager : MonoBehaviour
         forwardDir.y = 0f; // Triệt tiêu độ nghiêng theo phương thẳng đứng khi spawn
         Quaternion dropRot = (forwardDir.sqrMagnitude > 0.001f) ? Quaternion.LookRotation(forwardDir) : Quaternion.identity;
 
+        bool isLadder = itemObj.GetComponent<LadderController>() != null || itemObj.GetComponentInChildren<LadderController>() != null;
+        if (isLadder)
+        {
+            dropRot = Quaternion.Euler(0f, dropRot.eulerAngles.y, 0f);
+        }
+
         // Thả item ra ngoài thế giới
         itemObj.transform.SetParent(null);
         itemObj.transform.position = dropPosition;
@@ -668,7 +674,7 @@ public class HotbarManager : MonoBehaviour
         itemObj.transform.localScale = Vector3.one;
         itemObj.SetActive(true);
 
-        // Kích hoạt vật lý tự nhiên bình thường khi thả/ném (mở khóa toàn bộ rotation constraints)
+        // Kích hoạt vật lý tự nhiên bình thường khi thả/ném
         Rigidbody rb = itemObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -676,14 +682,25 @@ public class HotbarManager : MonoBehaviour
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
-            // Cho phép vật thể tự do xoay, nghiêng, rơi và va chạm tự nhiên
-            rb.constraints = RigidbodyConstraints.None;
+            if (isLadder)
+            {
+                // Thang: Khóa hoàn toàn góc nghiêng X và Z để thang luôn luôn đứng thẳng khi đặt
+                rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                var ladder = itemObj.GetComponent<LadderController>() ?? itemObj.GetComponentInChildren<LadderController>();
+                if (ladder != null) ladder.EnsureUpright();
+            }
+            else
+            {
+                // Các vật phẩm thường: Cho phép tự do xoay, nghiêng, lăn và va chạm tự nhiên
+                rb.constraints = RigidbodyConstraints.None;
+            }
 
             // Nếu không có vật cản trước mặt -> Thả/ném nhẹ theo hướng nhìn
             if (!hasObstacle)
             {
-                float force = (itemObj.GetComponent<LadderController>() != null) ? 0.6f : dropForwardForce;
-                rb.AddForce(dropDirection * force, ForceMode.Impulse);
+                float force = isLadder ? 0.3f : dropForwardForce;
+                Vector3 appliedDirection = isLadder ? forwardDir : dropDirection;
+                rb.AddForce(appliedDirection * force, ForceMode.Impulse);
             }
         }
 

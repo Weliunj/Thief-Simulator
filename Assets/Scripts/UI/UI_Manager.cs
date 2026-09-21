@@ -98,6 +98,20 @@ public class UI_Manager : MonoBehaviour
             lockpickMinigame.CloseMinigame();
         }
 
+        // Nhận dữ liệu Chapter và Character từ GameSession nếu được mở từ Menu
+        if (GameSession.SelectedChapter != null)
+        {
+            currentChapter = GameSession.SelectedChapter;
+        }
+        if (GameSession.NextChapter != null)
+        {
+            nextChapter = GameSession.NextChapter;
+        }
+        if (GameSession.SelectedPlayer != null)
+        {
+            playerData = GameSession.SelectedPlayer;
+        }
+
         // Tự động tìm PlayerStats trong scene nếu chưa được gán
         if (playerStats == null)
         {
@@ -426,6 +440,7 @@ public class UI_Manager : MonoBehaviour
     {
         Time.timeScale = 1f;
         isPaused = false;
+        GameSession.ClearSession();
         SceneManager.LoadScene("HomeMenu");
     }
 }

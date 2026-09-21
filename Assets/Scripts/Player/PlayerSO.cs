@@ -24,6 +24,10 @@ public class PlayerSO : ScriptableObject
     [Tooltip("Mô tả tiểu sử hoặc đặc điểm kỹ năng của nhân vật")]
     public string description = "A rookie thief with agile footsteps and balanced stamina.";
 
+    [Header("🎭 3D Character Model / Prefab")]
+    [Tooltip("Prefab nhân vật 3D tương ứng để Instantiate vào màn chơi")]
+    public GameObject characterPrefab;
+
     [Header("🏃 Base Movement Stats")]
     [Tooltip("Tốc độ di chuyển cơ bản khi đi bộ")]
     public float baseMoveSpeed = 2.0f;

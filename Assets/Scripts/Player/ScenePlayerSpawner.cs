@@ -1,0 +1,287 @@
+using System.Collections.Generic;
+using StarterAssets;
+using UnityEngine;
+using UnityEngine.Rendering.Universal;
+
+/// <summary>
+/// Component quản lý vị trí và sinh nhân vật (Player Spawner) trong Scene:
+/// - Quản lý danh sách các điểm xuất phát (spawnPoints Transform) trong Scene.
+/// - Tự động lấy Prefab nhân vật từ GameSession.SelectedPlayer (hoặc defaultPlayerData / fallbackPrefab).
+/// - Tự động Instantiate nhân vật tại điểm Spawn khi màn chơi khởi động.
+/// - Tự động kết nối Cinemachine Virtual Camera và UI_Manager vào Player vừa sinh.
+/// - Hỗ trợ Gizmos trực quan và Context Menu tiện lợi cho Level Design.
+/// </summary>
+public class ScenePlayerSpawner : MonoBehaviour
+{
+    [Header("👤 Player Configuration Reference")]
+    [Tooltip("Dữ liệu nhân vật mặc định nếu GameSession.SelectedPlayer là null")]
+    public PlayerSO defaultPlayerData;
+
+    [Tooltip("Prefab nhân vật dự phòng nếu PlayerSO chưa được gán characterPrefab")]
+    public GameObject fallbackPlayerPrefab;
+
+    [Header("📍 Scene Spawn Points")]
+    [Tooltip("Danh sách các Transform điểm xuất phát đặt trong Scene")]
+    public List<Transform> spawnPoints = new List<Transform>();
+
+    [Header("⚙️ Spawning Settings")]
+    [Tooltip("Tự động spawn nhân vật ngay khi Scene khởi động (Start)")]
+    public bool spawnOnStart = true;
+
+    [Tooltip("Không spawn nếu trong Scene đã có sẵn GameObject mang Tag 'Player'")]
+    public bool preventDuplicateIfPlayerExists = true;
+
+    [Header("📦 Spawned Instance")]
+    [SerializeField] private GameObject spawnedPlayerInstance;
+
+    public GameObject SpawnedPlayer => spawnedPlayerInstance;
+
+    private void Awake()
+    {
+        // 1. Đảm bảo Scene luôn có ít nhất 1 AudioListener để không bị lỗi cảnh báo
+        EnsureAudioListener();
+
+        // 2. Tự động thu thập Transform con nếu danh sách spawnPoints đang trống
+        if (spawnPoints == null || spawnPoints.Count == 0)
+        {
+            CollectChildSpawnPoints();
+        }
+    }
+
+    private void Start()
+    {
+        EnsureAudioListener();
+
+        if (spawnOnStart)
+        {
+            SpawnPlayer();
+        }
+    }
+
+    /// <summary>
+    /// Đảm bảo luôn có 1 AudioListener trong Scene (trên Camera.main hoặc Active Camera)
+    /// </summary>
+    private void EnsureAudioListener()
+    {
+        AudioListener listener = FindFirstObjectByType<AudioListener>();
+        if (listener == null)
+        {
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+            {
+                mainCam.gameObject.AddComponent<AudioListener>();
+                Debug.Log("<color=yellow>[ScenePlayerSpawner] Đã tự động thêm AudioListener vào Main Camera của Scene.</color>");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Thu thập toàn bộ Transform con làm điểm Spawn (có thể click chuột phải trong Inspector)
+    /// </summary>
+    [ContextMenu("Auto Collect Child Spawn Points")]
+    public void CollectChildSpawnPoints()
+    {
+        spawnPoints.Clear();
+        foreach (Transform child in transform)
+        {
+            if (child != transform)
+            {
+                spawnPoints.Add(child);
+            }
+        }
+        Debug.Log($"[ScenePlayerSpawner] Đã thu thập {spawnPoints.Count} điểm spawn từ các đối tượng con.");
+    }
+
+    /// <summary>
+    /// Thực hiện sinh nhân vật tại điểm Spawn được chọn
+    /// </summary>
+    [ContextMenu("Spawn Player Now")]
+    public GameObject SpawnPlayer()
+    {
+        // 1. Kiểm tra tránh sinh trùng lặp nếu đã có Player trong Scene
+        if (preventDuplicateIfPlayerExists)
+        {
+            GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
+            if (existingPlayer != null && existingPlayer != spawnedPlayerInstance)
+            {
+                Debug.Log($"[ScenePlayerSpawner] Đã phát hiện Player '{existingPlayer.name}' trong Scene. Bỏ qua sinh mới.");
+                spawnedPlayerInstance = existingPlayer;
+                SetupCameraAndUI(spawnedPlayerInstance);
+                return spawnedPlayerInstance;
+            }
+        }
+
+        // 2. Xác định điểm xuất phát
+        Transform targetSpawnPoint = transform;
+        if (spawnPoints != null && spawnPoints.Count > 0)
+        {
+            foreach (var pt in spawnPoints)
+            {
+                if (pt != null)
+                {
+                    targetSpawnPoint = pt;
+                    break;
+                }
+            }
+        }
+
+        // 3. Lấy cấu hình PlayerSO (GameSession hoặc default)
+        PlayerSO activeData = GameSession.SelectedPlayer != null ? GameSession.SelectedPlayer : defaultPlayerData;
+
+        // 4. Lấy Prefab cần Instantiate
+        GameObject prefabToInstantiate = null;
+        if (activeData != null && activeData.characterPrefab != null)
+        {
+            prefabToInstantiate = activeData.characterPrefab;
+        }
+        else if (fallbackPlayerPrefab != null)
+        {
+            prefabToInstantiate = fallbackPlayerPrefab;
+        }
+
+        if (prefabToInstantiate == null)
+        {
+            Debug.LogWarning("[ScenePlayerSpawner] Không tìm thấy characterPrefab trong PlayerSO hoặc fallbackPlayerPrefab!");
+            return null;
+        }
+
+        // 5. Instantiate Player
+        Vector3 spawnPos = targetSpawnPoint.position;
+        Quaternion spawnRot = targetSpawnPoint.rotation;
+
+        spawnedPlayerInstance = Instantiate(prefabToInstantiate, spawnPos, spawnRot);
+        spawnedPlayerInstance.name = prefabToInstantiate.name;
+
+        // 6. Nạp dữ liệu PlayerSO vào PlayerStats & PlayerController
+        PlayerController pc = spawnedPlayerInstance.GetComponent<PlayerController>();
+        PlayerStats stats = spawnedPlayerInstance.GetComponent<PlayerStats>();
+
+        if (stats != null && activeData != null)
+        {
+            stats.InitializeFromData(activeData);
+        }
+
+        if (pc != null && activeData != null)
+        {
+            pc.playerData = activeData;
+        }
+
+        // 7. Tự động kết nối Camera & UI
+        SetupCameraAndUI(spawnedPlayerInstance);
+
+        Debug.Log($"<color=cyan>[ScenePlayerSpawner] Đã sinh thành công '{spawnedPlayerInstance.name}' tại {spawnPos}!</color>");
+        return spawnedPlayerInstance;
+    }
+
+    /// <summary>
+    /// Tự động kết nối Cinemachine Virtual Camera và UI_Manager vào Player vừa sinh
+    /// </summary>
+    private void SetupCameraAndUI(GameObject playerObj)
+    {
+        if (playerObj == null) return;
+
+        PlayerController pc = playerObj.GetComponent<PlayerController>();
+        PlayerStats stats = playerObj.GetComponent<PlayerStats>();
+
+        // 1. Tìm Target Camera
+        Transform cameraTarget = null;
+        if (pc != null && pc.CinemachineCameraTarget != null)
+        {
+            cameraTarget = pc.CinemachineCameraTarget.transform;
+        }
+        else
+        {
+            GameObject targetObj = GameObject.FindGameObjectWithTag("CinemachineTarget");
+            if (targetObj != null) cameraTarget = targetObj.transform;
+        }
+
+        // 2. Kết nối Cinemachine Virtual Camera
+        if (cameraTarget != null)
+        {
+            ConnectCinemachineCamera(cameraTarget);
+        }
+
+        // 3. Kết nối UI_Manager
+        UI_Manager ui = FindFirstObjectByType<UI_Manager>();
+        if (ui != null && stats != null)
+        {
+            ui.playerStats = stats;
+        }
+
+        // 4. Kết nối PostProcess và kích hoạt Global Volume
+        PostProcess post = FindFirstObjectByType<PostProcess>(FindObjectsInactive.Include);
+        if (post != null)
+        {
+            post.gameObject.SetActive(true);
+            post.enabled = true;
+            if (pc != null) post.controller = pc;
+        }
+
+        // 5. Đảm bảo Camera.main bật renderPostProcessing
+        Camera mainCam = Camera.main;
+        if (mainCam != null)
+        {
+            var camData = mainCam.GetUniversalAdditionalCameraData();
+            if (camData != null)
+            {
+                camData.renderPostProcessing = true;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tìm và gán Follow / LookAt cho Cinemachine Camera trong Scene
+    /// </summary>
+    private void ConnectCinemachineCamera(Transform target)
+    {
+        if (target == null) return;
+
+        // Tìm tất cả các component có tên chứa CinemachineCamera hoặc CinemachineVirtualCamera
+        Component[] allComponents = FindObjectsByType<Component>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var comp in allComponents)
+        {
+            if (comp == null) continue;
+            string typeName = comp.GetType().Name;
+            if (typeName.Contains("CinemachineVirtualCamera") || typeName.Contains("CinemachineCamera"))
+            {
+                var followProp = comp.GetType().GetProperty("Follow");
+                var lookAtProp = comp.GetType().GetProperty("LookAt");
+
+                if (followProp != null) followProp.SetValue(comp, target);
+                if (lookAtProp != null) lookAtProp.SetValue(comp, target);
+
+                Debug.Log($"[ScenePlayerSpawner] Đã kết nối Camera ({typeName}) theo dõi '{target.name}'.");
+            }
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = new Color(0.2f, 1f, 0.4f, 0.8f); // Xanh lá sáng
+
+        if (spawnPoints != null && spawnPoints.Count > 0)
+        {
+            for (int i = 0; i < spawnPoints.Count; i++)
+            {
+                if (spawnPoints[i] != null)
+                {
+                    Vector3 pos = spawnPoints[i].position;
+                    // Vẽ hình trụ / quả cầu đại diện cho nhân vật
+                    Gizmos.DrawSphere(pos + Vector3.up * 0.9f, 0.35f);
+                    Gizmos.DrawWireCube(pos + Vector3.up * 0.9f, new Vector3(0.6f, 1.8f, 0.6f));
+
+                    // Vẽ mũi tên hướng nhìn xuất phát
+                    Vector3 forward = spawnPoints[i].forward * 1.2f;
+                    Gizmos.DrawRay(pos + Vector3.up * 0.9f, forward);
+                }
+            }
+        }
+        else
+        {
+            Vector3 pos = transform.position;
+            Gizmos.DrawSphere(pos + Vector3.up * 0.9f, 0.35f);
+            Gizmos.DrawWireCube(pos + Vector3.up * 0.9f, new Vector3(0.6f, 1.8f, 0.6f));
+            Gizmos.DrawRay(pos + Vector3.up * 0.9f, transform.forward * 1.2f);
+        }
+    }
+}

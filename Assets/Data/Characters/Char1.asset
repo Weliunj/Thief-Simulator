@@ -16,12 +16,13 @@ MonoBehaviour:
   characterName: Shadow Rookie
   avatar: {fileID: 0}
   description: A rookie thief with agile footsteps and balanced stamina.
+  characterPrefab: {fileID: 2584072912539631908, guid: 4b064078ab1af474b8767a3379c9fa1b, type: 3}
   baseMoveSpeed: 2
   baseSprintSpeed: 7
-  baseCrouchSpeed: 1.3
+  baseCrouchSpeed: 15
   baseJumpHeight: 1.2
   baseMaxStamina: 10
   staminaDepletionRate: 3
   staminaRegenRate: 2
   staminaRegenCooldown: 1
-  baseMaxWeight: 20
+  baseMaxWeight: 100

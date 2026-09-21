@@ -60,8 +60,36 @@ public class PlayerInteraction : MonoBehaviour
         }
     }
 
+    public static float interactionCooldownUntil = 0f;
+
+    /// <summary>
+    /// Đặt thời gian hồi tạm thời để tránh click nút UI kích hoạt nhầm Raycast tương tác
+    /// </summary>
+    public static void SetInteractionCooldown(float duration = 0.35f)
+    {
+        interactionCooldownUntil = Time.time + duration;
+    }
+
     void Update()
     {
+        // Khi đang chơi Minigame hoặc trong thời gian hồi sau khi đóng bảng: Dừng quét và không nhận input
+        if (UI_Manager.isSolving || Time.time < interactionCooldownUntil)
+        {
+            currentLootItem = null;
+            currentSpecialInteractable = null;
+            currentInteractable = null;
+
+            if (itemInfoHUD != null) itemInfoHUD.Hide();
+            if (mobileActions != null)
+            {
+                if (mobileActions.pickupButton != null && mobileActions.pickupButton.gameObject.activeSelf)
+                    mobileActions.pickupButton.gameObject.SetActive(false);
+                if (mobileActions.interactButton != null && mobileActions.interactButton.gameObject.activeSelf)
+                    mobileActions.interactButton.gameObject.SetActive(false);
+            }
+            return;
+        }
+
         PerformInteractionCheck();
         HandleInteractionInput();
     }

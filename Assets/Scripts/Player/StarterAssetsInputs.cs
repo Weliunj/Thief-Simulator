@@ -12,6 +12,7 @@ namespace StarterAssets
         public Vector2 look;
         public bool jump;
         public bool sprint;
+        public bool crouch;
 
         [Header("Movement Settings")]
         public bool analogMovement;
@@ -91,7 +92,7 @@ namespace StarterAssets
                 }
             }
 
-            // --- Mobile Action Buttons: Jump & Sprint ---
+            // --- Mobile Action Buttons: Jump, Sprint, Crouch ---
             if (mobileActions != null)
             {
                 // Jump: bấm 1 lần → set true (ThirdPersonController sẽ tự reset)
@@ -102,6 +103,9 @@ namespace StarterAssets
 
                 // Sprint: giữ = true, thả = false
                 SprintInput(mobileActions.sprintHeld);
+
+                // Crouch: giữ/toggle = true, thả = false
+                CrouchInput(mobileActions.crouchHeld);
             }
         }
 
@@ -128,6 +132,11 @@ namespace StarterAssets
         {
             SprintInput(value.isPressed);
         }
+
+        public void OnCrouch(InputValue value)
+        {
+            CrouchInput(value.isPressed);
+        }
 #endif
 
 
@@ -149,6 +158,11 @@ namespace StarterAssets
         public void SprintInput(bool newSprintState)
         {
             sprint = newSprintState;
+        }
+
+        public void CrouchInput(bool newCrouchState)
+        {
+            crouch = newCrouchState;
         }
         
         private void OnApplicationFocus(bool hasFocus)

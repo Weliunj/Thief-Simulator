@@ -143,11 +143,16 @@ public class CutsceneManager : MonoBehaviour, IPointerClickHandler
     }
 
     /// <summary>
-    /// Kích hoạt Skip sang Target Scene mặc định.
+    /// Kích hoạt Skip sang Target Scene (ưu tiên Scene của Chapter đang chọn trong GameSession).
     /// </summary>
     public void TriggerSkip()
     {
-        SkipToScene(targetSceneName);
+        string destination = targetSceneName;
+        if (GameSession.SelectedChapter != null && !string.IsNullOrEmpty(GameSession.SelectedChapter.sceneName))
+        {
+            destination = GameSession.SelectedChapter.sceneName;
+        }
+        SkipToScene(destination);
     }
 
     /// <summary>
@@ -165,12 +170,20 @@ public class CutsceneManager : MonoBehaviour, IPointerClickHandler
     }
 
     /// <summary>
-    /// Load Scene mục tiêu đã cài đặt.
+    /// Load Scene mục tiêu đã cài đặt (ưu tiên Scene của Chapter trong GameSession).
     /// </summary>
     public void LoadTargetScene()
     {
         if (isTransitioning) return;
-        LoadSceneInternal(string.IsNullOrEmpty(targetSceneName) ? "HomeMenu" : targetSceneName);
+
+        string destination = targetSceneName;
+        if (GameSession.SelectedChapter != null && !string.IsNullOrEmpty(GameSession.SelectedChapter.sceneName))
+        {
+            destination = GameSession.SelectedChapter.sceneName;
+        }
+
+        if (string.IsNullOrEmpty(destination)) destination = "HomeMenu";
+        LoadSceneInternal(destination);
     }
 
     private void LoadSceneInternal(string sceneName)

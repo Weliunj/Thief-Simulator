@@ -2951,6 +2951,7 @@ MonoBehaviour:
   backButton: {fileID: 1355418578}
   chapterSelectPanel: {fileID: 1610542626}
   mainMenuPanel: {fileID: 1983599578}
+  defaultPlayerData: {fileID: 11400000, guid: 70e5be38d2d5fdb4b9b5f133b6e3d22a, type: 2}
   audioSource: {fileID: 864305943}
 --- !u!1 &1697800107
 GameObject:
@@ -4074,6 +4075,26 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2076392057}
     m_Modifications:
+    - target: {fileID: 1164736589395654839, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1164736589395654839, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1164736589395654839, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0.16438383
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440171917150729480, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.547
+      objectReference: {fileID: 0}
+    - target: {fileID: 1440171917150729480, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2933255324438034714, guid: e3042a52bb723864487488159f4fb14a, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4154,9 +4175,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5095745345871666573, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0.547
+      objectReference: {fileID: 0}
+    - target: {fileID: 5095745345871666573, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5095745345871666573, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0.547
+      objectReference: {fileID: 0}
     - target: {fileID: 5333451588779075603, guid: e3042a52bb723864487488159f4fb14a, type: 3}
       propertyPath: m_Name
       value: SettingHUD
+      objectReference: {fileID: 0}
+    - target: {fileID: 5333451588779075603, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6130216636551125648, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6130216636551125648, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6130216636551125648, guid: e3042a52bb723864487488159f4fb14a, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -18.054
       objectReference: {fileID: 0}
     - target: {fileID: 6559138201678245362, guid: e3042a52bb723864487488159f4fb14a, type: 3}
       propertyPath: previousPanel

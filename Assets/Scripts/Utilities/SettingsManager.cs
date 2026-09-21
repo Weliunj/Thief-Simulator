@@ -82,7 +82,7 @@ public class SettingsManager : MonoBehaviour
         {
             currentFPS = frameCount / fpsTimer;
             currentFrameTimeMs = deltaTime * 1000.0f;
-            fpsDisplayText = $"FPS: {Mathf.RoundToInt(currentFPS)}";
+            fpsDisplayText = $"{Mathf.RoundToInt(currentFPS)}";
 
             if (ShowFPSLog)
             {
@@ -100,14 +100,17 @@ public class SettingsManager : MonoBehaviour
         if (fpsStyle == null)
         {
             fpsStyle = new GUIStyle();
-            fpsStyle.alignment = TextAnchor.UpperLeft;
-            fpsStyle.fontStyle = FontStyle.Bold;
-            fpsStyle.normal.textColor = Color.white; // Chữ trắng cơ bản, không đổi màu
+            fpsStyle.alignment = TextAnchor.LowerLeft;
+            fpsStyle.fontStyle = FontStyle.Normal;
+            fpsStyle.normal.textColor = new Color(1f, 1f, 1f, 0.75f); // Trắng trong suốt nhẹ, tinh tế
         }
 
         int w = Screen.width, h = Screen.height;
-        Rect rect = new Rect(20, 20, w, h * 2 / 100);
-        fpsStyle.fontSize = Mathf.Clamp(h * 2 / 50, 18, 50);
+        // Kích thước nhỏ gọn (bằng 1 nửa trước đây), đặt ở góc dưới bên trái
+        int fontSize = Mathf.Clamp(h / 70, 11, 20);
+        fpsStyle.fontSize = fontSize;
+
+        Rect rect = new Rect(15, h - fontSize - 12, 100, fontSize + 8);
 
         // Hiển thị text cố định 1 giây cập nhật 1 lần
         GUI.Label(rect, fpsDisplayText, fpsStyle);

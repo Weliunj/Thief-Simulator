@@ -30,6 +30,9 @@ public class ChapterSelectManager : MonoBehaviour
     public GameObject chapterSelectPanel; // Panel chọn Chapter này
     public GameObject mainMenuPanel;      // Panel Main Menu chính (để hiện lại khi bấm Back)
 
+    [Header("👤 Default Player Data (Tạm thời hardcode khi chưa có UI chọn nhân vật)")]
+    public PlayerSO defaultPlayerData;
+
     [Header("🔊 Audio")]
     public AudioSource audioSource;
 
@@ -89,6 +92,16 @@ public class ChapterSelectManager : MonoBehaviour
         }
 
         PlayClickSound();
+
+        // Lưu thông tin phiên chơi vào GameSession
+        GameSession.SelectedChapter = currentChapter;
+        int nextIndex = currentChapterIndex + 1;
+        GameSession.NextChapter = (nextIndex < chapterList.Count) ? chapterList[nextIndex] : null;
+
+        if (defaultPlayerData != null && GameSession.SelectedPlayer == null)
+        {
+            GameSession.SelectedPlayer = defaultPlayerData;
+        }
 
         if (!string.IsNullOrEmpty(currentChapter.sceneName))
         {

@@ -33,21 +33,37 @@ public class PostProcess : MonoBehaviour
             controller = FindAnyObjectByType<StarterAssets.PlayerController>();
         }
 
-        // 2. Tự động bật Allow Dynamic Resolution trên Camera bằng code
+        // 2. Tự động tìm Volume trong Scene nếu chưa gán
+        if (myVolume == null)
+        {
+            myVolume = FindFirstObjectByType<Volume>(FindObjectsInactive.Include);
+        }
+
+        // 3. Đảm bảo Volume luôn được bật (Active & Enabled)
+        if (myVolume != null)
+        {
+            myVolume.gameObject.SetActive(true);
+            myVolume.enabled = true;
+            if (myVolume.profile != null)
+            {
+                myVolume.profile.TryGet(out _vignette);
+            }
+        }
+
+        // 4. Tự động bật Post Processing & Allow Dynamic Resolution trên Camera URP
         Camera cam = GetComponent<Camera>();
         if (cam == null) cam = Camera.main;
         if (cam != null)
         {
             cam.allowDynamicResolution = true;
+            var camData = cam.GetUniversalAdditionalCameraData();
+            if (camData != null)
+            {
+                camData.renderPostProcessing = true;
+            }
         }
 
-        // 3. Lấy component Vignette từ Volume
-        if (myVolume != null && myVolume.profile != null)
-        {
-            myVolume.profile.TryGet(out _vignette);
-        }
-
-        // 4. Khởi tạo Dynamic Resolution ban đầu
+        // 5. Khởi tạo Dynamic Resolution ban đầu
         _currentResolutionScale = baseResolutionScale;
         if (enableDynamicResolution)
         {
@@ -57,7 +73,12 @@ public class PostProcess : MonoBehaviour
 
     void Update()
     {
-        if (controller == null) return;
+        // Tự động tìm lại Controller nếu lúc Start nhân vật chưa kịp sinh ra
+        if (controller == null)
+        {
+            controller = FindAnyObjectByType<StarterAssets.PlayerController>();
+            if (controller == null) return;
+        }
 
         // 1. Trạng thái chết (Died)
         if (controller.player != null && controller.player.isDied)

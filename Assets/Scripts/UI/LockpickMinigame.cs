@@ -72,6 +72,8 @@ public class LockpickMinigame : MonoBehaviour
         // Không làm mờ Target Image: Giữ alpha luôn là 1.0 (rõ nét 100%)
         if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 1.0f;
         
+        AutoFindCloseButton();
+
         if (closeButton != null)
         {
             closeButton.onClick.RemoveListener(OnCloseButtonClicked);
@@ -100,17 +102,27 @@ public class LockpickMinigame : MonoBehaviour
         }
     }
 
+    private void AutoFindCloseButton()
+    {
+        if (closeButton != null) return;
+
+        GameObject searchTarget = panelRoot != null ? panelRoot : gameObject;
+        Button[] buttons = searchTarget.GetComponentsInChildren<Button>(true);
+        foreach (var b in buttons)
+        {
+            if (b == null) continue;
+            string bName = b.gameObject.name.ToLower();
+            if (bName.Contains("close") || bName.Contains("exit") || bName.Contains("back") || bName.Contains("cancel"))
+            {
+                closeButton = b;
+                break;
+            }
+        }
+    }
+
     public void OnCloseButtonClicked()
     {
-        UI_Manager uiManager = FindFirstObjectByType<UI_Manager>();
-        if (uiManager != null)
-        {
-            uiManager.CancelLockpicking();
-        }
-        else
-        {
-            CloseMinigame();
-        }
+        CloseMinigame();
     }
 
     public void OnLockpickButtonPressed()
@@ -131,6 +143,13 @@ public class LockpickMinigame : MonoBehaviour
         isPlaying = true;
         isWaitingNextStage = false;
 
+        AutoFindCloseButton();
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveListener(OnCloseButtonClicked);
+            closeButton.onClick.AddListener(OnCloseButtonClicked);
+        }
+
         if (panelRoot != null) panelRoot.SetActive(true);
         if (statusText != null) statusText.text = "Hit the target zone to pick the lock!";
 
@@ -145,6 +164,23 @@ public class LockpickMinigame : MonoBehaviour
         isWaitingNextStage = false;
         StopAllCoroutines();
         if (panelRoot != null) panelRoot.SetActive(false);
+
+        // Chống hiện tượng click nút Close bị xuyên thấu kích hoạt lại Raycast mở cửa
+        PlayerInteraction.SetInteractionCooldown(0.4f);
+
+        // Khôi phục MainHUD và trạng thái điều khiển cho Player thông qua UI_Manager
+        if (UI_Manager.isSolving)
+        {
+            UI_Manager uiManager = FindFirstObjectByType<UI_Manager>();
+            if (uiManager != null)
+            {
+                uiManager.CancelLockpicking();
+            }
+            else
+            {
+                UI_Manager.isSolving = false;
+            }
+        }
     }
 
     void SetupStage(int stage)
@@ -187,14 +223,10 @@ public class LockpickMinigame : MonoBehaviour
         // 1. Di chuyển thanh chạy qua lại
         MoveIndicator();
 
-        // 2. Nhận tương tác người chơi (Phím Space, Click chuột, Phím E)
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.E))
+        // 2. Nhận tương tác phím trên PC (Space / E).
+        // KHÔNG nhận chạm/click bừa trên màn hình - Mobile bắt buộc bấm đúng lockpickButton!
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.E))
         {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            {
-                return;
-            }
-
             AttemptUnlock();
         }
     }

@@ -682,8 +682,11 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
       - Định dạng FPS hiển thị dạng chữ trắng cơ bản (không đổi màu phức tạp), cập nhật cố định chính xác 1 giây 1 lần (`fpsDisplayText`).
       - Bổ sung trường `targetFPS`, `showFPSOnScreen`, `vSync`, `renderScale` vào `SettingsData` được tự động lưu và load từ `game_settings.json`.
       - Bổ sung hỗ trợ UI (Toggle bật/tắt FPS on-screen, Dropdown chọn mức FPS 30/45/60/90/120) vào **[SettingsHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/SettingsHUD.cs)** kèm âm thanh click khi tương tác Toggle và Dropdown.
-      - Tối ưu hóa **[HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs)**: Tự động quét và liên kết AudioSource để nút Settings/Options và các nút Menu luôn phát tiếng click ổn định.
-      - Xóa bỏ hoàn toàn script riêng lẻ cũ `Assets/Scripts/Utilities/GameSettings.cs`.
+    - **Xây dựng hệ thống GameSession truyền dữ liệu Chapter và Character xuyên Scene**:
+      - Tạo mới **[GameSession.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Utilities/GameSession.cs)** (static session holder) lưu trữ `SelectedChapter`, `NextChapter`, `SelectedPlayer`.
+      - Cập nhật **[ChapterSelectManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ChapterSelectManager.cs)**: Khi bấm Play $\rightarrow$ tự động nạp Chapter được chọn và `defaultPlayerData` (tạm thời hardcode khi chưa có UI chọn nhân vật) vào `GameSession`.
+      - Cập nhật **[PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs)**: Trong `Awake()` $\rightarrow$ tự động nhận `GameSession.SelectedPlayer` để nạp chỉ số vào `PlayerStats`.
+      - Cập nhật **[UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs)**: Trong `Start()` $\rightarrow$ tự động nhận `GameSession.SelectedChapter` và `GameSession.NextChapter` để nạp vào game session; tự động `ClearSession()` khi quay về Menu.
 - **Danh sách file thay đổi**:
   - `Assets/Scripts/Player/PlayerSO.cs` (New / Refactored)
   - `Assets/Scripts/Player/PlayerStats.cs` (New)
@@ -699,10 +702,65 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/UI/PauseHUD.cs` (New)
   - `Assets/Scripts/UI/SettingsHUD.cs` (Renamed/Refactored)
   - `Assets/Scripts/UI/HomeScreen.cs` (Modified)
+    - **Tạo mới hệ thống SceneItemSpawner hỗ trợ danh sách vị trí trong Scene và kiểm tra Rarity**:
+      - Tạo mới **[SceneItemSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/SceneItemSpawner.cs)**: MonoBehaviour gắn trực tiếp trong Scene gameplay, quản lý toàn bộ các điểm spawn vật phẩm (`spawnPoints`, `additionalPositions`).
+      - Tự động liên kết `ChapterSO` (từ `GameSession.SelectedChapter` hoặc cấu hình Inspector).
+      - Tích hợp thuật toán chọn đồ theo xác suất trọng số độ hiếm (**Weighted Rarity Random**): `Trash` (20%), `Common` (45%), `Uncommon` (20%), `Rare` (10%), `Epic` (4%), `Legendary` (1%), `Mythic` (0.2%).
+      - Tự động phân loại `spawnableItems` của Chapter theo độ hiếm và khởi tạo chỉ số ngẫu nhiên (`item.InitializeStats()`).
+      - Hỗ trợ Gizmos trực quan và Context Menu Editor tiện lợi (`Auto Collect Child Spawn Points`, `Spawn All Items Now`, `Clear Spawned Items`).
+    - **Tối ưu cơ chế rớt đồ khi Player chết (Cách 1)**:
+      - Đơn giản hóa [PlayerController.DropItemsOnDeath()](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs): khi người chơi tử vong, toàn bộ vật phẩm đang cầm sẽ rơi rải rác xung quanh vị trí thi thể với hiệu ứng vật lý tự nhiên (impulse force & torque) thay vì quay về các điểm spawn trong Scene.
+    - **Sửa lỗi nút Crouch trên Mobile và chuẩn hóa luồng Input Cúi người**:
+      - Bổ sung `crouch` input và sự kiện `OnCrouch` vào [StarterAssetsInputs.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/StarterAssetsInputs.cs).
+      - Tự động liên kết `mobileActions` trong `Start()` của [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs) tránh bị `null` khi load nhân vật từ Prefab.
+    - **Tách hệ thống Item, Inventory, Nhặt đồ, Thả đồ và Tải trọng sang [PlayerInventory.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInventory.cs)**:
+      - Tạo mới component `PlayerInventory.cs` chuyên trách quản lý: túi đồ `heldItems`, nhặt đồ `TryPickupItem`, trạng thái cầm đồ `isTaking` / `UpdateHoldingState`, thả đồ thủ công `DropLastItem`, rớt đồ khi tử vong `DropAllItemsOnDeath`, và tính toán tải trọng balo `UpdateWeight`.
+      - Tinh gọn [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs) (giảm ~200 dòng code dư thừa), chỉ tập trung vào Controller Movement, Jump, Crouch, Ladder, Footstep.
+    - **Tạo mới hệ thống [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs)**:
+      - Quản lý danh sách các điểm xuất phát (`spawnPoints`) trong Scene gameplay.
+      - Bổ sung trường `characterPrefab` vào [PlayerSO.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerSO.cs).
+      - Tự động lấy nhân vật từ `GameSession.SelectedPlayer` (hoặc `defaultPlayerData`) để sinh đúng Prefab nhân vật lúc màn chơi bắt đầu (`Start()`).
+      - Tự động kết nối `CinemachineVirtualCamera.Follow` / `LookAt` và `UI_Manager.playerStats` vào nhân vật vừa sinh.
+      - Hỗ trợ Gizmos màu xanh lá trực quan và Context Menu Editor (`Auto Collect Child Spawn Points`, `Spawn Player Now`).
+      - Bổ sung cơ chế tự động tìm và bổ sung `AudioListener` vào `Camera.main` trong [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs) để ngăn chặn hoàn toàn lỗi thiếu AudioListener khi chuyển Scene.
+      - Tự động kích hoạt Global Volume, Post Processing trên URP Camera và liên kết PlayerController trong [PostProcess.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Utilities/PostProcess.cs) và [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs).
+      - Cải tiến [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs): Chỉ cho phép bẻ khóa khi bấm đúng `lockpickButton` (Mobile) hoặc phím Space/E (PC), loại bỏ hoàn toàn việc click/chạm bừa trên màn hình; bổ sung `interactionCooldown` ngăn chặn hiện tượng bấm nút Close bị xuyên thấu mở lại Minigame.
+      - Tối ưu hiển thị FPS trong [SettingsManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Utilities/SettingsManager.cs): Chỉ hiển thị số nguyên, giảm 1 nửa kích thước font và chuyển xuống góc dưới màn hình.
+      - Tối ưu vật lý Thang trong [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs), [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) và [PlayerInventory.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInventory.cs): Khóa trục nghiêng `FreezeRotationX | FreezeRotationZ`, đảm bảo Thang luôn luôn đứng thẳng 100% khi đặt/thả ra thế giới mà không bao giờ bị đổ ngã.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerSO.cs` (New / Refactored)
+  - `Assets/Scripts/Player/PlayerStats.cs` (New)
+  - `Assets/Scripts/Player/PlayerInventory.cs` (New)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (New)
+  - `Assets/Scripts/Player/PlayerController.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Modified)
+  - `Assets/Scripts/Player/StarterAssetsInputs.cs` (Modified)
+  - `Assets/Scripts/Player/MobileActionButtons.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/Player/Flashlight.cs` (Modified)
+  - `Assets/Scripts/AI/AI_Move.cs` (Modified)
+  - `Assets/Scripts/Items/Item.cs` (Modified)
+  - `Assets/Scripts/Items/LadderController.cs` (Modified)
+  - `Assets/Scripts/Items/SceneItemSpawner.cs` (New)
+  - `Assets/Scripts/Items/ItemSpawner.cs` (Deleted)
+  - `Assets/Scripts/Items/ItemLibrary.cs` (Deleted)
+  - `Assets/Scripts/UI/ChapterSO.cs` (Modified)
+  - `Assets/Scripts/UI/LockpickMinigame.cs` (Modified)
+  - `Assets/Scripts/UI/MainHUD.cs` (New)
+  - `Assets/Scripts/UI/PauseHUD.cs` (New)
+  - `Assets/Scripts/UI/SettingsHUD.cs` (Renamed/Refactored)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Modified)
+  - `Assets/Scripts/UI/ChapterSelectManager.cs` (Modified)
   - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/Cutscenes/CutsceneManager.cs` (Modified)
+  - `Assets/Scripts/Utilities/GameSession.cs` (New)
+  - `Assets/Scripts/Utilities/PostProcess.cs` (Modified)
   - `Assets/Scripts/Utilities/SettingsManager.cs` (Modified)
   - `Assets/Scripts/Utilities/GameSettings.cs` (Deleted)
 - **Ảnh hưởng**:
-  - Dễ dàng tạo nhiều nhân vật khác nhau (char_01, char_02, char_03...) bằng cách tạo asset `PlayerSO` trong Project và kéo vào PlayerController.
-  - Phân tách rõ ràng giữa cấu hình gốc (ScriptableObject không bị sửa đổi runtime gây bẩn dữ liệu Asset) và trạng thái động (MonoBehaviour gắn trên instance Player trong scene).
-  - Thống nhất toàn bộ thiết lập Game (Sensitivity, FPS, vSync, Render Scale) vào một hệ thống Settings duy nhất, lưu trữ JSON ổn định và hoạt động xuyên suốt mọi Scene.
+  - Dữ liệu Chapter và Character được truyền tự động, mượt mà từ HomeMenu $\rightarrow$ Scene Cutscene/Intro $\rightarrow$ Scene Gameplay mà không bị mất dữ liệu giữa chừng.
+  - Loại bỏ các script thừa thãi (`ItemLibrary`, `ItemSpawner`), thay thế hoàn toàn bằng `SceneItemSpawner` chuẩn hóa theo Rarity và ChapterSO.
+  - Thống nhất toàn bộ thiết lập Game và phiên chơi ổn định xuyên suốt mọi Scene.
+  - Nút Crouch trên Mobile và bàn phím (C / Ctrl) hoạt động mượt mà, chuyển đổi tư thế và hạ thấp camera chính xác.
+  - Cấu trúc Player chuẩn Single Responsibility Principle: tách biệt hoàn toàn giữa Điều khiển di chuyển (PlayerController), Chỉ số trạng thái (PlayerStats) và Quản lý vật phẩm balo (PlayerInventory).
+  - Khởi tạo và sinh nhân vật động linh hoạt thông qua `ScenePlayerSpawner`, sẵn sàng cho cấu trúc Multiplayer / PUN2 về sau.

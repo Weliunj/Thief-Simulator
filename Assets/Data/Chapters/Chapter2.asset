@@ -17,10 +17,16 @@ MonoBehaviour:
   sceneName: Chapter2Test
   gameplaySceneName: Chapter2Test
   description: Test
-  isUnlocked: 0
+  isUnlocked: 1
   isCompleted: 0
-  maxTime: 100
+  maxTime: 500
   targetPoint: 500
-  playerSpawnPosition: {fileID: 0}
-  itemSpawnPositions: []
-  spawnableItems: []
+  spawnableItems:
+  - {fileID: 6263703980385329713, guid: 7e80d78c338b7fc4694267fef0c13909, type: 3}
+  - {fileID: 4005796672040673075, guid: 3f71d9cb1b07f864995785c4677db3fb, type: 3}
+  - {fileID: 8462310194758362648, guid: 873444d20b95e104788c25ce8463b411, type: 3}
+  - {fileID: 3077443859550070580, guid: 648f5aadc41b0df48b9132285465b9d7, type: 3}
+  - {fileID: 2293247134377988557, guid: c770ee6d7b20ab04196ae8e1d1ddf545, type: 3}
+  - {fileID: 8984484879443959301, guid: 1c4a2edfd14ea7644a0272255533c132, type: 3}
+  - {fileID: 7338982691582405998, guid: d3b71e0a8d2eebd418e7c9d18ff20da8, type: 3}
+  - {fileID: 2351362709971780688, guid: f22933982521a8846b44b797f35c898e, type: 3}

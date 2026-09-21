@@ -58,9 +58,9 @@ public class LadderController : MonoBehaviour, IInteractable
     [Range(0.7f, 1.0f)]
     public float topAttachProgress = 0.90f;
 
-    [Tooltip("Vị trí bám khi bắt đầu leo lên từ chân thang (0.0 - 1.0)")]
-    [Range(0.0f, 0.3f)]
-    public float bottomAttachProgress = 0.05f;
+    [Tooltip("Vị trí bám khi bắt đầu leo lên từ chân thang (0.0 - 1.0, 0.0 = ngay tại vị trí bottomPoint đã kéo ngang người)")]
+    [Range(-0.7f, 1.0f)]
+    public float bottomAttachProgress = 0.0f;
 
     [Tooltip("Đảo ngược 180 độ hướng mặt thang khi trèo (Bật để quay ngược hướng bám thang)")]
     public bool invertFacingDirection = true;
@@ -84,10 +84,40 @@ public class LadderController : MonoBehaviour, IInteractable
     private float climbProgress = 0f; // 0 = Chân thang (A), 1 = Đỉnh thang (B)
     private float reClimbCooldownTimer = 0f;
 
+    void Awake()
+    {
+        EnsureUpright();
+    }
+
     void Start()
     {
+        EnsureUpright();
         InitializePoints();
         FindPlayerReferences();
+    }
+
+    void OnEnable()
+    {
+        EnsureUpright();
+    }
+
+    /// <summary>
+    /// Đảm bảo thang luôn đứng thẳng 100%, khóa góc nghiêng X và Z để thang không bao giờ bị đổ ngã
+    /// </summary>
+    public void EnsureUpright()
+    {
+        Vector3 angles = transform.eulerAngles;
+        transform.eulerAngles = new Vector3(0f, angles.y, 0f);
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            if (!rb.isKinematic)
+            {
+                rb.angularVelocity = Vector3.zero;
+            }
+        }
     }
 
     void OnDisable()
