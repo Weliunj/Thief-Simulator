@@ -8,7 +8,7 @@ public class UI_Manager : MonoBehaviour
     [Header("⚙️ References")]
     public PlayerManager playerManager;
     public static bool isSolving = false;
-    
+
     public GameObject diedPanel;
     public GameObject WinPanel;
 
@@ -21,12 +21,12 @@ public class UI_Manager : MonoBehaviour
     [HideInInspector] public bool isPaused = false;
 
     [Header("🔋 Stamina UI")]
-    public TextMeshProUGUI currStamina; 
-    public TextMeshProUGUI Stamina; 
+    public TextMeshProUGUI currStamina;
+    public TextMeshProUGUI Stamina;
 
     [Header("🏋️ Weight UI")]
-    public TextMeshProUGUI currkg;       
-    public TextMeshProUGUI kg;          
+    public TextMeshProUGUI currkg;
+    public TextMeshProUGUI kg;
 
     [Header("⚠️ Warning Colors")]
     [Tooltip("Normal base color (used when value < threshold)")]
@@ -38,9 +38,9 @@ public class UI_Manager : MonoBehaviour
     public float warnThreshold = 0.5f;
 
     [Header("🌟 Point UI")]
-    public TextMeshProUGUI point;       
+    public TextMeshProUGUI point;
     public TextMeshProUGUI targetPoint;
-    
+
     [Header("⏰ Time UI")]
     public TextMeshProUGUI timeText; // Text hiển thị thời gian còn lại
     public AudioSource alarm;
@@ -112,23 +112,23 @@ public class UI_Manager : MonoBehaviour
                 alarm.Play();
             }
         }
-        
+
         // --- CẬP NHẬT THỜI GIAN ---
         if (!playerManager.isDied && playerManager.currpoint < playerManager.totalpoint)
         {
             playerManager.currentTime -= Time.deltaTime;
-            
+
             if (playerManager.currentTime <= 0.3f)
             {
                 playerManager.currentTime = 0f;
                 Debug.Log("HẾT THỜI GIAN! Game Over (tạm thời chỉ debug)");
             }
         }
-        
+
         // --- CẬP NHẬT UI ĐỘNG ---
-        if (currStamina != null) 
-        { 
-            currStamina.text = $"{playerManager._stamina:F1}"; 
+        if (currStamina != null)
+        {
+            currStamina.text = $"{playerManager._stamina:F1}";
             if (playerManager.MaxStamina > 0f)
             {
                 float sNorm = Mathf.Clamp01(playerManager._stamina / playerManager.MaxStamina);
@@ -142,9 +142,9 @@ public class UI_Manager : MonoBehaviour
             }
         }
 
-        if (currkg != null) 
-        { 
-            currkg.text = $"{playerManager.currweight}"; 
+        if (currkg != null)
+        {
+            currkg.text = $"{playerManager.currweight}";
             if (playerManager.Maxweight > 0)
             {
                 float wNorm = Mathf.Clamp01((float)playerManager.currweight / (float)playerManager.Maxweight);
@@ -159,17 +159,17 @@ public class UI_Manager : MonoBehaviour
         }
 
         if (point != null) { point.text = $"{playerManager.currpoint}"; }
-        
+
         if (timeText != null)
         {
             int minutes = Mathf.FloorToInt(playerManager.currentTime / 60f);
             int seconds = Mathf.FloorToInt(playerManager.currentTime % 60f);
             timeText.text = $"{minutes:00}:{seconds:00}";
         }
-        
+
         // --- XỬ LÝ TRẠNG THÁI GAME ---
         UpdateGameState();
-        
+
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             ToggleSettings();
@@ -190,11 +190,11 @@ public class UI_Manager : MonoBehaviour
                 if (settingPanel != null) settingPanel.SetActive(false);
                 if (mainHUDPanel != null) mainHUDPanel.SetActive(false);
                 if (WinPanel != null) WinPanel.SetActive(false);
-                if (diedPanel != null) diedPanel.SetActive(true); 
-                Cursor.lockState = CursorLockMode.None; 
+                if (diedPanel != null) diedPanel.SetActive(true);
+                Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
             }
-        } 
+        }
         else if (playerManager.totalpoint > 0 && playerManager.currpoint >= playerManager.totalpoint)
         {
             if (!isWinHandled)
@@ -203,9 +203,9 @@ public class UI_Manager : MonoBehaviour
                 if (isSolving) CancelLockpicking();
                 if (settingPanel != null) settingPanel.SetActive(false);
                 if (mainHUDPanel != null) mainHUDPanel.SetActive(false);
-                if (diedPanel != null) diedPanel.SetActive(false); 
+                if (diedPanel != null) diedPanel.SetActive(false);
                 if (WinPanel != null) WinPanel.SetActive(true);
-                Cursor.lockState = CursorLockMode.None; 
+                Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
 
                 // Tự động tích hoàn thành Chapter hiện tại và mở khóa Chapter tiếp theo
@@ -268,7 +268,7 @@ public class UI_Manager : MonoBehaviour
     //                       LOCKPICK MINIGAME API
     // =========================================================================
 
-    public void StartLockpicking(LockpickDoor door)
+    public void StartLockpicking(DoorController door)
     {
         if (lockpickMinigame == null)
         {
@@ -309,7 +309,8 @@ public class UI_Manager : MonoBehaviour
                     Cursor.visible = false;
                 }
                 if (door != null) door.OnUnlockFailed();
-            }
+            },
+            door: door
         );
     }
 
@@ -348,7 +349,7 @@ public class UI_Manager : MonoBehaviour
         // Tải lại đúng Scene hiện tại của màn chơi đang chơi
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-    
+
     public void Menu()
     {
         Time.timeScale = 1f;

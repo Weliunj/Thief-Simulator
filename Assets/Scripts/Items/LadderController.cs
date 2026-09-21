@@ -11,7 +11,7 @@ using UnityEngine;
 /// - Hỗ trợ Tuột thang nhanh (Slide Down) khi giữ Crouch / Sprint / kéo mạnh cần xuống.
 /// - Chống spam nhảy (Jump Cooldown) và đẩy lùi an toàn khi nhảy rời thang.
 /// </summary>
-public class Ladder : MonoBehaviour, IInteractable
+public class LadderController : MonoBehaviour, IInteractable
 {
     [Header("📍 Climb Points (Điểm chân thang và đỉnh thang)")]
     [Tooltip("Điểm bắt đầu ở chân thang (A)")]

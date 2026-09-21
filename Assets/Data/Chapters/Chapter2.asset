@@ -19,7 +19,8 @@ MonoBehaviour:
   description: Test
   isUnlocked: 0
   isCompleted: 0
-  maxTime: 300
+  maxTime: 100
   targetPoint: 500
-  playerSpawnPosition: {x: 0, y: 0, z: 0}
+  playerSpawnPosition: {fileID: 0}
+  itemSpawnPositions: []
   spawnableItems: []

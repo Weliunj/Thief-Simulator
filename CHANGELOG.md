@@ -14,6 +14,7 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Danh sách file thay đổi**:
   - `Assets/_Project/.../Filename.cs` (Dòng modified/new)
 - **Ảnh hưởng**: Những tính năng hay cấu trúc nào bị ảnh hưởng.
+- **Quy tắc khung giờ (3 tiếng)**: Các thay đổi/tác vụ diễn ra trong vòng **3 tiếng** sẽ được viết gộp chung vào cùng 1 mục log để tránh làm file quá dài.
 - **Lưu ý**: log mới hãy ghi xuống cuối file.
 ```
 
@@ -405,32 +406,6 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - **Tự động ẩn nút Pickup và chặn nhặt đồ khi đang leo thang**:
     - Trong [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs), kiểm tra `playerController.isClimbingLadder`: Tắt toàn bộ HUD, nút `Pickup` và nút `Interact`, đồng thời chặn nhận phím `E` / `F`.
     - Trong [Item.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Item.cs), thêm kiểm tra `isClimbingLadder` vào `CanInteract()` để từ chối mọi yêu cầu nhặt đồ khi người chơi đang bám trên thang.
-  - **Bổ sung cơ chế chống kẹt lơ lửng trên không ([Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs))**:
-    - Thêm hàm `OnDisable()` vào [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs): Nếu GameObject Thang bị ẩn/hủy/cất đi khi người chơi đang bám, hệ thống lập tức gọi `StopClimbing()`, khôi phục `CharacterController` và trả quyền điều khiển để trọng lực tự nhiên đưa Player tiếp đất an toàn.
-- **Danh sách file thay đổi**:
-  - `Assets/Scripts/Player/PlayerInteraction.cs` (Modified)
-  - `Assets/Scripts/Items/Item.cs` (Modified)
-  - `Assets/Scripts/Items/Ladder.cs` (Modified)
-- **Ảnh hưởng**:
-  - Loại bỏ hoàn toàn lỗi hiển thị nút nhặt thang khi đang trèo và triệt tiêu lỗi Player bị đóng băng trôi nổi trên không.
-
----
-
-### [2026-09-21 15:11] — feat(ladder): invert climbing face orientation and add invertFacingDirection toggle
-- **Tác vụ**:
-  - **Đảo ngược 180 độ hướng mặt bám thang**:
-    - Bổ sung biến `invertFacingDirection` (mặc định: `true`) vào [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs).
-    - Đảo ngược hướng nhìn mặt thang và hướng bước ra ở đỉnh thang theo đúng hướng model thang của người dùng.
-    - Cho phép bật/tắt linh hoạt ngay trong Unity Inspector nếu muốn đổi hướng bám thang.
----
-
-### [2026-09-21 15:22] — feat(hotbar): attach held item to camera view and lock upright rotation on drop
-- **Tác vụ**:
-  - **Gắn vật phẩm đang cầm (`ItemHoldPoint`) vào Camera**:
-    - Trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs), chuyển điểm gắn `ItemHoldPoint` làm con trực tiếp của `Camera` (thay vì Player).
-### [2026-09-21 15:30] — feat(hotbar): lock held item upright rotation (Y-axis world up) and restore natural drop physics
-- **Tác vụ**:
-  - **Khóa góc xoay vật phẩm đang cầm (Trục Y luôn thẳng đứng)**:
     - Cập nhật trong `LateUpdate()` của [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs): Vị trí cầm item di chuyển lên/xuống mượt mà theo góc nhìn Camera, nhưng góc xoay (Rotation) của vật phẩm luôn được giữ cố định trục Y hướng thẳng đứng (`Vector3.up`).
     - Khi người chơi ngước camera lên trời hoặc cúi xuống đất, item chỉ di chuyển vị trí theo tầm mắt mà không bị chúi/nghiêng theo camera, luôn giữ dáng đứng thẳng.
   - **Khôi phục vật lý tự nhiên bình thường khi Thả/Ném (Drop)**:
@@ -440,29 +415,250 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
 - **Ảnh hưởng**:
   - Item trên tay hiển thị trực quan và thẳng đứng khi xoay camera ngước lên/xuống.
-  - Vật phẩm sau khi thả/ném tương tác vật lý hoàn toàn tự nhiên với môi trường.
 
+---
 
+### [2026-09-21 15:50] — refactor(items, ui): rename to DoorController and LadderController, and cleanup obsolete Range_Interaction
+- **Tác vụ**:
+  - **Tái cấu trúc và đổi tên Controller chuẩn hóa**:
+    - Đổi tên và di chuyển `LockpickDoor.cs` từ `Assets/Scripts/UI/` sang [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/DoorController.cs) nằm trong thư mục `Assets/Scripts/Items/`.
+    - Cập nhật tham chiếu `StartLockpicking(DoorController door)` trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
+    - Đổi tên `Ladder.cs` thành [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs).
+  - **Dọn dẹp mã nguồn cũ `Range_Interaction`**:
+    - Loại bỏ hoàn toàn các trường và logic tạm tắt `Range_Interaction` trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) sau khi toàn bộ hệ thống tương tác đã được chuyển sang `PlayerInteraction` và `ItemInfoHUD` 2D.
+    - Cập nhật kiểm tra `GetComponent<LadderController>()` trong hàm `DropSelectedItem()`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/DoorController.cs` (Renamed/Moved)
+  - `Assets/Scripts/Items/LadderController.cs` (Renamed)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Cấu trúc thư mục và tên class rõ ràng, chuẩn phong cách kiến trúc Unity.
+  - Loại bỏ hoàn toàn lỗi compile `CS0246`.
 
+---
 
+### [2026-09-21 16:05] — feat(door): replace door destruction with smooth child model opening and 3D spatial audio
+- **Tác vụ**:
+  - **Thay thế hoàn toàn cơ chế phá hủy cửa cũ (`Destroy(gameObject)`)**:
+    - Xóa bỏ các cơ chế cũ không cần thiết (`destroyOnUnlock`, `DestroyDoorWithDelay`, `interactRadius`, `CheckPlayerDistance`, `Update` distance check).
+    - Tự động tắt toàn bộ `Collider` trên cánh cửa khi mở khóa thành công để Player và NPC có thể đi qua tự nhiên.
+    - Bổ sung cơ chế mở cửa xoay mượt mà (`SmoothOpenDoorRoutine` / `openRotationOffset`, `openSpeed`) tác động trực tiếp lên model con (`doorChildModel`).
+  - **Chuyển toàn bộ phát âm thanh bẻ khóa từ 2D UI sang 3D Spatial Audio trên Cửa**:
+    - Thêm các hàm `PlayHitSound()`, `PlayMissSound()`, `PlayVictorySound()` phát qua `AudioSource` 3D đặt ngay tại vị trí cánh cửa trong không gian.
+- **Tác vụ**:
+  - Sửa lỗi runtime `Animator.speed can only be negative when Animator recorder is enabled`:
+    - Unity Mecanim chặn gán giá trị âm trực tiếp vào thuộc tính toàn cục `Animator.speed` trong chế độ chơi thông thường.
+    - Đã cập nhật [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs):
+      1. Luôn giữ `Animator.speed >= 0`.
+      2. Khi leo xuống: Sử dụng cơ chế điều khiển `climbNormalizedTime` lùi dần và gọi `_animator.Play(0, 0, climbNormalizedTime)` trực tiếp (hoặc set qua Float parameter `ClimbSpeed` nếu có cấu hình trong Animator Controller).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/Ladder.cs` (Lines 345-410)
+- **Ảnh hưởng**:
+  - Triệt tiêu hoàn toàn lỗi console trong Unity khi leo thang xuống, animation tua ngược mượt mà không cần can thiệp offline recording.
 
+---
 
+### [2026-09-21 13:35] — feat(ui, ladder): integrate dedicated mobile InteractBtn and raycast PointA/PointB ladder climbing
+- **Tác vụ**:
+  - **Tách biệt nút `PickupBtn` và `InteractBtn` trên Mobile**:
+    - Nâng cấp [MobileActionButtons.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/MobileActionButtons.cs): Thêm trường `pickupButton` (nhặt item vào túi) và `interactButton` (tương tác đặc biệt: Thang, Cửa, v.v.).
+    - Cập nhật [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs):
+      - Khi rọi tâm ngắm vào Item Loot (`IsLootItem() == true`): Tự động bật `PickupBtn`, ẩn `InteractBtn`.
+      - Khi rọi tâm ngắm vào đối tượng đặc biệt như Thang (`IsLootItem() == false`): Tự động bật `InteractBtn`, ẩn `PickupBtn`.
+      - Khi không nhắm vào vật thể nào: Tự động ẩn cả 2 nút.
+  - **Tích hợp `IInteractable` và Raycast điểm A / điểm B cho [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs)**:
+    - Thêm Trigger Collider cho `PointA` và `PointB` để tâm ngắm Raycast từ cả trên nóc nhà nhìn xuống (điểm B) hay dưới đất nhìn lên (điểm A) đều bắt trúng dễ dàng.
+    - Khi bấm `InteractBtn` (hoặc phím `E` / `F`):
+      - Đứng ở trên nóc nhà / nhìn gần điểm B -> Gợi ý `"Climb Down"`, tự động bám vào đỉnh thang và leo xuống.
+      - Đứng ở dưới đất / nhìn gần điểm A -> Gợi ý `"Climb Up"`, tự động bám vào chân thang và leo lên.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/MobileActionButtons.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Modified)
+  - `Assets/Scripts/Items/Ladder.cs` (Modified)
+- **Ảnh hưởng**:
+  - Giao diện nút bấm trên Mobile hiển thị đúng ngữ cảnh (nút Nhặt cho đồ, nút Tương tác cho Thang/Cửa), xử lý leo thang 2 chiều từ trên cao xuống hoặc từ dưới lên cực kỳ trực quan và nhạy bén.
 
+---
 
+### [2026-09-21 13:42] — fix(ladder): remove auto-climb trigger and enforce explicit Interact button press
+- **Tác vụ**:
+  - Loại bỏ hoàn toàn cơ chế tự động bám thang khi di chuyển Joystick (`autoClimbOnJoystick` và trigger overlap).
+  - Thang giờ đây chỉ bắt đầu leo khi người chơi **chủ động bấm nút `InteractBtn` trên Mobile (hoặc phím `E` / `F` trên PC)**:
+    - Rọi tâm ngắm vào thang (hoặc đứng gần chân/đỉnh thang) -> Nút `InteractBtn` sáng lên.
+    - Nhấn `InteractBtn` -> Player bám vào thang.
+    - Khi đã bám thang -> Dùng Joystick W/S để leo lên/xuống, bấm Space/Jump để nhảy thoát ra sau.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/Ladder.cs` (Cleaned up auto-climb logic)
+- **Ảnh hưởng**:
+  - Tránh việc người chơi vô tình bị hút/dính vào thang khi chỉ đi ngang qua; mọi thao tác leo thang đều được kiểm soát chủ động qua nút bấm.
 
+---
 
+### [2026-09-21 13:52] — feat(ladder): instant climb idle pose on interact and independent Up/Down animation speeds
+- **Tác vụ**:
+  - **Tư thế bám thang tức thì (Climb Idle Pose)**:
+    - Khi bấm `InteractBtn` để bám thang, gọi trực tiếp `_animator.Play("Climb", 0, climbNormalizedTime)` kèm `_animator.Update(0f)` để nhân vật ngay lập tức chuyển sang tư thế tay chân bám chắc trên bậc thang thay vì bị kẹt ở tư thế đứng Idle dưới đất.
+  - **Tách biệt 2 biến tốc độ Animation Lên và Xuống**:
+    - Thêm `animClimbUpSpeed` (mặc định `1.0`): Tùy chỉnh tốc độ animation khi trèo LÊN.
+    - Thêm `animClimbDownSpeed` (mặc định `1.0`): Tùy chỉnh tốc độ animation khi trèo XUỐNG.
+    - Cân bằng tốc độ phát animation của cả 2 chiều di chuyển, loại bỏ hệ số chênh lệch cứng.
+- **Ảnh hưởng**:
+  - Nhân vật vào tư thế bám thang đẹp mắt ngay khi bấm nút, và người dùng có thể thoải mái tinh chỉnh tốc độ animation trèo lên / trèo xuống độc lập theo ý muốn trong Inspector.
 
+---
 
+### [2026-09-21 13:55] — feat(ladder): rail-based movement for inclined ladders, collision ignore, fast slide down, and jump cooldown
+- **Tác vụ**:
+  - **Khắc phục triệt để lỗi kẹt thang khi đặt thang nghiêng**:
+    - Chuyển sang cơ chế di chuyển theo **Ray Toán Học (`climbProgress` từ 0 đến 1)** nội suy giữa `PointA` và `PointB`: Player di chuyển chính xác 100% dọc theo đường ray thang ở bất kỳ góc nghiêng nào (30°, 60°, 75°...) mà không phụ thuộc vào ma sát vật lý.
+    - Tự động gọi `Physics.IgnoreCollision(true/false)` giữa Player và toàn bộ Collider của Thang khi đang bám thang -> Triệt tiêu hoàn toàn va chạm gây khựng/kẹt.
+  - **Thêm tính năng Tuột thang nhanh (`slideSpeedMultiplier`)**:
+    - Khi trèo xuống, nếu giữ phím **Crouch (`Ctrl` / Nút Cúi)** hoặc **Sprint (`Shift` / Nút Chạy)** hoặc kéo mạnh Joystick xuống -> Kích hoạt chế độ **Tuột thang nhanh (Slide Down)** với tốc độ gấp `slideSpeedMultiplier` lần (mặc định x2.2 lần).
+  - **Khắc phục lỗi spam nhảy liên tục trên thang**:
+    - Thêm biến `reClimbCooldown` (mặc định `0.45s`) ngăn Player bị hút/bám lại thang ngay lập tức sau khi bấm Nhảy rời thang.
+    - Xóa cờ `starterInputs.jump` và áp dụng lực đẩy lùi an toàn `pushVector * 0.2f` đưa Player tách xa hẳn khỏi thang.
+---
 
+### [2026-09-21 14:24] — fix(ladder, camera): top rung attachment inset and ladder camera yaw clamping
+- **Tác vụ**:
+  - **Khắc phục lỗi bám vào hư không khi leo xuống từ đỉnh thang**:
+    - Thêm `topAttachProgress` (mặc định `0.90`) và `bottomAttachProgress` (mặc định `0.05`) vào [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs).
+    - Khi bấm tương tác để leo xuống từ đỉnh thang, nhân vật sẽ được đặt trực tiếp vào vị trí bậc thang phía dưới đỉnh (thay vì vị trí 1.0 trên đỉnh mép tường), giúp tay chân bám chắc chắn vào rungs của thang mà không bị trôi lơ lửng giữa không trung.
+  - **Đồng bộ hướng nhìn và giới hạn góc quay Camera khi leo thang**:
+    - Thêm `SetLadderCameraFacing(targetYaw)` và `ladderYawClamp` (mặc định `70°`) vào [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs).
+    - Khi bám vào thang, tự động xoay mặt nhân vật và camera hướng thẳng vào mặt thang.
+    - Trong suốt quá trình đang leo (`isClimbingLadder == true`), khóa không cho xoay camera tự do 360° ra sau lưng nhân vật, giới hạn góc quay trái/phải trong phạm vi an toàn ±70°.
+    - Khi nhảy rời thang hoặc leo xong tới đỉnh/chân thang, khôi phục góc nhìn 360° tự do bình thường.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/Ladder.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerController.cs` (Modified)
+- **Ảnh hưởng**:
+  - Tư thế bám thang chân thực hơn, giải quyết triệt để lỗi góc nhìn 360° bất thường và lỗi bám mép không trung khi trèo xuống.
 
+---
 
+### [2026-09-21 14:35] — feat(ladder): fix top exit step direction and add canClimb permission toggle
+- **Tác vụ**:
+  - **Sửa hướng bước ra ở đỉnh thang (`ExitTopLadder`)**:
+    - Điều chỉnh hướng bước ra ở đỉnh thang theo hướng mặt trước mà Player đang nhìn (`playerController.transform.forward` / `-transform.forward`), đảm bảo khi leo lên đến đỉnh thang nhân vật sẽ bước thẳng về phía trước lên sàn/mái nhà thay vì bị bước ngược ra sau lưng.
+    - Cập nhật tia Gizmos màu vàng ở đỉnh thang chỉ đúng hướng bước lên sàn.
+  - **Bổ sung cờ quyền leo thang `canClimb` (Hỗ trợ Online / Debuff / Trạng thái)**:
+    - Thêm `canClimb` vào [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs) và [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs).
+    - Nếu `canClimb == false`, ngăn không cho tương tác hoặc bắt đầu leo thang.
+    - Nếu `canClimb` bị chuyển sang `false` trong khi Player đang bám trên thang (do bị stun, bị mất quyền leo, hoặc server online ngắt), Player sẽ tự động kích hoạt `FallOffLadder()` buông tay rơi tự do xuống dưới với trọng lực tự nhiên.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/Ladder.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerController.cs` (Modified)
+- **Ảnh hưởng**:
+  - Khắc phục triệt để lỗi bước ra ngược ở đỉnh thang và sẵn sàng tích hợp logic multiplayer / trạng thái gameplay.
 
+---
 
+### [2026-09-21 14:40] — fix(hotbar, ladder): auto hide held 3D item model while climbing ladder
+- **Tác vụ**:
+  - **Tự động cất/ẩn model item đang cầm khi leo thang**:
+    - Khi bắt đầu leo thang (`StartClimbing`), gọi `playerController.hotbarManager.DeselectAll()` và ẩn tất cả model trong `heldItem`.
+    - Ẩn model 3D vật phẩm trước mặt để 2 tay nhân vật rảnh bám vào thang leo tự nhiên.
+    - Vật phẩm vẫn được lưu giữ an toàn tuyệt đối trong các ô Hotbar / túi đồ của Player, không bị rơi hay mất đi.
+  - **Khóa thao tác chọn/cầm item trên Hotbar khi đang bám thang**:
+    - Cập nhật [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs): Khi `playerController.isClimbingLadder == true`, bỏ qua các thao tác click slot, phím số 1-9 và phím Drop Q/G.
+    - Sau khi leo xong hoặc nhảy rời thang, Player có thể thoải mái bấm chọn lại bất kỳ ô item nào trên Hotbar để cầm lại đồ.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/Ladder.cs` (Modified)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Loại bỏ hoàn toàn hiện tượng model đồ vật bị cầm lơ lửng trước mặt che khuất tầm nhìn và bậc thang khi đang leo.
 
+---
 
+### [2026-09-21 14:52] — feat(interaction): support dual Pickup and Climb buttons for objects having both Item and Ladder
+- **Tác vụ**:
+  - **Tách biệt và hỗ trợ đa tương tác (Multi-Interactable) trên cùng một GameObject**:
+    - Nâng cấp [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs) quét và nhận diện đồng thời cả component `Item` (Loot Item) và `Ladder` (hoặc các tương tác đặc biệt khác).
+    - **Khi đối tượng có cả `Item` và `Ladder` (như Thang xách tay)**:
+      - **Trên Mobile**: Tự động bật **CẢ 2 NÚT** (`Pickup` để nhặt và `Interact` để leo thang).
+      - **Trên PC**:
+        - Phím **`E`** (hoặc nút `Pickup`): Nhặt Thang vào Hotbar/Túi đồ (thực thi qua `Item.cs`).
+        - Phím **`F`** (hoặc nút `Interact`): Bám vào Thang để Leo (thực thi qua `Ladder.cs`).
+  - **Giữ nguyên thiết kế gốc chuẩn Clean Architecture**:
+    - [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs) thuần túy phụ trách logic leo thang (`IsLootItem() = false`).
+---
 
+### [2026-09-21 14:56] — fix(hotbar, ladder): align drop rotation with player view and dynamic approach side climbing
+- **Tác vụ**:
+  - **Sửa góc xoay khi thả (Drop) Thang / Item theo hướng nhìn của Player**:
+    - Trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs), thay thế `Quaternion.identity` bằng `Quaternion.LookRotation(forwardDir)` dựa theo góc nhìn hiện tại của người chơi.
+    - Bất kể người chơi quay mặt về hướng nào (Bắc, Nam, Đông, Tây) khi bấm thả đồ, Thang sẽ luôn được xoay thẳng mặt theo góc nhìn của người chơi.
+    - Giảm lực đẩy xung lượng khi thả Thang để Thang đứng vững trên mặt sàn, tránh bị văng lật ngã.
+  - **Khắc phục lỗi người chơi trèo bị bay sang mặt đối diện (`Ladder.cs`)**:
+    - Trong [Ladder.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Ladder.cs), tính toán vector hướng tiếp cận giữa Player và Thang.
+    - Tự động phát hiện người chơi đang đứng ở mặt trước hay mặt sau của thang để xoay mặt người chơi và góc camera hướng thẳng vào mặt thang phía tiếp cận (thay vì luôn cố định cứng 1 hướng duy nhất làm người chơi bị lật 180° sang phía bên kia).
+---
 
+### [2026-09-21 15:01] — fix(interaction, ladder): disable pickup and auto-stop climbing on ladder disable to prevent floating in midair
+- **Tác vụ**:
+  - **Tự động ẩn nút Pickup và chặn nhặt đồ khi đang leo thang**:
+    - Trong [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs), kiểm tra `playerController.isClimbingLadder`: Tắt toàn bộ HUD, nút `Pickup` và nút `Interact`, đồng thời chặn nhận phím `E` / `F`.
+    - Trong [Item.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Item.cs), thêm kiểm tra `isClimbingLadder` vào `CanInteract()` để từ chối mọi yêu cầu nhặt đồ khi người chơi đang bám trên thang.
+    - Cập nhật trong `LateUpdate()` của [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs): Vị trí cầm item di chuyển lên/xuống mượt mà theo góc nhìn Camera, nhưng góc xoay (Rotation) của vật phẩm luôn được giữ cố định trục Y hướng thẳng đứng (`Vector3.up`).
+    - Khi người chơi ngước camera lên trời hoặc cúi xuống đất, item chỉ di chuyển vị trí theo tầm mắt mà không bị chúi/nghiêng theo camera, luôn giữ dáng đứng thẳng.
+  - **Khôi phục vật lý tự nhiên bình thường khi Thả/Ném (Drop)**:
+    - Khi thả vật phẩm ra thế giới (`DropSelectedItem`), đặt `rb.constraints = RigidbodyConstraints.None`.
+    - Cho phép vật thể tự do tương tác vật lý (rơi, va chạm, lăn, ngã tự nhiên) theo trọng lực và lực ném thông thường thay vì bị khóa cứng góc xoay.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Item trên tay hiển thị trực quan và thẳng đứng khi xoay camera ngước lên/xuống.
 
+---
 
+### [2026-09-21 15:50] — refactor(items, ui): rename to DoorController and LadderController, and cleanup obsolete Range_Interaction
+- **Tác vụ**:
+  - **Tái cấu trúc và đổi tên Controller chuẩn hóa**:
+    - Đổi tên và di chuyển `LockpickDoor.cs` từ `Assets/Scripts/UI/` sang [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/DoorController.cs) nằm trong thư mục `Assets/Scripts/Items/`.
+    - Cập nhật tham chiếu `StartLockpicking(DoorController door)` trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
+    - Đổi tên `Ladder.cs` thành [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs).
+  - **Dọn dẹp mã nguồn cũ `Range_Interaction`**:
+    - Loại bỏ hoàn toàn các trường và logic tạm tắt `Range_Interaction` trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) sau khi toàn bộ hệ thống tương tác đã được chuyển sang `PlayerInteraction` và `ItemInfoHUD` 2D.
+    - Cập nhật kiểm tra `GetComponent<LadderController>()` trong hàm `DropSelectedItem()`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/DoorController.cs` (Renamed/Moved)
+  - `Assets/Scripts/Items/LadderController.cs` (Renamed)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Cấu trúc thư mục và tên class rõ ràng, chuẩn phong cách kiến trúc Unity.
+  - Loại bỏ hoàn toàn lỗi compile `CS0246`.
 
+---
 
+### [2026-09-21 16:05] — feat(door): replace door destruction with smooth child model opening and 3D spatial audio
+- **Tác vụ**:
+  - **Thay thế hoàn toàn cơ chế phá hủy cửa cũ (`Destroy(gameObject)`)**:
+    - Xóa bỏ các cơ chế cũ không cần thiết (`destroyOnUnlock`, `DestroyDoorWithDelay`, `interactRadius`, `CheckPlayerDistance`, `Update` distance check).
+    - Tự động tắt toàn bộ `Collider` trên cánh cửa khi mở khóa thành công để Player và NPC có thể đi qua tự nhiên.
+    - Bổ sung cơ chế mở cửa xoay mượt mà (`SmoothOpenDoorRoutine` / `openRotationOffset`, `openSpeed`) tác động trực tiếp lên model con (`doorChildModel`).
+  - **Chuyển toàn bộ phát âm thanh bẻ khóa từ 2D UI sang 3D Spatial Audio trên Cửa**:
+    - Thêm các hàm `PlayHitSound()`, `PlayMissSound()`, `PlayVictorySound()` phát qua `AudioSource` 3D đặt ngay tại vị trí cánh cửa trong không gian.
+    - Cập nhật [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs) và [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs) để kích hoạt âm thanh 3D trên `DoorController` đang tương tác.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/DoorController.cs` (Modified)
+  - `Assets/Scripts/UI/LockpickMinigame.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Cánh cửa giữ nguyên trong scene, xoay mở chân thực thay vì biến mất đột ngột.
+  - Trải nghiệm âm thanh vòm 3D chân thực, phát ra đúng từ vị trí ổ khóa cửa.
+
+---
+
+### [2026-09-21 16:30] — fix(interaction): use raycast hit surface contact point instead of root pivot distance
+- **Tác vụ**:
+  - **Sửa lỗi khoảng cách tương tác trên Cửa và các vật thể lớn ([PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs))**:
+    - **Nguyên nhân**: Trước đây tính khoảng cách tới `transform.position` (tọa độ Pivot gốc của cánh cửa - thường nằm ở góc bản lề/khung cửa), khiến người chơi phải đứng áp sát vào bản lề mới hiện nút tương tác.
+    - **Khắc phục**: Chuyển sang tính khoảng cách từ Player đến **điểm tiếp xúc bề mặt thực tế (`hit.point` / `ClosestPoint`)** của tia Raycast trên cánh cửa.
+    - Giúp người chơi có thể đứng từ khoảng cách nhặt đồ bình thường (`maxPlayerReach = 3.5m`) và rọi tia Ray vào bất kỳ vị trí nào trên cánh cửa để bắt đầu bẻ khóa ngay lập tức.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Modified)
+- **Ảnh hưởng**:
+  - Trải nghiệm tương tác mở cửa mượt mà, đồng nhất với tầm với nhặt đồ thông thường.

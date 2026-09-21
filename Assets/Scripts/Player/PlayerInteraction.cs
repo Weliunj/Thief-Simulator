@@ -129,15 +129,18 @@ public class PlayerInteraction : MonoBehaviour
 
                 if (interactables != null && interactables.Length > 0)
                 {
-                    // 3. Kiểm tra khoảng cách từ người chơi đến vật phẩm
-                    float distToPlayer = Vector3.Distance(transform.position, hit.collider.transform.position);
-                    if (distToPlayer <= maxPlayerReach)
+                    // 3. Kiểm tra khoảng cách từ người chơi đến điểm tiếp xúc (hit.point) hoặc Collider bề mặt
+                    // Lưu ý: Dùng hit.point hoặc ClosestPoint thay vì transform.position của vật thể (vì Cửa/Thang to có Pivot ở góc bản lề/chân)
+                    Vector3 contactPoint = (hit.point != Vector3.zero) ? hit.point : hit.collider.ClosestPoint(transform.position);
+                    float distToPlayer = Vector3.Distance(transform.position, contactPoint);
+
+                    if (distToPlayer <= maxPlayerReach || hit.distance <= maxPlayerReach)
                     {
                         // 4. XỬ LÝ KHI CÓ NHIỀU ITEM TRONG VÙNG QUÉT:
-                        Vector3 toItem = hit.collider.transform.position - ray.origin;
-                        float distAlongRay = Vector3.Dot(toItem, ray.direction);
+                        Vector3 toContact = contactPoint - ray.origin;
+                        float distAlongRay = Vector3.Dot(toContact, ray.direction);
                         Vector3 pointOnRay = ray.origin + ray.direction * distAlongRay;
-                        float distanceFromCrosshairCenter = Vector3.Distance(hit.collider.transform.position, pointOnRay);
+                        float distanceFromCrosshairCenter = Vector3.Distance(contactPoint, pointOnRay);
 
                         float score = distanceFromCrosshairCenter + (hit.distance * 0.05f);
 

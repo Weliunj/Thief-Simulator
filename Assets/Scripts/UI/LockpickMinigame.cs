@@ -42,12 +42,6 @@ public class LockpickMinigame : MonoBehaviour
         "Clean pick! Stay focused!"
     };
 
-    [Header("🎮 Audio (Optional)")]
-    public AudioSource audioSource;
-    public AudioClip hitSound;
-    public AudioClip missSound;
-    public AudioClip victorySound;
-
     [Header("📈 Difficulty & Transition Settings")]
     public int totalStages = 3;
     public float baseSpeed = 400f;                  // Tốc độ ban đầu
@@ -68,6 +62,7 @@ public class LockpickMinigame : MonoBehaviour
     private float trackWidth;
     private float indicatorWidth;
     private float lastIndicatorX;
+    private DoorController currentDoor;
 
     private Action onSuccessCallback;
     private Action onFailedCallback;
@@ -126,8 +121,9 @@ public class LockpickMinigame : MonoBehaviour
         }
     }
 
-    public void StartMinigame(Action onSuccess, Action onFailed = null)
+    public void StartMinigame(Action onSuccess, Action onFailed = null, DoorController door = null)
     {
+        currentDoor = door;
         onSuccessCallback = onSuccess;
         onFailedCallback = onFailed;
 
@@ -243,8 +239,9 @@ public class LockpickMinigame : MonoBehaviour
 
         if (isHit)
         {
-            // Bấm trúng!
-            if (audioSource != null && hitSound != null) audioSource.PlayOneShot(hitSound);
+            // Bấm trúng nấc! Phát âm thanh 3D tại cửa
+            if (currentDoor != null) currentDoor.PlayHitSound();
+
             StartCoroutine(FlashTarget(1f));
 
             currentStage++;
@@ -254,7 +251,8 @@ public class LockpickMinigame : MonoBehaviour
                 isWaitingNextStage = true;
                 UpdateProgressIcons(totalStages);
 
-                if (audioSource != null && victorySound != null) audioSource.PlayOneShot(victorySound);
+                if (currentDoor != null) currentDoor.PlayVictorySound();
+
                 if (statusText != null) statusText.text = "<color=green>LOCK PICKED SUCCESSFULLY!</color>";
                 
                 StartCoroutine(CompleteMinigameCoroutine(true));
@@ -296,7 +294,9 @@ public class LockpickMinigame : MonoBehaviour
     {
         isWaitingNextStage = true;
 
-        if (audioSource != null && missSound != null) audioSource.PlayOneShot(missSound);
+        // Phát âm thanh gãy công cụ tại cửa
+        if (currentDoor != null) currentDoor.PlayMissSound();
+
         StartCoroutine(FlashTarget(0.4f));
 
         if (statusText != null) statusText.text = "<color=red>Missed! Lockpicking failed!</color>";
@@ -384,9 +384,9 @@ public class LockpickMinigame : MonoBehaviour
     private IEnumerator CompleteMinigameCoroutine(bool isWin)
     {
         float delay = 1.0f;
-        if (isWin && victorySound != null)
+        if (isWin && currentDoor != null && currentDoor.victorySound != null)
         {
-            delay = Mathf.Max(1.0f, victorySound.length);
+            delay = Mathf.Max(1.0f, currentDoor.victorySound.length);
         }
         yield return new WaitForSeconds(delay);
         CloseMinigame();

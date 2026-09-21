@@ -74,7 +74,6 @@ public class HotbarManager : MonoBehaviour
     private Camera mainCamera;
     private GameObject currentHeldModel;
     private List<Collider> disabledColliders = new List<Collider>();
-    private List<MonoBehaviour> disabledRangeScripts = new List<MonoBehaviour>();
 
     void Awake()
     {
@@ -526,27 +525,14 @@ public class HotbarManager : MonoBehaviour
             }
         }
 
-        // 2. Tạm thời tắt Range_Interaction hoặc Floating UI trên item để không che khuất màn hình
-        disabledRangeScripts.Clear();
-        var rangeScripts = itemObj.GetComponentsInChildren<Range_Interaction>(true);
-        foreach (var r in rangeScripts)
-        {
-            if (r != null && r.enabled)
-            {
-                r.enabled = false;
-                disabledRangeScripts.Add(r);
-                if (r.E_icon != null) r.E_icon.SetActive(false);
-            }
-        }
-
-        // 3. Đảm bảo tất cả Renderers trên item đều được bật sáng
+        // 2. Đảm bảo tất cả Renderers trên item đều được bật sáng
         var renderers = itemObj.GetComponentsInChildren<Renderer>(true);
         foreach (var rend in renderers)
         {
             if (rend != null) rend.enabled = true;
         }
 
-        // 4. Reset Rigidbody
+        // 3. Reset Rigidbody
         Rigidbody rb = itemObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -558,7 +544,7 @@ public class HotbarManager : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        // 5. Gắn vào HoldPoint trước mặt player (CinemachineCameraTarget)
+        // 4. Gắn vào HoldPoint trước mặt player (CinemachineCameraTarget)
         if (itemHoldPoint != null)
         {
             itemObj.transform.SetParent(itemHoldPoint, false);
@@ -591,13 +577,6 @@ public class HotbarManager : MonoBehaviour
                 if (col != null) col.enabled = true;
             }
             disabledColliders.Clear();
-
-            // Bật lại Range_Interaction
-            foreach (var r in disabledRangeScripts)
-            {
-                if (r != null) r.enabled = true;
-            }
-            disabledRangeScripts.Clear();
 
             currentHeldModel.SetActive(false);
             currentHeldModel = null;
@@ -670,18 +649,12 @@ public class HotbarManager : MonoBehaviour
             Debug.Log($"<color=#55FF55><b>[Hotbar Drop]</b> KHÔNG GIAN THOÁNG (Không có vật cản trong {maxDropDistance}m) -> Ném item về phía trước với lực {dropForwardForce}</color>");
         }
 
-        // Bật lại collider & scripts đã tạm tắt khi cầm
+        // Bật lại collider đã tạm tắt khi cầm
         foreach (var col in disabledColliders)
         {
             if (col != null) col.enabled = true;
         }
         disabledColliders.Clear();
-
-        foreach (var r in disabledRangeScripts)
-        {
-            if (r != null) r.enabled = true;
-        }
-        disabledRangeScripts.Clear();
 
         // 🎯 TÍNH TOÁN HƯỚNG VÀ GÓC XOAY BAN ĐẦU KHI THẢ
         Vector3 forwardDir = (mainCamera != null) ? mainCamera.transform.forward : (playerController != null ? playerController.transform.forward : dropDirection);
@@ -709,7 +682,7 @@ public class HotbarManager : MonoBehaviour
             // Nếu không có vật cản trước mặt -> Thả/ném nhẹ theo hướng nhìn
             if (!hasObstacle)
             {
-                float force = (itemObj.GetComponent<Ladder>() != null) ? 0.6f : dropForwardForce;
+                float force = (itemObj.GetComponent<LadderController>() != null) ? 0.6f : dropForwardForce;
                 rb.AddForce(dropDirection * force, ForceMode.Impulse);
             }
         }
