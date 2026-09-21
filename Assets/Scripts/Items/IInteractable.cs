@@ -37,6 +37,21 @@ public interface IInteractable
     bool CanInteract(PlayerController player, out string failReason);
 
     /// <summary>
+    /// Mô tả chi tiết về đối tượng
+    /// </summary>
+    string GetDescription();
+
+    /// <summary>
+    /// Icon hình ảnh của đối tượng (nếu có)
+    /// </summary>
+    Sprite GetIcon();
+
+    /// <summary>
+    /// Độ hiếm của vật phẩm
+    /// </summary>
+    ItemRarity GetRarity();
+
+    /// <summary>
     /// Thực hiện hành động tương tác
     /// </summary>
     void Interact(PlayerController player);

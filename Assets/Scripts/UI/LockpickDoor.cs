@@ -205,6 +205,9 @@ public class LockpickDoor : MonoBehaviour, IInteractable
     public int GetPrice() => 0;
     public int GetWeight() => 0;
     public bool IsLootItem() => false;
+    public string GetDescription() => "A locked door. Requires lockpicking to open.";
+    public Sprite GetIcon() => null;
+    public ItemRarity GetRarity() => ItemRarity.Common;
 
     public bool CanInteract(PlayerController player, out string failReason)
     {

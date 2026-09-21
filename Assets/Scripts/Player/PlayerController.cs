@@ -102,7 +102,8 @@ namespace StarterAssets
         [Header("Setting")]
         private UI_Manager ui;
         public float rangeInteract = 2f;
-        private List<GameObject> heldItem = new List<GameObject>();
+        public List<GameObject> heldItem = new List<GameObject>();
+        public HotbarManager hotbarManager;
 
         [Header("📱 Mobile Action Buttons")]
         public MobileActionButtons mobileActions;
@@ -164,6 +165,10 @@ namespace StarterAssets
             characterController = GetComponent<CharacterController>();
             deathHandler = GetComponent<PlayerDeathHandler>();
             ui = FindFirstObjectByType<UI_Manager>();
+            if (hotbarManager == null)
+            {
+                hotbarManager = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
+            }
             StartCenter = characterController.center;
             StartHeight = characterController.height;
 
@@ -329,9 +334,16 @@ namespace StarterAssets
         public void TakeItem()
         {
             // Cập nhật trạng thái item đang cầm: đặt tất cả item về trạng thái ẩn (false)
+            // NGOẠI TRỪ item đang được HotbarManager hiển thị trước mặt player
+            GameObject currentlyHeldByHotbar = null;
+            if (hotbarManager != null && hotbarManager.currentSelectedIndex >= 0)
+            {
+                currentlyHeldByHotbar = hotbarManager.GetCurrentHeldModel();
+            }
+
             foreach (var item in heldItem)
             {
-                if (item != null)
+                if (item != null && item != currentlyHeldByHotbar)
                 {
                     item.SetActive(false);
                 }
@@ -377,43 +389,44 @@ namespace StarterAssets
             }
 
 
-            //Drop Item
-            bool dropInput = Input.GetKeyDown(KeyCode.Q) || (mobileActions != null && mobileActions.dropPressed);
-            if (dropInput && heldItem.Count > 0 && !isTaking)
+            // Drop Item (chỉ chạy logic cũ nếu KHÔNG có HotbarManager, vì HotbarManager đã tự xử lý drop item đang chọn)
+            if (hotbarManager == null)
             {
-                // Lấy item để drop (chọn item cuối cùng trong list)
-                int lastindex = heldItem.Count - 1;
-                GameObject itemToDrop = heldItem[lastindex];
-                if (itemToDrop != null)
+                bool dropInput = Input.GetKeyDown(KeyCode.Q) || (mobileActions != null && mobileActions.dropPressed);
+                if (dropInput && heldItem.Count > 0 && !isTaking)
                 {
-                    Item item = itemToDrop.GetComponent<Item>();
-                    if (item != null)
+                    // Lấy item để drop (chọn item cuối cùng trong list)
+                    int lastindex = heldItem.Count - 1;
+                    GameObject itemToDrop = heldItem[lastindex];
+                    if (itemToDrop != null)
                     {
-                        player.currweight -= item.kg;
-                        player.currweight = Mathf.Max(0, player.currweight);
-
-                        // Unparent if necessary
-                        itemToDrop.transform.SetParent(null);
-                        itemToDrop.transform.position = transform.position + transform.forward * 1f + Vector3.up * 0.5f;
-                        itemToDrop.transform.rotation = Quaternion.identity;
-                        // Reactivate item and physics
-                        itemToDrop.SetActive(true);
-                        Rigidbody rbDrop = itemToDrop.GetComponent<Rigidbody>();
-                        if (rbDrop != null)
+                        Item item = itemToDrop.GetComponent<Item>();
+                        if (item != null)
                         {
-                            rbDrop.isKinematic = false;
-                            rbDrop.linearVelocity = Vector3.zero;
-                            Vector3 dropForce = (transform.forward + Vector3.up * 0.5f) * Random.Range(1.5f, 3f);
-                            rbDrop.AddForce(dropForce, ForceMode.Impulse);
-                            Debug.Log($"Applied drop force {dropForce} to {itemToDrop.name}");
+                            player.currweight -= item.kg;
+                            player.currweight = Mathf.Max(0, player.currweight);
+
+                            // Unparent if necessary
+                            itemToDrop.transform.SetParent(null);
+                            itemToDrop.transform.position = transform.position + transform.forward * 1f + Vector3.up * 0.5f;
+                            itemToDrop.transform.rotation = Quaternion.identity;
+                            // Reactivate item and physics
+                            itemToDrop.SetActive(true);
+                            Rigidbody rbDrop = itemToDrop.GetComponent<Rigidbody>();
+                            if (rbDrop != null)
+                            {
+                                rbDrop.isKinematic = false;
+                                rbDrop.linearVelocity = Vector3.zero;
+                                Vector3 dropForce = (transform.forward + Vector3.up * 0.5f) * Random.Range(1.5f, 3f);
+                                rbDrop.AddForce(dropForce, ForceMode.Impulse);
+                            }
+                            heldItem.RemoveAt(heldItem.Count - 1);
                         }
-                        heldItem.RemoveAt(heldItem.Count - 1);
-                        Debug.Log($"Dropped item: {itemToDrop.name} at {itemToDrop.transform.position}. weight: {player.currweight}/{player.Maxweight}");
                     }
-                }
-                else
-                {
-                    heldItem.RemoveAt(lastindex);
+                    else
+                    {
+                        heldItem.RemoveAt(lastindex);
+                    }
                 }
             }
 
@@ -442,18 +455,43 @@ namespace StarterAssets
 
             if (player.currweight + itemKg <= player.Maxweight)
             {
+                if (hotbarManager == null)
+                {
+                    hotbarManager = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
+                }
+
+                // Nếu có Hotbar, kiểm tra còn slot trống không
+                if (hotbarManager != null && !hotbarManager.HasEmptySlot())
+                {
+                    Debug.Log("Hotbar đã đầy! Không thể nhặt thêm vật phẩm.");
+                    return false;
+                }
+
                 if (!heldItem.Contains(itemObj))
                 {
                     heldItem.Add(itemObj);
                     player.currweight += itemKg;
 
-                    Rigidbody rbPick = itemObj.GetComponent<Rigidbody>();
-                    if (rbPick != null)
+                    Item itemComp = itemObj.GetComponent<Item>();
+                    if (hotbarManager != null)
                     {
-                        rbPick.isKinematic = true;
-                        rbPick.linearVelocity = Vector3.zero;
+                        hotbarManager.AddItem(itemObj, itemComp);
                     }
-                    itemObj.SetActive(false);
+                    else
+                    {
+                        Rigidbody rbPick = itemObj.GetComponent<Rigidbody>();
+                        if (rbPick != null)
+                        {
+                            if (!rbPick.isKinematic)
+                            {
+                                rbPick.linearVelocity = Vector3.zero;
+                                rbPick.angularVelocity = Vector3.zero;
+                            }
+                            rbPick.isKinematic = true;
+                        }
+                        itemObj.SetActive(false);
+                    }
+
                     Debug.Log($"Picked up: {itemObj.name} (kg: {itemKg}) - new weight: {player.currweight}/{player.Maxweight}");
                 }
                 isTaking = true;
@@ -864,6 +902,10 @@ namespace StarterAssets
             // Xóa các item đã spawn khỏi danh sách held items, reset trọng lượng
             heldItem.RemoveAll(x => itemsToDrop.Contains(x));
             player.currweight = 0;
+            if (hotbarManager != null)
+            {
+                hotbarManager.ClearAllSlots();
+            }
 
             Debug.Log($"Đã spawn {droppedCount} items trong phạm vi {dropRadius}m trên đầu player.");
         }

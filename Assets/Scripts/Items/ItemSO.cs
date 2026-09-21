@@ -1,11 +1,67 @@
 using UnityEngine;
 
+/// <summary>
+/// Bảng phân loại độ hiếm của vật phẩm
+/// </summary>
+public enum ItemRarity
+{
+    Trash,      // Rác / Phế liệu (Vỏ lon, báo cũ, chai lọ rỗng...)
+    Common,     // Phổ thông (Cốc, bát, sách, tranh nhỏ...)
+    Uncommon,   // Khá (Ấm siêu tốc, máy sấy, quạt mini...)
+    Rare,       // Hiếm (Điện thoại, máy tính bảng, loa bluetooth...)
+    Epic,       // Cực hiếm (Laptop gaming, máy ảnh xịn, trang sức bạc...)
+    Legendary,  // Huyền thoại (Trang sức vàng, kim cương, đồng hồ Rolex...)
+    Mythic      // Thần thoại (Cổ vật vô giá, bảo vật quốc gia...)
+}
+
+public static class ItemRarityExtensions
+{
+    /// <summary>
+    /// Lấy mã màu Color đại diện cho độ hiếm
+    /// </summary>
+    public static Color GetColor(this ItemRarity rarity)
+    {
+        switch (rarity)
+        {
+            case ItemRarity.Trash: return new Color(0.6f, 0.6f, 0.6f);      // Xám
+            case ItemRarity.Common: return Color.white;                      // Trắng
+            case ItemRarity.Uncommon: return new Color(0.2f, 0.85f, 0.3f);   // Xanh lá
+            case ItemRarity.Rare: return new Color(0.2f, 0.6f, 1f);          // Xanh dương
+            case ItemRarity.Epic: return new Color(0.68f, 0.25f, 0.95f);    // Tím
+            case ItemRarity.Legendary: return new Color(1f, 0.6f, 0.05f);    // Vàng cam
+            case ItemRarity.Mythic: return new Color(1f, 0.1f, 0.35f);       // Đỏ hồng rực rỡ
+            default: return Color.white;
+        }
+    }
+
+    /// <summary>
+    /// Lấy tên hiển thị độ hiếm (VD: "Common", "Rare", "Mythic")
+    /// </summary>
+    public static string GetDisplayName(this ItemRarity rarity)
+    {
+        switch (rarity)
+        {
+            case ItemRarity.Trash: return "Trash";
+            case ItemRarity.Common: return "Common";
+            case ItemRarity.Uncommon: return "Uncommon";
+            case ItemRarity.Rare: return "Rare";
+            case ItemRarity.Epic: return "Epic";
+            case ItemRarity.Legendary: return "Legendary";
+            case ItemRarity.Mythic: return "Mythic";
+            default: return rarity.ToString();
+        }
+    }
+}
+
 [CreateAssetMenu(fileName = "NewItemData", menuName = "Thief Simulator/Item Data", order = 2)]
 public class ItemSO : ScriptableObject
 {
     [Header("📌 Basic Information")]
     [Tooltip("Tên vật phẩm")]
     public string itemName = "Valuable Item";
+
+    [Tooltip("Độ hiếm của vật phẩm")]
+    public ItemRarity rarity = ItemRarity.Common;
 
     [Tooltip("Hình ảnh / Icon của vật phẩm")]
     public Sprite itemIcon;

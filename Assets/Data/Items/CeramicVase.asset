@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
-  m_Name: HealthKit
+  m_Name: CeramicVase
   m_EditorClassIdentifier: Assembly-CSharp::ItemSO
-  itemName: Health kit
+  itemName: Ceramic vase
   rarity: 1
-  itemIcon: {fileID: -1537239397, guid: a8a427e629c26764580478de0dc109ac, type: 3}
+  itemIcon: {fileID: 1151267638, guid: 5e4075f35341fed4abe4e9026beacec0, type: 3}
   description: A valuable item that can be stolen and sold for points.
-  basePrice: 30
-  minPrice: 20
-  maxPrice: 40
-  baseKg: 1
-  minKg: 1
-  maxKg: 2
+  basePrice: 50
+  minPrice: 30
+  maxPrice: 70
+  baseKg: 5
+  minKg: 3
+  maxKg: 7

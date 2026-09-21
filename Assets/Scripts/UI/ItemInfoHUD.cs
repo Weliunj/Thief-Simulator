@@ -3,29 +3,35 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Quản lý UI HUD hiển thị thông tin đối tượng (Tên, Giá trị, Cân nặng, Phím tương tác)
-/// khi tâm ngắm của người chơi rọi trúng đối tượng tương tác.
+/// Quản lý UI HUD hiển thị thông tin đối tượng (Tên, Mô tả, Giá trị, Cân nặng, Phím tương tác)
+/// và tâm ngắm Crosshair (hiệu ứng phóng to / làm rõ khi rọi trúng item và thu nhỏ / làm mờ khi ở trạng thái idle).
 /// </summary>
 public class ItemInfoHUD : MonoBehaviour
 {
-    [Header("🖼️ UI Elements")]
-    [Tooltip("Panel gốc chứa toàn bộ UI HUD thông tin")]
-    public GameObject hudPanel;
+    [Header("🖼️ Info Content Panel")]
+    [Tooltip("Panel chứa nội dung chữ (Tên, Giá, Cân nặng, Mô tả). Sẽ ẩn khi không nhìn vào item")]
+    public GameObject infoContentPanel;
 
-    [Tooltip("Icon hoặc nút bấm tương tác (nếu có - chỉ hiện khi rọi trúng item)")]
+    [Tooltip("Icon hoặc nút bấm tương tác (chỉ hiện khi rọi trúng item)")]
     public GameObject interactIcon;
 
-    [Tooltip("Text gộp chung đơn giản nếu không muốn chia nhiều text box (VD: '[E] Laptop ($150 - 4Kg)')")]
+    [Tooltip("Text gộp chung đơn giản (VD: '[E] Laptop ($150 - 4Kg)')")]
     public TextMeshProUGUI singleCombinedText;
 
     [Tooltip("Text hiển thị tên đối tượng")]
     public TextMeshProUGUI nameText;
+
+    [Tooltip("Text hiển thị mô tả chi tiết")]
+    public TextMeshProUGUI descriptionText;
 
     [Tooltip("Text hiển thị giá trị ($)")]
     public TextMeshProUGUI priceText;
 
     [Tooltip("Text hiển thị khối lượng (Kg)")]
     public TextMeshProUGUI weightText;
+
+    [Tooltip("Text hiển thị độ hiếm của vật phẩm")]
+    public TextMeshProUGUI rarityText;
 
     [Tooltip("Text cảnh báo nếu không thể tương tác (VD: Quá tải, Cửa đã mở...)")]
     public TextMeshProUGUI warningText;
@@ -59,27 +65,53 @@ public class ItemInfoHUD : MonoBehaviour
     [Tooltip("Màu của tâm khi rọi trúng item")]
     public Color targetCrosshairColor = Color.white;
 
-    private CanvasGroup canvasGroup;
+    private CanvasGroup infoCanvasGroup;
     private Color defaultCrosshairColor = Color.white;
     private bool isHoveringItem = false;
 
     void Awake()
     {
-        if (hudPanel == null)
+        // Tự động tìm Crosshair Image nếu chưa gán
+        if (crosshairImage == null)
         {
-            hudPanel = gameObject;
+            var images = GetComponentsInChildren<Image>(true);
+            foreach (var img in images)
+            {
+                if (img.gameObject.name.ToLower().Contains("crosshair"))
+                {
+                    crosshairImage = img;
+                    break;
+                }
+            }
         }
-
-        canvasGroup = hudPanel.GetComponent<CanvasGroup>();
-        if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
 
         if (crosshairImage != null)
         {
-            // Tắt raycastTarget để tâm không bao giờ chặn click chuột / vuốt cảm ứng
             crosshairImage.raycastTarget = false;
             defaultCrosshairColor = crosshairImage.color;
             crosshairImage.transform.localScale = Vector3.one * idleScale;
             crosshairImage.color = new Color(defaultCrosshairColor.r, defaultCrosshairColor.g, defaultCrosshairColor.b, idleAlpha);
+            crosshairImage.gameObject.SetActive(true);
+        }
+
+        // Tự động tìm infoContentPanel nếu chưa gán
+        if (infoContentPanel == null)
+        {
+            Transform infoChild = transform.Find("InfoPanel") ?? transform.Find("Content") ?? transform.Find("Panel");
+            if (infoChild != null)
+            {
+                infoContentPanel = infoChild.gameObject;
+            }
+            else
+            {
+                // Nếu không có panel con riêng biệt, dùng CanvasGroup để ẩn hiện nội dung mà không tắt cả GameObject HUD
+                infoCanvasGroup = GetComponent<CanvasGroup>();
+                if (infoCanvasGroup == null) infoCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+        else
+        {
+            infoCanvasGroup = infoContentPanel.GetComponent<CanvasGroup>();
         }
 
         // Tự động tìm TextMeshProUGUI nếu chưa được gán trong Inspector
@@ -96,8 +128,10 @@ public class ItemInfoHUD : MonoBehaviour
                 {
                     string low = t.gameObject.name.ToLower();
                     if (low.Contains("name") && nameText == null) nameText = t;
+                    else if ((low.Contains("desc") || low.Contains("detail")) && descriptionText == null) descriptionText = t;
                     else if (low.Contains("price") && priceText == null) priceText = t;
                     else if ((low.Contains("weight") || low.Contains("kg")) && weightText == null) weightText = t;
+                    else if (low.Contains("rarity") && rarityText == null) rarityText = t;
                     else if ((low.Contains("warn") || low.Contains("fail")) && warningText == null) warningText = t;
                 }
             }
@@ -147,19 +181,20 @@ public class ItemInfoHUD : MonoBehaviour
 
         isHoveringItem = true;
 
-        if (hudPanel != null && !hudPanel.activeSelf)
+        // Bật hiển thị panel thông tin
+        if (infoContentPanel != null)
         {
-            hudPanel.SetActive(true);
+            infoContentPanel.SetActive(true);
         }
 
-        if (canvasGroup != null)
+        if (infoCanvasGroup != null)
         {
-            canvasGroup.alpha = 1f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
+            infoCanvasGroup.alpha = 1f;
+            infoCanvasGroup.interactable = true;
+            infoCanvasGroup.blocksRaycasts = true;
         }
 
-        if (interactIcon != null && !interactIcon.activeSelf)
+        if (interactIcon != null)
         {
             interactIcon.SetActive(true);
         }
@@ -167,6 +202,7 @@ public class ItemInfoHUD : MonoBehaviour
         // 1. Tên đối tượng & Combined Text
         if (singleCombinedText != null)
         {
+            singleCombinedText.gameObject.SetActive(true);
             if (interactable.IsLootItem())
             {
                 if (canInteract)
@@ -185,10 +221,26 @@ public class ItemInfoHUD : MonoBehaviour
 
         if (nameText != null)
         {
+            nameText.gameObject.SetActive(true);
             nameText.text = interactable.GetInteractableName();
         }
 
-        // 2. Nếu là vật phẩm (Loot Item) thì hiển thị Giá tiền & Cân nặng
+        // Mô tả chi tiết (Description)
+        if (descriptionText != null)
+        {
+            string desc = interactable.GetDescription();
+            if (!string.IsNullOrEmpty(desc))
+            {
+                descriptionText.gameObject.SetActive(true);
+                descriptionText.text = desc;
+            }
+            else
+            {
+                descriptionText.gameObject.SetActive(false);
+            }
+        }
+
+        // 2. Nếu là vật phẩm (Loot Item) thì hiển thị Giá tiền, Cân nặng & Độ hiếm
         if (interactable.IsLootItem())
         {
             if (priceText != null)
@@ -204,12 +256,21 @@ public class ItemInfoHUD : MonoBehaviour
                 weightText.text = $"{interactable.GetWeight()} Kg";
                 weightText.color = weightColor;
             }
+
+            if (rarityText != null)
+            {
+                rarityText.gameObject.SetActive(true);
+                ItemRarity r = interactable.GetRarity();
+                rarityText.text = r.GetDisplayName();
+                rarityText.color = r.GetColor();
+            }
         }
         else
         {
-            // Cửa, thang... không hiển thị giá tiền & cân nặng
+            // Cửa, thang... không hiển thị giá tiền, cân nặng & độ hiếm
             if (priceText != null) priceText.gameObject.SetActive(false);
             if (weightText != null) weightText.gameObject.SetActive(false);
+            if (rarityText != null) rarityText.gameObject.SetActive(false);
         }
 
         // 3. Cảnh báo (nếu quá tải hoặc không thể tương tác)
@@ -236,27 +297,47 @@ public class ItemInfoHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Ẩn HUD khi không nhìn vào đối tượng nào
+    /// Ẩn nội dung HUD khi không nhìn vào đối tượng nào (Tâm ngắm vẫn giữ và quay về trạng thái idle)
     /// </summary>
     public void Hide()
     {
         isHoveringItem = false;
 
-        if (hudPanel != null && hudPanel.activeSelf)
+        if (infoContentPanel != null)
         {
-            hudPanel.SetActive(false);
+            infoContentPanel.SetActive(false);
         }
 
-        if (canvasGroup != null)
+        if (infoCanvasGroup != null)
         {
-            canvasGroup.alpha = 0f;
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
+            infoCanvasGroup.alpha = 0f;
+            infoCanvasGroup.interactable = false;
+            infoCanvasGroup.blocksRaycasts = false;
         }
 
-        if (interactIcon != null && interactIcon.activeSelf)
+        if (interactIcon != null)
         {
             interactIcon.SetActive(false);
+        }
+
+        if (descriptionText != null)
+        {
+            descriptionText.gameObject.SetActive(false);
+        }
+
+        if (rarityText != null)
+        {
+            rarityText.gameObject.SetActive(false);
+        }
+
+        if (warningText != null)
+        {
+            warningText.gameObject.SetActive(false);
+        }
+
+        if (singleCombinedText != null)
+        {
+            singleCombinedText.gameObject.SetActive(false);
         }
     }
 }

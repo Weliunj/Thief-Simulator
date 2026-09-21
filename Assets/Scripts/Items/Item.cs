@@ -8,6 +8,9 @@ public class Item : MonoBehaviour, IInteractable
 
     [Header("📊 Current Stats (Generated at Runtime)")]
     public string itemName = "";
+    public ItemRarity rarity = ItemRarity.Common;
+    [TextArea(2, 4)]
+    public string description = "";
     public float Price = 0f;
     public int kg = 0;
 
@@ -35,6 +38,8 @@ public class Item : MonoBehaviour, IInteractable
             Price = stats.price;
             kg = stats.kg;
             itemName = string.IsNullOrEmpty(itemData.itemName) ? gameObject.name : itemData.itemName;
+            description = itemData.description;
+            rarity = itemData.rarity;
         }
         else
         {
@@ -46,6 +51,10 @@ public class Item : MonoBehaviour, IInteractable
             if (string.IsNullOrEmpty(itemName))
             {
                 itemName = gameObject.name.Replace("(Clone)", "").Trim();
+            }
+            if (string.IsNullOrEmpty(description))
+            {
+                description = "A valuable item that can be collected.";
             }
         }
     }
@@ -83,6 +92,12 @@ public class Item : MonoBehaviour, IInteractable
 
     public bool IsLootItem() => true;
 
+    public string GetDescription() => string.IsNullOrEmpty(description) ? (itemData != null ? itemData.description : "") : description;
+
+    public Sprite GetIcon() => itemData != null ? itemData.itemIcon : null;
+
+    public ItemRarity GetRarity() => rarity;
+
     public bool CanInteract(PlayerController player, out string failReason)
     {
         if (player == null || player.player == null)
@@ -94,6 +109,17 @@ public class Item : MonoBehaviour, IInteractable
         if (player.player.currweight + kg > player.player.Maxweight)
         {
             failReason = "Too Heavy! (Overweight)";
+            return false;
+        }
+
+        if (player.hotbarManager == null)
+        {
+            player.hotbarManager = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
+        }
+
+        if (player.hotbarManager != null && !player.hotbarManager.HasEmptySlot())
+        {
+            failReason = "Hotbar Full!";
             return false;
         }
 
