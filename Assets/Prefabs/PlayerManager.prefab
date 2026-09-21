@@ -859,7 +859,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &8644167003652081129
 Transform:
   m_ObjectHideFlags: 0
@@ -1695,7 +1695,9 @@ MonoBehaviour:
   dropHeight: 1.5
   itemSpawner: {fileID: 7129805397226439036}
   deathHandler: {fileID: 0}
+  canClimb: 1
   isClimbingLadder: 0
+  ladderYawClamp: 100
   Crouching: 0
 --- !u!114 &6487387858774349113
 MonoBehaviour:

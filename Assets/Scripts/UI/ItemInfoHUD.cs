@@ -205,17 +205,11 @@ public class ItemInfoHUD : MonoBehaviour
             singleCombinedText.gameObject.SetActive(true);
             if (interactable.IsLootItem())
             {
-                if (canInteract)
-                    singleCombinedText.text = $"{interactable.GetInteractableName()} (${interactable.GetPrice()} - {interactable.GetWeight()}Kg)";
-                else
-                    singleCombinedText.text = $"{interactable.GetInteractableName()} ({failReason})";
+                singleCombinedText.text = $"{interactable.GetInteractableName()} (${interactable.GetPrice()} - {interactable.GetWeight()}Kg)";
             }
             else
             {
-                if (canInteract)
-                    singleCombinedText.text = $"{interactable.GetInteractableName()}";
-                else
-                    singleCombinedText.text = $"{interactable.GetInteractableName()} ({failReason})";
+                singleCombinedText.text = $"{interactable.GetInteractableName()}";
             }
         }
 
@@ -272,28 +266,35 @@ public class ItemInfoHUD : MonoBehaviour
             if (weightText != null) weightText.gameObject.SetActive(false);
             if (rarityText != null) rarityText.gameObject.SetActive(false);
         }
+    }
 
-        // 3. Cảnh báo (nếu quá tải hoặc không thể tương tác)
-        if (canInteract)
+    private Coroutine warningCoroutine;
+
+    /// <summary>
+    /// Hiển thị thông báo cảnh báo tạm thời khi bấm nút tương tác thất bại (Hotbar đầy, quá tải...)
+    /// </summary>
+    public void ShowWarning(string message, float duration = 2.0f)
+    {
+        if (warningText == null || string.IsNullOrEmpty(message)) return;
+
+        if (warningCoroutine != null)
         {
-            if (warningText != null) warningText.gameObject.SetActive(false);
+            StopCoroutine(warningCoroutine);
         }
-        else
-        {
-            if (warningText != null)
-            {
-                if (!string.IsNullOrEmpty(failReason))
-                {
-                    warningText.gameObject.SetActive(true);
-                    warningText.text = failReason;
-                    warningText.color = warningColor;
-                }
-                else
-                {
-                    warningText.gameObject.SetActive(false);
-                }
-            }
-        }
+
+        warningCoroutine = StartCoroutine(WarningRoutine(message, duration));
+    }
+
+    private System.Collections.IEnumerator WarningRoutine(string message, float duration)
+    {
+        warningText.gameObject.SetActive(true);
+        warningText.text = message;
+        warningText.color = warningColor;
+
+        yield return new WaitForSeconds(duration);
+
+        warningText.gameObject.SetActive(false);
+        warningCoroutine = null;
     }
 
     /// <summary>
@@ -302,6 +303,12 @@ public class ItemInfoHUD : MonoBehaviour
     public void Hide()
     {
         isHoveringItem = false;
+
+        if (warningCoroutine != null)
+        {
+            StopCoroutine(warningCoroutine);
+            warningCoroutine = null;
+        }
 
         if (infoContentPanel != null)
         {

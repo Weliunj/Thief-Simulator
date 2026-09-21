@@ -106,6 +106,12 @@ public class Item : MonoBehaviour, IInteractable
             return false;
         }
 
+        if (player.isClimbingLadder)
+        {
+            failReason = "Cannot pick up while climbing";
+            return false;
+        }
+
         if (player.player.currweight + kg > player.player.Maxweight)
         {
             failReason = "Too Heavy! (Overweight)";

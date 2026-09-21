@@ -29,7 +29,9 @@ public class PlayerInteraction : MonoBehaviour
     private PlayerController playerController;
     private MobileActionButtons mobileActions;
 
-    // Đối tượng đang được nhắm trúng (Hiển thị trên HUD và sẽ nhặt khi bấm nút)
+    // Đối tượng đang được nhắm trúng
+    private IInteractable currentLootItem;
+    private IInteractable currentSpecialInteractable;
     private IInteractable currentInteractable;
 
     void Awake()
@@ -63,10 +65,28 @@ public class PlayerInteraction : MonoBehaviour
 
     /// <summary>
     /// Bắn SphereCast quét các vật phẩm trong vùng nhìn.
-    /// Nếu có nhiều vật phẩm, ưu tiên vật phẩm nằm gần tâm ngắm (crosshair) nhất.
+    /// Tự động tách biệt Loot Item (nhặt đồ) và Special Interactable (thang, cửa).
     /// </summary>
     private void PerformInteractionCheck()
     {
+        // Khi đang leo thang: Tắt toàn bộ HUD và nút Pickup / Interact để tránh nhặt nhầm thang đang bám
+        if (playerController != null && playerController.isClimbingLadder)
+        {
+            currentLootItem = null;
+            currentSpecialInteractable = null;
+            currentInteractable = null;
+
+            if (itemInfoHUD != null) itemInfoHUD.Hide();
+            if (mobileActions != null)
+            {
+                if (mobileActions.pickupButton != null && mobileActions.pickupButton.gameObject.activeSelf)
+                    mobileActions.pickupButton.gameObject.SetActive(false);
+                if (mobileActions.interactButton != null && mobileActions.interactButton.gameObject.activeSelf)
+                    mobileActions.interactButton.gameObject.SetActive(false);
+            }
+            return;
+        }
+
         if (mainCamera == null)
         {
             mainCamera = Camera.main;
@@ -82,7 +102,8 @@ public class PlayerInteraction : MonoBehaviour
 
         RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, maxCameraRayDistance, interactLayer, QueryTriggerInteraction.Collide);
 
-        IInteractable bestInteractable = null;
+        IInteractable bestLoot = null;
+        IInteractable bestSpecial = null;
         float bestScore = float.MaxValue; // Càng nhỏ càng ưu tiên (gần tâm ngắm nhất)
 
         if (hits != null && hits.Length > 0)
@@ -95,57 +116,87 @@ public class PlayerInteraction : MonoBehaviour
                     continue;
                 }
 
-                // 2. Tìm component IInteractable
-                IInteractable interactable = hit.collider.GetComponentInParent<IInteractable>();
-                if (interactable == null)
+                // 2. Tìm TẤT CẢ components IInteractable trên đối tượng (Item, Ladder, LockpickDoor...)
+                IInteractable[] interactables = hit.collider.GetComponentsInParent<IInteractable>();
+                if (interactables == null || interactables.Length == 0)
                 {
-                    interactable = hit.collider.GetComponent<IInteractable>();
+                    interactables = hit.collider.GetComponents<IInteractable>();
                 }
-                if (interactable == null)
+                if (interactables == null || interactables.Length == 0)
                 {
-                    interactable = hit.collider.GetComponentInChildren<IInteractable>();
+                    interactables = hit.collider.GetComponentsInChildren<IInteractable>();
                 }
 
-                if (interactable != null)
+                if (interactables != null && interactables.Length > 0)
                 {
                     // 3. Kiểm tra khoảng cách từ người chơi đến vật phẩm
                     float distToPlayer = Vector3.Distance(transform.position, hit.collider.transform.position);
                     if (distToPlayer <= maxPlayerReach)
                     {
                         // 4. XỬ LÝ KHI CÓ NHIỀU ITEM TRONG VÙNG QUÉT:
-                        // Tính khoảng cách vuông góc từ vị trí Item đến trục tâm ngắm (Ray)
                         Vector3 toItem = hit.collider.transform.position - ray.origin;
                         float distAlongRay = Vector3.Dot(toItem, ray.direction);
                         Vector3 pointOnRay = ray.origin + ray.direction * distAlongRay;
                         float distanceFromCrosshairCenter = Vector3.Distance(hit.collider.transform.position, pointOnRay);
 
-                        // Điểm ưu tiên: Ưu tiên số 1 là sát tâm ngắm nhất, ưu tiên số 2 là gần player hơn
                         float score = distanceFromCrosshairCenter + (hit.distance * 0.05f);
 
                         if (score < bestScore)
                         {
                             bestScore = score;
-                            bestInteractable = interactable;
+                            bestLoot = null;
+                            bestSpecial = null;
+
+                            foreach (var it in interactables)
+                            {
+                                if (it.IsLootItem())
+                                {
+                                    if (bestLoot == null) bestLoot = it;
+                                }
+                                else
+                                {
+                                    if (bestSpecial == null) bestSpecial = it;
+                                }
+                            }
                         }
                     }
                 }
             }
         }
 
-        currentInteractable = bestInteractable;
+        currentLootItem = bestLoot;
+        currentSpecialInteractable = bestSpecial;
+        currentInteractable = bestLoot ?? bestSpecial;
 
-        // Cập nhật thông tin vật phẩm được chọn lên UI HUD
-        if (currentInteractable != null)
+        // Cập nhật thông tin vật phẩm được chọn lên UI HUD và Mobile Action Buttons
+        if (currentLootItem != null || currentSpecialInteractable != null)
         {
-            bool canInteract = currentInteractable.CanInteract(playerController, out string failReason);
+            IInteractable primary = currentLootItem ?? currentSpecialInteractable;
+            bool canInteract = primary.CanInteract(playerController, out string failReason);
+
             if (itemInfoHUD != null)
             {
-                itemInfoHUD.ShowInteractable(currentInteractable, canInteract, failReason);
+                itemInfoHUD.ShowInteractable(primary, canInteract, failReason);
             }
-            if (mobileActions != null && mobileActions.interactButton != null)
+
+            // Xử lý bật/tắt nút Mobile: Nếu vừa có Item vừa có Thang -> Bật CẢ 2 NÚT!
+            if (mobileActions != null)
             {
-                if (!mobileActions.interactButton.gameObject.activeSelf)
-                    mobileActions.interactButton.gameObject.SetActive(true);
+                // Nút Pickup (nhặt đồ vào túi)
+                if (mobileActions.pickupButton != null)
+                {
+                    bool showPickup = (currentLootItem != null);
+                    if (mobileActions.pickupButton.gameObject.activeSelf != showPickup)
+                        mobileActions.pickupButton.gameObject.SetActive(showPickup);
+                }
+
+                // Nút Interact (tương tác đặc biệt: Thang, Cửa, v.v.)
+                if (mobileActions.interactButton != null)
+                {
+                    bool showInteract = (currentSpecialInteractable != null);
+                    if (mobileActions.interactButton.gameObject.activeSelf != showInteract)
+                        mobileActions.interactButton.gameObject.SetActive(showInteract);
+                }
             }
         }
         else
@@ -154,9 +205,11 @@ public class PlayerInteraction : MonoBehaviour
             {
                 itemInfoHUD.Hide();
             }
-            if (mobileActions != null && mobileActions.interactButton != null)
+            if (mobileActions != null)
             {
-                if (mobileActions.interactButton.gameObject.activeSelf)
+                if (mobileActions.pickupButton != null && mobileActions.pickupButton.gameObject.activeSelf)
+                    mobileActions.pickupButton.gameObject.SetActive(false);
+                if (mobileActions.interactButton != null && mobileActions.interactButton.gameObject.activeSelf)
                     mobileActions.interactButton.gameObject.SetActive(false);
             }
         }
@@ -164,21 +217,54 @@ public class PlayerInteraction : MonoBehaviour
 
     /// <summary>
     /// Xử lý bấm phím nhặt / tương tác.
-    /// Đảm bảo: Thông tin gì đang hiện trên HUD thì bấm nút sẽ nhặt/tương tác đúng vật phẩm đó.
+    /// - Phím E (hoặc nút Pickup): Nhặt Item vào Hotbar.
+    /// - Phím F (hoặc nút Interact): Leo thang / Mở cửa.
     /// </summary>
     private void HandleInteractionInput()
     {
-        if (currentInteractable == null || playerController == null) return;
+        if (playerController == null || playerController.isClimbingLadder) return;
 
-        bool isInteractInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.interactPressed);
+        bool pickupInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.pickupPressed);
+        bool interactInput = Input.GetKeyDown(KeyCode.F) || (mobileActions != null && mobileActions.interactPressed);
 
-        if (isInteractInput)
+        // Fallback: Nếu đối tượng chỉ có duy nhất tương tác đặc biệt (như cửa chỉ có LockpickDoor) và bấm E
+        if (currentLootItem == null && currentSpecialInteractable != null && Input.GetKeyDown(KeyCode.E))
         {
-            if (currentInteractable.CanInteract(playerController, out _))
+            interactInput = true;
+        }
+
+        // 1. Thực hiện Nhặt đồ (Pickup)
+        if (pickupInput && currentLootItem != null)
+        {
+            if (currentLootItem.CanInteract(playerController, out string failReason))
             {
-                // Thực hiện tương tác trực tiếp với vật phẩm đang chọn
-                currentInteractable.Interact(playerController);
+                currentLootItem.Interact(playerController);
             }
+            else
+            {
+                if (itemInfoHUD != null && !string.IsNullOrEmpty(failReason))
+                {
+                    itemInfoHUD.ShowWarning(failReason);
+                }
+            }
+            return;
+        }
+
+        // 2. Thực hiện Tương tác đặc biệt (Leo thang / Mở cửa)
+        if (interactInput && currentSpecialInteractable != null)
+        {
+            if (currentSpecialInteractable.CanInteract(playerController, out string failReason))
+            {
+                currentSpecialInteractable.Interact(playerController);
+            }
+            else
+            {
+                if (itemInfoHUD != null && !string.IsNullOrEmpty(failReason))
+                {
+                    itemInfoHUD.ShowWarning(failReason);
+                }
+            }
+            return;
         }
     }
 

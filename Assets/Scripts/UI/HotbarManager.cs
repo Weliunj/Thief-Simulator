@@ -41,11 +41,11 @@ public class HotbarManager : MonoBehaviour
     [Tooltip("Vị trí hiển thị model vật phẩm trước mặt (Camera hoặc Player)")]
     public Transform itemHoldPoint;
 
-    [Tooltip("Offset vị trí cầm item so với Player")]
-    public Vector3 holdPointOffset = new Vector3(0f, -0.22f, 0.1f);
+    [Tooltip("Offset vị trí cầm item so với Camera")]
+    public Vector3 holdPointOffset = new Vector3(0.2f, -0.25f, 0.55f);
 
     [Tooltip("Góc xoay 3D của vật phẩm khi cầm trên tay")]
-    public Vector3 holdPointRotation = new Vector3(10f, -25f, 0f);
+    public Vector3 holdPointRotation = new Vector3(5f, -15f, 0f);
 
     [Header("🔽 Drop Settings")]
     [Tooltip("Nút bấm Thả (Drop) - chỉ hiện khi đang chọn item")]
@@ -165,6 +165,47 @@ public class HotbarManager : MonoBehaviour
         }
     }
 
+    void LateUpdate()
+    {
+        UpdateHeldModelTransform();
+    }
+
+    /// <summary>
+    /// Cập nhật vị trí và góc xoay của item đang cầm theo Camera mỗi frame:
+    /// - Vị trí di chuyển lên/xuống theo góc nhìn của Camera
+    /// - Góc xoay KHÓA trục Y luôn thẳng đứng (Vector3.up), không bị nghiêng chúi/ngước khi quay camera
+    /// </summary>
+    public void UpdateHeldModelTransform()
+    {
+        if (currentHeldModel == null || itemHoldPoint == null) return;
+
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            if (mainCamera == null) mainCamera = FindFirstObjectByType<Camera>();
+        }
+
+        if (mainCamera != null)
+        {
+            Vector3 camPos = mainCamera.transform.position;
+            Vector3 camFwd = mainCamera.transform.forward;
+            Vector3 camRight = mainCamera.transform.right;
+            Vector3 camUp = mainCamera.transform.up;
+
+            // Đặt vị trí item trước mặt theo góc nhìn Camera
+            itemHoldPoint.position = camPos + (camRight * holdPointOffset.x) + (camUp * holdPointOffset.y) + (camFwd * holdPointOffset.z);
+
+            // Khóa góc xoay: Trục Y luôn thẳng đứng (Vector3.up), chỉ xoay quanh trục Y theo hướng nhìn ngang
+            Vector3 horizontalFwd = camFwd;
+            horizontalFwd.y = 0f;
+
+            if (horizontalFwd.sqrMagnitude > 0.0001f)
+            {
+                itemHoldPoint.rotation = Quaternion.LookRotation(horizontalFwd.normalized, Vector3.up) * Quaternion.Euler(0f, holdPointRotation.y, 0f);
+            }
+        }
+    }
+
     /// <summary>
     /// Khởi tạo và liên kết các HotbarSlot trong GroupLayout
     /// </summary>
@@ -205,9 +246,9 @@ public class HotbarManager : MonoBehaviour
             playerController = FindFirstObjectByType<PlayerController>();
         }
 
-        if (itemHoldPoint == null && playerController != null)
+        if (itemHoldPoint == null)
         {
-            Transform existing = playerController.transform.Find("ItemHoldPoint");
+            Transform existing = transform.Find("ItemHoldPoint");
             if (existing != null)
             {
                 itemHoldPoint = existing;
@@ -215,20 +256,12 @@ public class HotbarManager : MonoBehaviour
             else
             {
                 GameObject hpObj = new GameObject("ItemHoldPoint");
-                hpObj.transform.SetParent(playerController.transform, false);
-                hpObj.transform.localPosition = holdPointOffset;
-                hpObj.transform.localRotation = Quaternion.Euler(holdPointRotation);
-                hpObj.transform.localScale = Vector3.one;
+                hpObj.transform.SetParent(transform, false);
                 itemHoldPoint = hpObj.transform;
             }
         }
 
-        if (itemHoldPoint != null)
-        {
-            itemHoldPoint.localPosition = holdPointOffset;
-            itemHoldPoint.localRotation = Quaternion.Euler(holdPointRotation);
-            itemHoldPoint.localScale = Vector3.one;
-        }
+        UpdateHeldModelTransform();
     }
 
     /// <summary>
@@ -389,6 +422,9 @@ public class HotbarManager : MonoBehaviour
     {
         if (index < 0 || index >= slots.Count) return;
 
+        // Đang leo thang -> Không cho cầm/đổi item trên tay
+        if (playerController != null && playerController.isClimbingLadder) return;
+
         if (currentSelectedIndex == index)
         {
             // Bấm lại vào slot đang chọn -> Bỏ chọn
@@ -406,6 +442,9 @@ public class HotbarManager : MonoBehaviour
     public void SelectSlot(int index)
     {
         if (index < 0 || index >= slots.Count) return;
+
+        // Đang leo thang -> Không cho cầm item trên tay
+        if (playerController != null && playerController.isClimbingLadder) return;
 
         // Bỏ chọn slot cũ
         if (currentSelectedIndex >= 0 && currentSelectedIndex < slots.Count)
@@ -526,6 +565,7 @@ public class HotbarManager : MonoBehaviour
             itemObj.transform.localPosition = Vector3.zero;
             itemObj.transform.localRotation = Quaternion.identity;
             itemObj.transform.localScale = Vector3.one;
+            UpdateHeldModelTransform();
         }
         else
         {
@@ -643,14 +683,19 @@ public class HotbarManager : MonoBehaviour
         }
         disabledRangeScripts.Clear();
 
+        // 🎯 TÍNH TOÁN HƯỚNG VÀ GÓC XOAY BAN ĐẦU KHI THẢ
+        Vector3 forwardDir = (mainCamera != null) ? mainCamera.transform.forward : (playerController != null ? playerController.transform.forward : dropDirection);
+        forwardDir.y = 0f; // Triệt tiêu độ nghiêng theo phương thẳng đứng khi spawn
+        Quaternion dropRot = (forwardDir.sqrMagnitude > 0.001f) ? Quaternion.LookRotation(forwardDir) : Quaternion.identity;
+
         // Thả item ra ngoài thế giới
         itemObj.transform.SetParent(null);
         itemObj.transform.position = dropPosition;
-        itemObj.transform.rotation = Quaternion.identity;
+        itemObj.transform.rotation = dropRot;
         itemObj.transform.localScale = Vector3.one;
         itemObj.SetActive(true);
 
-        // Kích hoạt vật lý
+        // Kích hoạt vật lý tự nhiên bình thường khi thả/ném (mở khóa toàn bộ rotation constraints)
         Rigidbody rb = itemObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -658,10 +703,14 @@ public class HotbarManager : MonoBehaviour
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
 
-            // Nếu không có vật cản trước mặt -> Ném về phía trước
+            // Cho phép vật thể tự do xoay, nghiêng, rơi và va chạm tự nhiên
+            rb.constraints = RigidbodyConstraints.None;
+
+            // Nếu không có vật cản trước mặt -> Thả/ném nhẹ theo hướng nhìn
             if (!hasObstacle)
             {
-                rb.AddForce(dropDirection * dropForwardForce, ForceMode.Impulse);
+                float force = (itemObj.GetComponent<Ladder>() != null) ? 0.6f : dropForwardForce;
+                rb.AddForce(dropDirection * force, ForceMode.Impulse);
             }
         }
 
@@ -704,6 +753,9 @@ public class HotbarManager : MonoBehaviour
 
     private void HandleKeyboardInput()
     {
+        // Đang leo thang -> Bỏ qua phím tắt Hotbar
+        if (playerController != null && playerController.isClimbingLadder) return;
+
         // Phím số 1 -> 9 để chọn slot
         for (int i = 0; i < slots.Count && i < 9; i++)
         {

@@ -349,41 +349,30 @@ namespace StarterAssets
                 }
             }
 
-            //Nhat item
-            bool pickupInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.interactPressed);
-            if (pickupInput && !isTaking)
+            // Nhặt item (Chỉ dùng logic OverlapSphere cũ khi KHÔNG có component PlayerInteraction)
+            if (GetComponent<PlayerInteraction>() == null)
             {
-                Collider[] hitColliders = Physics.OverlapSphere(transform.position, rangeInteract);
-
-                foreach (var hitCollider in hitColliders)
+                bool pickupInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.interactPressed);
+                if (pickupInput && !isTaking)
                 {
-                    if (hitCollider.CompareTag("item"))
+                    Collider[] hitColliders = Physics.OverlapSphere(transform.position, rangeInteract);
+
+                    foreach (var hitCollider in hitColliders)
                     {
-                        Item item = hitCollider.GetComponent<Item>();
-
-                        // KIỂM TRA TRỌNG LƯỢNG TỐI ĐA TRƯỚC KHI NHẶT
-                        if (player.currweight + item.kg <= player.Maxweight)
+                        if (hitCollider.CompareTag("item"))
                         {
-                            if (!heldItem.Contains(hitCollider.gameObject))
+                            Item item = hitCollider.GetComponent<Item>();
+                            if (item != null)
                             {
-                                heldItem.Add(hitCollider.gameObject);
-                                player.currweight += item.kg;
-                                // Disable physics & hide so it doesn't collide with the world while carried
-                                Rigidbody rbPick = hitCollider.GetComponent<Rigidbody>();
-                                if (rbPick != null) { rbPick.isKinematic = true; rbPick.linearVelocity = Vector3.zero; }
-                                hitCollider.gameObject.SetActive(false);
-                                Debug.Log($"Picked up: {hitCollider.gameObject.name} (kg: {item.kg}) - new weight: {player.currweight}/{player.Maxweight}");
+                                if (TryPickupItem(hitCollider.gameObject, item.kg))
+                                {
+                                    isTaking = true;
+                                    takeTimer = takeDuration;
+                                    if (_animator != null) { _animator.SetTrigger("Take"); }
+                                    break; // Chỉ nhặt một item mỗi lần nhấn E
+                                }
                             }
-                            isTaking = true;
-                            takeTimer = takeDuration;
-                            if (_animator != null) { _animator.SetTrigger("Take"); }
-                            break; // Chỉ nhặt một item mỗi lần nhấn E
                         }
-                        else
-                        {
-                            Debug.Log("Nang qua tha cho toi: " + item.gameObject.name);
-                        }
-
                     }
                 }
             }
@@ -506,20 +495,26 @@ namespace StarterAssets
             }
         }
 
+        [Header("🪜 Ladder Settings")]
+        [Tooltip("Cho phép leo thang hay không (canClimb). Nếu bị tắt (ví dụ do stun, online sync, mất quyền leo), người chơi sẽ lập tức buông tay rơi khỏi thang")]
+        public bool canClimb = true;
         public bool isClimbingLadder = false;
         public void LadderClimb()
         {
+            if (_animator == null) return;
+
             if (isClimbingLadder)
             {
                 _animator.SetBool("Climb", true);
             }
             else
             {
-                isClimbingLadder = false;
                 _animator.SetBool("Climb", false);
+                if (_animator.speed <= 0.01f)
+                {
+                    _animator.speed = 1.0f;
+                }
             }
-
-
         }
         private void LateUpdate()
         {
@@ -550,6 +545,21 @@ namespace StarterAssets
             }
         }
 
+        [Header("🪜 Ladder Camera Settings")]
+        [Tooltip("Giới hạn góc quay camera trái/phải (độ) khi đang leo thang")]
+        public float ladderYawClamp = 100.0f;
+        private float _ladderBaseYaw = 0.0f;
+
+        /// <summary>
+        /// Khóa góc nhìn camera hướng vào mặt thang và kích hoạt giới hạn góc quay trái/phải
+        /// </summary>
+        public void SetLadderCameraFacing(float targetYaw)
+        {
+            _cinemachineTargetYaw = targetYaw;
+            _ladderBaseYaw = targetYaw;
+            _cinemachineTargetPitch = 0.0f;
+        }
+
         /// <summary>
         /// Hàm xử lý riêng cho Input và xoay Camera
         /// </summary>
@@ -575,8 +585,17 @@ namespace StarterAssets
                 _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
             }
 
-            // Giới hạn góc xoay 360 độ cho Yaw và Pitch
-            _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
+            // Giới hạn góc xoay cho Yaw và Pitch
+            if (isClimbingLadder)
+            {
+                // Khi đang leo thang: Giới hạn góc quay camera trái/phải quanh hướng thang (không cho quay 360 độ ra sau)
+                _cinemachineTargetYaw = Mathf.Clamp(_cinemachineTargetYaw, _ladderBaseYaw - ladderYawClamp, _ladderBaseYaw + ladderYawClamp);
+            }
+            else
+            {
+                // Giới hạn góc xoay 360 độ thông thường cho Yaw
+                _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
+            }
             _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
             // Cập nhật góc xoay cho đối tượng theo dõi Cinemachine
