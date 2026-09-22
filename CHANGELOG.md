@@ -795,29 +795,49 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Sửa lỗi tương tác Cửa (Door) và Minigame trong [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs) & [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs):
     - Khắc phục lỗi nhìn vào tường nhà vẫn bắt trúng Cửa: Loại bỏ hàm tìm con `GetComponentsInChildren` nguy hiểm trên Collider va chạm (trước đây bắn trúng tường nhà `House` sẽ quét xuống tất cả cửa con bên trong).
     - Bổ sung cơ chế kiểm tra tầm nhìn (Line-of-Sight occlusion check): Nếu có tường/vật cản che chắn trực tiếp trước mặt, tia quét sẽ bị chặn lại và không thể tương tác xuyên thấu qua tường.
-    - Khắc phục lỗi Cửa đã mở vẫn hiện chữ "Pick Lock" và mở minigame: Tự động bỏ qua các cửa có `isUnlocked == true`, ẩn hoàn toàn nút tương tác và không cho phép kích hoạt minigame sau khi đã mở khóa thành công.
-    - Loại bỏ lệnh phát âm thanh trùng lặp trong [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs), đảm bảo âm thanh mở khóa thành công (`victorySound`) chỉ phát duy nhất 1 lần từ `DoorController.OnUnlockSuccess()`.
+  - Phát triển hệ thống tương tác vật phẩm cầm tay (Held Item Interaction) và [FlashlightController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/FlashlightController.cs):
+    - Tạo mới interface [IHeldInteractable.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/IHeldInteractable.cs) chuẩn hóa cho mọi vật phẩm có thể tương tác trực tiếp khi đang cầm trên tay (Đèn pin, Thuốc, Súng, Scanner...).
+    - Tái cấu trúc [FlashlightController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/FlashlightController.cs) & [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs):
+      - Loại bỏ hoàn toàn các biến trùng lặp, đồng bộ hóa 100% việc lấy dữ liệu (Tên, Mô tả, Icon, Giá tiền, Cân nặng, Độ hiếm) từ component `Item` và ScriptableObject (`ItemSO`).
+      - Bổ sung `lightLocalOffset` và `lightLocalRotation` cho Đèn pin: Giúp dễ dàng vi chỉnh vị trí và góc xoay hướng chiếu sáng (xoay 90 độ nếu nòng 3D Model bị dựng đứng trên trục Y) mà không cần tạo GameObject phụ thủ công.
+    - Cập nhật [Item.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Item.cs) & [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs):
+      - Hỗ trợ `followCameraPitch`, `customHoldOffset`, `customHoldRotation` riêng cho từng Item.
+      - Đối với Đèn pin (`followCameraPitch = true`): Góc xoay ngửa lên / cúi xuống bám sát 100% theo hướng nhìn Camera, đảm bảo luồng sáng luôn chiếu đúng tâm ngắm.
+    - Cập nhật [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs):
+      - Giải quyết triệt để xung đột nút tương tác: Dùng chung 1 nút `Interact` duy nhất (phím F / nút Interact trên Mobile) theo cơ chế chuyển đổi ngữ cảnh thông minh:
+        - Khi nhìn vào Thang / Cửa: Tự động ưu tiên **Leo Thang / Mở Cửa**.
+    - Cập nhật [ItemInfoHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ItemInfoHUD.cs) & [MobileActionButtons.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/MobileActionButtons.cs):
+      - Phân tách riêng biệt giữa **Tên đối tượng (`nameText`)** và **Hành động (`actionPromptText`)**. `nameText` chỉ thuần túy chứa tên đối tượng (VD: *"Flashlight"*, *"Ladder"*, *"Wooden Locked Door"*).
+      - `MobileActionButtons.SetInteractPrompt()` tự động quét tìm child object `Prompt` (như `InteractBtn -> Prompt`) để gán chính xác câu lệnh hành động (như `"Turn On"`, `"Turn Off"`, `"Climb Up"`, `"Pick Lock"`) lên nút Mobile UI.
 - **Danh sách file thay đổi**:
   - `Assets/Scripts/UI/UIEventSystemFixer.cs` (New)
+  - `Assets/Scripts/Items/IHeldInteractable.cs` (New)
+  - `Assets/Scripts/Items/FlashlightController.cs` (New)
+  - `Assets/Scripts/Items/Item.cs` (Lines 15-35)
   - `Assets/Scripts/UI/HomeScreen.cs` (Lines 20-35)
   - `Assets/Scripts/UI/ChapterSelectManager.cs` (Lines 40-55)
   - `Assets/Scripts/UI/SettingsHUD.cs` (Lines 105-115)
   - `Assets/Scripts/Player/PlayerController.cs` (Lines 200-210)
-  - `Assets/Scripts/Player/PlayerInteraction.cs` (Lines 130-245)
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Lines 30-320)
   - `Assets/Scripts/UI/UI_Manager.cs` (Lines 290-415, 440-445)
   - `Assets/Scripts/Player/StarterAssetsInputs.cs` (Rewritten / Enhanced)
-  - `Assets/Scripts/UI/HotbarManager.cs` (Lines 50-190, 235-255, 580-605, 760-815)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Lines 50-310, 580-605, 760-815)
   - `Assets/Scripts/Items/LadderController.cs` (Lines 90-145, 595-605)
   - `Assets/Scripts/UI/LockpickMinigame.cs` (Lines 45-55, 225-305)
   - `Assets/Scripts/UI/MainHUD.cs` (Lines 15-200 — Streamlined)
+  - `Assets/Scripts/UI/ItemInfoHUD.cs` (Lines 200-220)
+  - `Assets/Scripts/Player/MobileActionButtons.cs` (Lines 180-210)
 - **Ảnh hưởng**:
   - Chuột luôn luôn hiển thị và không bị khóa trong suốt toàn bộ quá trình chơi game từ Menu đến Gameplay.
-  - Tester có thể vừa dùng WASD + Space để di chuyển/nhảy, vừa dùng chuột click trực tiếp vào mọi nút trên màn hình (Pickup, Interact, Drop, Sprint, Crouch, Flashlight, Hotbar, Pause) y hệt như thao tác chạm trên điện thoại, giúp quá trình build EXE và test nhanh hơn rất nhiều so với build APK.
+  - Tester có thể vừa dùng WASD + Space để di chuyển/nhảy, vừa dùng chuột click trực tiếp vào mọi nút trên màn hình (Pickup, Interact, Drop, Sprint, Crouch, Flashlight, Hotbar, Pause) y hệt như thao tác chạm trên điện thoại, giúp quá trình build EXE và test nhanh hơn rất nhiều so me với build APK.
   - Minigame bẻ khóa có độ chính xác và thử thách chuẩn hơn, tránh việc người chơi bấm ăn may khi 2 hình tròn vừa chạm mép nhau.
   - Giao diện HUD chính hiển thị trực quan và tinh gọn, loại bỏ các biến rác trong Inspector.
   - Thao tác đặt/ném đồ trực quan, phân biệt rõ ràng giữa hành vi Đặt vào tường (khóa đứng thang) và Ném ra ngoài khoảng không (lật đổ vật lý tự nhiên).
   - Tương tác cửa chuẩn xác 100%: không bị quét xuyên tường khi nhìn chỗ khác, cửa mở xong sẽ không hiện minigame bẻ khóa lại và âm thanh chiến thắng chỉ phát đúng 1 lần.
   - Thang đặt ra thế giới luôn hiện đầy đủ nút Leo trèo (Interact) và nút Nhặt đồ (Pickup), đồng thời khóa va chạm để không bị đi bộ dẫm lên thang nghiêng.
+  - Đèn pin hoạt động như một Special Item hoàn chỉnh: ngửa camera lên xuống thì chùm sáng bám theo chuẩn xác, bật/tắt bằng phím F / nút Interact mà không hề bị xung đột với Thang và Cửa.
+  - Chuỗi hành động động `GetActionPrompt()` và `GetHeldActionPrompt()` hiển thị đầy đủ, chính xác lên HUD và nhãn nút Mobile giúp người chơi biết rõ bấm phím/nút sẽ thực hiện hành động gì.
+
 
 
 

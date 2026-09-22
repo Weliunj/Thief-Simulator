@@ -20,6 +20,18 @@ public class Item : MonoBehaviour, IInteractable
     public int MinKg = 1;
     public int MaxKg = 10;
 
+    [Header("🎯 Custom Hold Settings (Khi cầm trên Hotbar)")]
+    [Tooltip("Cho phép trục xoay của vật phẩm ngửa lên / cúi xuống bám theo góc nhìn Camera (dành cho Đèn pin, Súng...)")]
+    public bool followCameraPitch = false;
+
+    [Tooltip("Ghi đè vị trí cầm tay riêng cho item này")]
+    public bool useCustomHoldOffset = false;
+    public Vector3 customHoldOffset = Vector3.zero;
+
+    [Tooltip("Ghi đè góc xoay khi cầm tay riêng cho item này")]
+    public bool useCustomHoldRotation = false;
+    public Vector3 customHoldRotation = Vector3.zero;
+
     void Awake()
     {
         InitializeStats();

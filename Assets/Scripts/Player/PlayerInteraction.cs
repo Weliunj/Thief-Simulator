@@ -33,6 +33,7 @@ public class PlayerInteraction : MonoBehaviour
     private IInteractable currentLootItem;
     private IInteractable currentSpecialInteractable;
     private IInteractable currentInteractable;
+    private IHeldInteractable currentHeldInteractable;
 
     void Awake()
     {
@@ -78,6 +79,7 @@ public class PlayerInteraction : MonoBehaviour
             currentLootItem = null;
             currentSpecialInteractable = null;
             currentInteractable = null;
+            currentHeldInteractable = null;
 
             if (itemInfoHUD != null) itemInfoHUD.Hide();
             if (mobileActions != null)
@@ -106,6 +108,7 @@ public class PlayerInteraction : MonoBehaviour
             currentLootItem = null;
             currentSpecialInteractable = null;
             currentInteractable = null;
+            currentHeldInteractable = null;
 
             if (itemInfoHUD != null) itemInfoHUD.Hide();
             if (mobileActions != null)
@@ -116,6 +119,13 @@ public class PlayerInteraction : MonoBehaviour
                     mobileActions.interactButton.gameObject.SetActive(false);
             }
             return;
+        }
+
+        // Lấy IHeldInteractable từ Item đang cầm trên Hotbar (Đèn pin...)
+        currentHeldInteractable = null;
+        if (playerController != null && playerController.hotbarManager != null)
+        {
+            currentHeldInteractable = playerController.hotbarManager.GetHeldInteractable();
         }
 
         if (mainCamera == null)
@@ -234,6 +244,9 @@ public class PlayerInteraction : MonoBehaviour
                     bool showPickup = (currentLootItem != null);
                     if (mobileActions.pickupButton.gameObject.activeSelf != showPickup)
                         mobileActions.pickupButton.gameObject.SetActive(showPickup);
+
+                    if (showPickup && currentLootItem != null)
+                        mobileActions.SetPickupPrompt(currentLootItem.GetActionPrompt());
                 }
 
                 // Nút Interact (tương tác đặc biệt: Thang, Cửa, v.v.)
@@ -242,6 +255,30 @@ public class PlayerInteraction : MonoBehaviour
                     bool showInteract = (currentSpecialInteractable != null && currentSpecialInteractable.CanInteract(playerController, out _));
                     if (mobileActions.interactButton.gameObject.activeSelf != showInteract)
                         mobileActions.interactButton.gameObject.SetActive(showInteract);
+
+                    if (showInteract && currentSpecialInteractable != null)
+                        mobileActions.SetInteractPrompt(currentSpecialInteractable.GetActionPrompt());
+                }
+            }
+        }
+        else if (currentHeldInteractable != null && currentHeldInteractable.CanInteractWhileHeld())
+        {
+            // Không nhìn vào vật thể thế giới, nhưng ĐANG CẦM ITEM ĐẶC BIỆT TRÊN TAY (Đèn pin...) -> Bật nút Interact để Bật/Tắt!
+            if (itemInfoHUD != null)
+            {
+                itemInfoHUD.Hide();
+            }
+            if (mobileActions != null)
+            {
+                if (mobileActions.pickupButton != null && mobileActions.pickupButton.gameObject.activeSelf)
+                    mobileActions.pickupButton.gameObject.SetActive(false);
+
+                if (mobileActions.interactButton != null)
+                {
+                    if (!mobileActions.interactButton.gameObject.activeSelf)
+                        mobileActions.interactButton.gameObject.SetActive(true);
+
+                    mobileActions.SetInteractPrompt(currentHeldInteractable.GetHeldActionPrompt());
                 }
             }
         }
@@ -264,7 +301,7 @@ public class PlayerInteraction : MonoBehaviour
     /// <summary>
     /// Xử lý bấm phím nhặt / tương tác.
     /// - Phím E (hoặc nút Pickup): Nhặt Item vào Hotbar.
-    /// - Phím F (hoặc nút Interact): Leo thang / Mở cửa.
+    /// - Phím F (hoặc nút Interact): Leo thang / Mở cửa / Bật tắt Đèn pin đang cầm.
     /// </summary>
     private void HandleInteractionInput()
     {
@@ -296,21 +333,30 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        // 2. Thực hiện Tương tác đặc biệt (Leo thang / Mở cửa)
-        if (interactInput && currentSpecialInteractable != null)
+        // 2. Thực hiện Tương tác đặc biệt (Ưu tiên Vật thể thế giới: Leo thang / Mở cửa -> sau đó đến Item trên tay: Đèn pin)
+        if (interactInput)
         {
-            if (currentSpecialInteractable.CanInteract(playerController, out string failReason))
+            if (currentSpecialInteractable != null)
             {
-                currentSpecialInteractable.Interact(playerController);
-            }
-            else
-            {
-                if (itemInfoHUD != null && !string.IsNullOrEmpty(failReason))
+                if (currentSpecialInteractable.CanInteract(playerController, out string failReason))
                 {
-                    itemInfoHUD.ShowWarning(failReason);
+                    currentSpecialInteractable.Interact(playerController);
                 }
+                else
+                {
+                    if (itemInfoHUD != null && !string.IsNullOrEmpty(failReason))
+                    {
+                        itemInfoHUD.ShowWarning(failReason);
+                    }
+                }
+                return;
             }
-            return;
+            else if (currentHeldInteractable != null && currentHeldInteractable.CanInteractWhileHeld())
+            {
+                // Kích hoạt tương tác trên Item đang cầm (Bật/Tắt đèn pin)
+                currentHeldInteractable.OnHeldInteract(playerController);
+                return;
+            }
         }
     }
 

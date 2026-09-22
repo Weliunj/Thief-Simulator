@@ -251,7 +251,8 @@ public class HotbarManager : MonoBehaviour
     /// <summary>
     /// Cập nhật vị trí và góc xoay của item đang cầm theo Camera mỗi frame:
     /// - Vị trí di chuyển lên/xuống theo góc nhìn của Camera
-    /// - Góc xoay KHÓA trục Y luôn thẳng đứng (Vector3.up), không bị nghiêng chúi/ngước khi quay camera
+    /// - Nếu item có followCameraPitch: Ngửa lên / cúi xuống bám theo hướng nhìn Camera (Đèn pin)
+    /// - Nếu item thường: Khóa trục Y luôn thẳng đứng, không bị nghiêng chúi/ngước khi quay camera
     /// </summary>
     public void UpdateHeldModelTransform()
     {
@@ -270,18 +271,40 @@ public class HotbarManager : MonoBehaviour
             Vector3 camRight = mainCamera.transform.right;
             Vector3 camUp = mainCamera.transform.up;
 
+            Item item = currentHeldModel.GetComponent<Item>();
+            Vector3 activeOffset = (item != null && item.useCustomHoldOffset) ? item.customHoldOffset : holdPointOffset;
+            Vector3 activeRotation = (item != null && item.useCustomHoldRotation) ? item.customHoldRotation : holdPointRotation;
+            bool followPitch = (item != null && item.followCameraPitch);
+
             // Đặt vị trí item trước mặt theo góc nhìn Camera
-            itemHoldPoint.position = camPos + (camRight * holdPointOffset.x) + (camUp * holdPointOffset.y) + (camFwd * holdPointOffset.z);
+            itemHoldPoint.position = camPos + (camRight * activeOffset.x) + (camUp * activeOffset.y) + (camFwd * activeOffset.z);
 
-            // Khóa góc xoay: Trục Y luôn thẳng đứng (Vector3.up), chỉ xoay quanh trục Y theo hướng nhìn ngang
-            Vector3 horizontalFwd = camFwd;
-            horizontalFwd.y = 0f;
-
-            if (horizontalFwd.sqrMagnitude > 0.0001f)
+            if (followPitch)
             {
-                itemHoldPoint.rotation = Quaternion.LookRotation(horizontalFwd.normalized, Vector3.up) * Quaternion.Euler(0f, holdPointRotation.y, 0f);
+                // Bám theo toàn bộ hướng quay của Camera (cả ngửa lên và cúi xuống - dành cho Đèn pin, Súng...)
+                itemHoldPoint.rotation = mainCamera.transform.rotation * Quaternion.Euler(activeRotation);
+            }
+            else
+            {
+                // Khóa góc xoay: Trục Y luôn thẳng đứng (Vector3.up), chỉ xoay quanh trục Y theo hướng nhìn ngang
+                Vector3 horizontalFwd = camFwd;
+                horizontalFwd.y = 0f;
+
+                if (horizontalFwd.sqrMagnitude > 0.0001f)
+                {
+                    itemHoldPoint.rotation = Quaternion.LookRotation(horizontalFwd.normalized, Vector3.up) * Quaternion.Euler(0f, activeRotation.y, 0f);
+                }
             }
         }
+    }
+
+    /// <summary>
+    /// Lấy component IHeldInteractable của vật phẩm đang cầm trên tay (nếu có)
+    /// </summary>
+    public IHeldInteractable GetHeldInteractable()
+    {
+        if (currentHeldModel == null) return null;
+        return currentHeldModel.GetComponent<IHeldInteractable>() ?? currentHeldModel.GetComponentInChildren<IHeldInteractable>();
     }
 
     /// <summary>

@@ -21,6 +21,9 @@ public class ItemInfoHUD : MonoBehaviour
     [Tooltip("Text hiển thị tên đối tượng")]
     public TextMeshProUGUI nameText;
 
+    [Tooltip("Text hiển thị hành động tương tác (VD: Pick Up, Climb Up, Pick Lock, Turn On)")]
+    public TextMeshProUGUI actionPromptText;
+
     [Tooltip("Text hiển thị mô tả chi tiết")]
     public TextMeshProUGUI descriptionText;
 
@@ -128,6 +131,7 @@ public class ItemInfoHUD : MonoBehaviour
                 {
                     string low = t.gameObject.name.ToLower();
                     if (low.Contains("name") && nameText == null) nameText = t;
+                    else if ((low.Contains("prompt") || low.Contains("action")) && actionPromptText == null) actionPromptText = t;
                     else if ((low.Contains("desc") || low.Contains("detail")) && descriptionText == null) descriptionText = t;
                     else if (low.Contains("price") && priceText == null) priceText = t;
                     else if ((low.Contains("weight") || low.Contains("kg")) && weightText == null) weightText = t;
@@ -200,16 +204,17 @@ public class ItemInfoHUD : MonoBehaviour
         }
 
         // 1. Tên đối tượng & Combined Text
+        string actionPrompt = interactable.GetActionPrompt();
         if (singleCombinedText != null)
         {
             singleCombinedText.gameObject.SetActive(true);
             if (interactable.IsLootItem())
             {
-                singleCombinedText.text = $"{interactable.GetInteractableName()} (${interactable.GetPrice()} - {interactable.GetWeight()}Kg)";
+                singleCombinedText.text = $"[E] {actionPrompt} - {interactable.GetInteractableName()} (${interactable.GetPrice()} - {interactable.GetWeight()}Kg)";
             }
             else
             {
-                singleCombinedText.text = $"{interactable.GetInteractableName()}";
+                singleCombinedText.text = $"[F] {actionPrompt} ({interactable.GetInteractableName()})";
             }
         }
 
@@ -217,6 +222,12 @@ public class ItemInfoHUD : MonoBehaviour
         {
             nameText.gameObject.SetActive(true);
             nameText.text = interactable.GetInteractableName();
+        }
+
+        if (actionPromptText != null)
+        {
+            actionPromptText.gameObject.SetActive(true);
+            actionPromptText.text = actionPrompt;
         }
 
         // Mô tả chi tiết (Description)
@@ -345,6 +356,11 @@ public class ItemInfoHUD : MonoBehaviour
         if (singleCombinedText != null)
         {
             singleCombinedText.gameObject.SetActive(false);
+        }
+
+        if (actionPromptText != null)
+        {
+            actionPromptText.gameObject.SetActive(false);
         }
     }
 }

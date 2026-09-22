@@ -639,7 +639,15 @@ public class LadderController : MonoBehaviour, IInteractable
     //                        IINTERACTABLE IMPLEMENTATION
     // =========================================================================
 
-    public string GetInteractableName() => "Ladder";
+    private Item itemComp;
+
+    private Item GetItemComponent()
+    {
+        if (itemComp == null) itemComp = GetComponent<Item>();
+        return itemComp;
+    }
+
+    public string GetInteractableName() => (GetItemComponent() != null) ? itemComp.GetInteractableName() : "Ladder";
 
     public string GetActionPrompt()
     {
@@ -653,9 +661,9 @@ public class LadderController : MonoBehaviour, IInteractable
         return "Climb";
     }
 
-    public int GetPrice() => 0;
+    public int GetPrice() => (GetItemComponent() != null) ? itemComp.GetPrice() : 0;
 
-    public int GetWeight() => 0;
+    public int GetWeight() => (GetItemComponent() != null) ? itemComp.GetWeight() : 0;
 
     /// <summary>
     /// False: Báo hiệu đây là đối tượng tương tác đặc biệt -> Kích hoạt nút InteractBtn trên Mobile
@@ -683,11 +691,11 @@ public class LadderController : MonoBehaviour, IInteractable
         return true;
     }
 
-    public string GetDescription() => "A sturdy ladder for climbing up and down.";
+    public string GetDescription() => (GetItemComponent() != null) ? itemComp.GetDescription() : "A sturdy ladder for climbing up and down.";
 
-    public Sprite GetIcon() => null;
+    public Sprite GetIcon() => (GetItemComponent() != null) ? itemComp.GetIcon() : null;
 
-    public ItemRarity GetRarity() => ItemRarity.Common;
+    public ItemRarity GetRarity() => (GetItemComponent() != null) ? itemComp.GetRarity() : ItemRarity.Common;
 
     public void Interact(PlayerController player)
     {

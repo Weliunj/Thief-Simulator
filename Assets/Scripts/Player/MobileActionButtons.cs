@@ -23,9 +23,6 @@ public class MobileActionButtons : MonoBehaviour
     [Header("🧎 Crouch Button (Toggle)")]
     public Button crouchButton;
 
-    [Header("🔦 Flashlight Button (Toggle)")]
-    public Button flashlightButton;
-
     // --- Trạng thái public để ThirdPersonController, PlayerInteraction đọc ---
     [HideInInspector] public bool jumpPressed = false;
     [HideInInspector] public bool sprintHeld = false;
@@ -33,8 +30,6 @@ public class MobileActionButtons : MonoBehaviour
     [HideInInspector] public bool pickupPressed = false;
     [HideInInspector] public bool interactPressed = false;
     [HideInInspector] public bool dropPressed = false;
-    [HideInInspector] public bool flashlightPressed = false;
-    [HideInInspector] public bool flashlightHeld = false;
 
     void Start()
     {
@@ -67,9 +62,6 @@ public class MobileActionButtons : MonoBehaviour
 
         if (crouchButton != null)
             crouchButton.onClick.AddListener(OnCrouchToggle);
-
-        if (flashlightButton != null)
-            flashlightButton.onClick.AddListener(OnFlashlightTap);
     }
 
     private void AutoFindButtons()
@@ -88,8 +80,6 @@ public class MobileActionButtons : MonoBehaviour
             sprintButton = FindButtonByName(allButtons, "sprint");
         if (crouchButton == null)
             crouchButton = FindButtonByName(allButtons, "crouch");
-        if (flashlightButton == null)
-            flashlightButton = FindButtonByName(allButtons, "flasklight", "flashlight");
     }
 
     private Button FindButtonByName(Button[] buttons, params string[] keywords)
@@ -134,13 +124,6 @@ public class MobileActionButtons : MonoBehaviour
         dropPressed = true;
     }
 
-    private void OnFlashlightTap()
-    {
-        flashlightPressed = true;
-        flashlightHeld = !flashlightHeld;
-        UpdateToggleVisuals();
-    }
-
     // =========================================================================
     //                      TOGGLE HANDLERS (Sprint & Crouch)
     // =========================================================================
@@ -181,9 +164,57 @@ public class MobileActionButtons : MonoBehaviour
         {
             sprintButton.image.color = sprintHeld ? new Color(0.9f, 0.9f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.5f);
         }
-        if (flashlightButton != null && flashlightButton.image != null)
+    }
+
+    /// <summary>
+    /// Cập nhật nhãn chữ trên nút Interact (VD: Climb Up, Climb Down, Pick Lock, Turn On, Turn Off)
+    /// Tự động tìm child 'Prompt' để gán chữ chuẩn xác
+    /// </summary>
+    public void SetInteractPrompt(string prompt)
+    {
+        UpdateButtonText(interactButton, prompt);
+    }
+
+    /// <summary>
+    /// Cập nhật nhãn chữ trên nút Pickup (VD: Pick Up, Take Flashlight)
+    /// </summary>
+    public void SetPickupPrompt(string prompt)
+    {
+        UpdateButtonText(pickupButton, prompt);
+    }
+
+    private void UpdateButtonText(Button btn, string prompt)
+    {
+        if (btn == null || string.IsNullOrEmpty(prompt)) return;
+
+        // 1. Ưu tiên tìm child GameObject có tên 'Prompt' hoặc chứa 'prompt'
+        Transform promptChild = btn.transform.Find("Prompt");
+        if (promptChild == null)
         {
-            flashlightButton.image.color = flashlightHeld ? new Color(0.9f, 0.9f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.5f);
+            foreach (Transform child in btn.transform)
+            {
+                if (child.name.ToLower().Contains("prompt"))
+                {
+                    promptChild = child;
+                    break;
+                }
+            }
+        }
+
+        Transform targetTransform = promptChild ?? btn.transform;
+
+        // 2. Gán text cho TextMeshProUGUI hoặc UI Text
+        var tmp = targetTransform.GetComponentInChildren<TMPro.TextMeshProUGUI>(true);
+        if (tmp != null)
+        {
+            tmp.text = prompt;
+            return;
+        }
+
+        var txt = targetTransform.GetComponentInChildren<UnityEngine.UI.Text>(true);
+        if (txt != null)
+        {
+            txt.text = prompt;
         }
     }
 
@@ -198,7 +229,6 @@ public class MobileActionButtons : MonoBehaviour
         pickupPressed = false;
         interactPressed = false;
         dropPressed = false;
-        flashlightPressed = false;
     }
 }
 
