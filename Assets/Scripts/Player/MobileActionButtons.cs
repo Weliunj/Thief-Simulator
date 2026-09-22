@@ -17,6 +17,16 @@ public class MobileActionButtons : MonoBehaviour
     public Button interactButton;  // Nút tương tác đặc biệt (Thang, Cửa, v.v.)
     public Button dropButton;
 
+    [Header("🦘 Jump Button & Climbing Icon Swap")]
+    [Tooltip("Image component hiển thị icon trên nút Jump (nếu để trống tự tìm)")]
+    public Image jumpButtonImage;
+
+    [Tooltip("Sprite icon mặc định của nút Jump")]
+    public Sprite defaultJumpIcon;
+
+    [Tooltip("Sprite icon thay thế của nút Jump khi đang leo thang (Ví dụ: Icon Nhảy Thoát Thang)")]
+    public Sprite ladderJumpIcon;
+
     [Header("🏃 Sprint Button (Toggle)")]
     public Button sprintButton;
 
@@ -30,6 +40,7 @@ public class MobileActionButtons : MonoBehaviour
     [HideInInspector] public bool pickupPressed = false;
     [HideInInspector] public bool interactPressed = false;
     [HideInInspector] public bool dropPressed = false;
+    [HideInInspector] public bool isClimbingMode = false;
 
     void Start()
     {
@@ -80,6 +91,93 @@ public class MobileActionButtons : MonoBehaviour
             sprintButton = FindButtonByName(allButtons, "sprint");
         if (crouchButton == null)
             crouchButton = FindButtonByName(allButtons, "crouch");
+
+        // Tìm Image của nút Jump và lưu Sprite mặc định
+        AutoFindJumpImage();
+    }
+
+    private void AutoFindJumpImage()
+    {
+        if (jumpButton == null) return;
+
+        if (jumpButtonImage == null)
+        {
+            // 1. Ưu tiên tìm trong các GameObject con có chứa Image
+            foreach (Transform child in jumpButton.transform)
+            {
+                Image childImg = child.GetComponent<Image>();
+                if (childImg != null)
+                {
+                    jumpButtonImage = childImg;
+                    break;
+                }
+            }
+
+            // 2. Nếu không có con, lấy component Image trên chính JumpButton
+            if (jumpButtonImage == null)
+            {
+                jumpButtonImage = jumpButton.GetComponent<Image>() ?? jumpButton.image;
+            }
+        }
+
+        if (jumpButtonImage != null && defaultJumpIcon == null)
+        {
+            defaultJumpIcon = jumpButtonImage.sprite;
+        }
+    }
+
+    /// <summary>
+    /// Chế độ leo thang: Ẩn tất cả các nút thừa (Sprint, Crouch, Drop, Pickup, Interact),
+    /// chỉ giữ lại nút Jump và đổi icon nút Jump sang icon leo thang.
+    /// </summary>
+    public void SetClimbingMode(bool climbing, Sprite customLadderJumpIcon = null)
+    {
+        isClimbingMode = climbing;
+
+        if (sprintButton != null) sprintButton.gameObject.SetActive(!climbing);
+        if (crouchButton != null) crouchButton.gameObject.SetActive(!climbing);
+        if (dropButton != null) dropButton.gameObject.SetActive(!climbing);
+
+        if (jumpButtonImage == null)
+        {
+            AutoFindJumpImage();
+        }
+
+        if (climbing)
+        {
+            if (pickupButton != null) pickupButton.gameObject.SetActive(false);
+            if (interactButton != null) interactButton.gameObject.SetActive(false);
+
+            if (jumpButton != null && !jumpButton.gameObject.activeSelf)
+            {
+                jumpButton.gameObject.SetActive(true);
+            }
+
+            // Đổi icon nút Jump sang icon leo thang
+            Sprite targetIcon = (customLadderJumpIcon != null) ? customLadderJumpIcon : ladderJumpIcon;
+            if (jumpButtonImage != null && targetIcon != null)
+            {
+                if (defaultJumpIcon == null) defaultJumpIcon = jumpButtonImage.sprite;
+
+                jumpButtonImage.sprite = targetIcon;
+                jumpButtonImage.overrideSprite = targetIcon;
+                Debug.Log($"<color=cyan>[MobileActionButtons] Đã đổi icon nút Jump sang '{targetIcon.name}' khi leo thang.</color>");
+            }
+            else if (targetIcon == null)
+            {
+                Debug.LogWarning("[MobileActionButtons] Chưa gán Sprite 'ladderJumpIcon' trong Inspector của MobileActionButtons hoặc LadderController!");
+            }
+        }
+        else
+        {
+            // Khôi phục icon nút Jump mặc định
+            if (jumpButtonImage != null && defaultJumpIcon != null)
+            {
+                jumpButtonImage.sprite = defaultJumpIcon;
+                jumpButtonImage.overrideSprite = defaultJumpIcon;
+                Debug.Log($"<color=green>[MobileActionButtons] Đã khôi phục icon nút Jump mặc định '{defaultJumpIcon.name}'.</color>");
+            }
+        }
     }
 
     private Button FindButtonByName(Button[] buttons, params string[] keywords)
@@ -158,11 +256,11 @@ public class MobileActionButtons : MonoBehaviour
     {
         if (crouchButton != null && crouchButton.image != null)
         {
-            crouchButton.image.color = crouchHeld ? new Color(0.9f, 0.9f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.5f);
+            crouchButton.image.color = crouchHeld ? new Color(1f, 0.9f, 0f, 1f) : new Color(1f, 1f, 1f, 0.5f);
         }
         if (sprintButton != null && sprintButton.image != null)
         {
-            sprintButton.image.color = sprintHeld ? new Color(0.9f, 0.9f, 0.5f, 0.8f) : new Color(1f, 1f, 1f, 0.5f);
+            sprintButton.image.color = sprintHeld ? new Color(1f, 0.9f, 0f, 1f) : new Color(1f, 1f, 1f, 0.5f);
         }
     }
 

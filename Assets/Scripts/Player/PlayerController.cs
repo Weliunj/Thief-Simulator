@@ -37,6 +37,8 @@ namespace StarterAssets
         public AudioClip LandingAudioClip;
         public AudioClip[] FootstepAudioClips;
         [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
+        [Tooltip("AudioSource phát tiếng bước chân và tiếp đất (tự động lấy hoặc tạo trên Player)")]
+        public AudioSource footstepAudioSource;
 
         [Space(10)]
         [Tooltip("The height the player can jump")]
@@ -248,6 +250,30 @@ namespace StarterAssets
 #else
             Debug.LogError("Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
+
+            // Khởi tạo AudioSource cho tiếng bước chân / tiếp đất
+            if (footstepAudioSource == null)
+            {
+                footstepAudioSource = GetComponent<AudioSource>();
+                if (footstepAudioSource == null)
+                {
+                    footstepAudioSource = gameObject.AddComponent<AudioSource>();
+                }
+            }
+
+            if (footstepAudioSource != null)
+            {
+                footstepAudioSource.spatialBlend = 1.0f; // 3D Spatial Audio
+                footstepAudioSource.playOnAwake = false;
+                footstepAudioSource.minDistance = 1.0f;
+                footstepAudioSource.maxDistance = 15.0f;
+                footstepAudioSource.rolloffMode = AudioRolloffMode.Linear;
+
+                if (SettingsManager.Instance != null && SettingsManager.Instance.sfxGroup != null)
+                {
+                    footstepAudioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+                }
+            }
 
             AssignAnimationIDs();
 
@@ -741,10 +767,20 @@ namespace StarterAssets
         {
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
-                if (FootstepAudioClips.Length > 0)
+                if (FootstepAudioClips != null && FootstepAudioClips.Length > 0)
                 {
                     var index = Random.Range(0, FootstepAudioClips.Length);
-                    AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
+                    if (FootstepAudioClips[index] != null)
+                    {
+                        if (footstepAudioSource != null)
+                        {
+                            footstepAudioSource.PlayOneShot(FootstepAudioClips[index], FootstepAudioVolume);
+                        }
+                        else
+                        {
+                            AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
+                        }
+                    }
                 }
             }
         }
@@ -753,7 +789,17 @@ namespace StarterAssets
         {
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
-                AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
+                if (LandingAudioClip != null)
+                {
+                    if (footstepAudioSource != null)
+                    {
+                        footstepAudioSource.PlayOneShot(LandingAudioClip, FootstepAudioVolume);
+                    }
+                    else
+                    {
+                        AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
+                    }
+                }
             }
         }
     }

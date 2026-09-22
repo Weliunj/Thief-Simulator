@@ -20,6 +20,9 @@ public class HomeScreen : MonoBehaviour
 
     private void Awake()
     {
+        // Đảm bảo trong HomeMenu chỉ có đúng 1 AudioListener duy nhất
+        ScenePlayerSpawner.EnsureAudioListener();
+
         // Luôn mở khóa chuột khi vào màn hình Menu
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -49,6 +52,25 @@ public class HomeScreen : MonoBehaviour
             if (audioSources == null || audioSources.Length == 0)
             {
                 audioSources = FindObjectsByType<AudioSource>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            }
+        }
+
+        // Tự động gán Mixer Group (BGM cho nhạc lặp, SFX cho tiếng click)
+        if (audioSources != null && SettingsManager.Instance != null)
+        {
+            foreach (var src in audioSources)
+            {
+                if (src == null || src.outputAudioMixerGroup != null) continue;
+
+                string objName = src.gameObject.name.ToLower();
+                if (src.loop || objName.Contains("bgm") || objName.Contains("music"))
+                {
+                    src.outputAudioMixerGroup = SettingsManager.Instance.bgmGroup;
+                }
+                else
+                {
+                    src.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+                }
             }
         }
 

@@ -12,6 +12,15 @@ public class SettingsHUD : MonoBehaviour
     [Tooltip("Text hiển thị giá trị độ nhạy (VD: 1.5, 2.0, ...)")]
     public TextMeshProUGUI sensitivityValueText;
 
+    [Header("🔊 Audio Volume UI Components (BGM & SFX)")]
+    [Tooltip("Slider điều chỉnh âm lượng nhạc nền BGM (0.0 -> 1.0)")]
+    public Slider bgmSlider;
+    public TextMeshProUGUI bgmValueText;
+
+    [Tooltip("Slider điều chỉnh âm lượng hiệu ứng âm thanh SFX (0.0 -> 1.0)")]
+    public Slider sfxSlider;
+    public TextMeshProUGUI sfxValueText;
+
     [Header("📊 FPS & Graphics UI Components")]
     [Tooltip("Toggle hiển thị FPS trên màn hình")]
     public Toggle showFPSToggle;
@@ -36,6 +45,8 @@ public class SettingsHUD : MonoBehaviour
     private float currentPendingSensitivity = 2.0f;
     private bool currentPendingShowFPS = true;
     private int currentPendingFPS = 60;
+    private float currentPendingBGM = 0.8f;
+    private float currentPendingSFX = 1.0f;
     private Coroutine saveFeedbackCoroutine;
     private string originalSaveText = "Save";
 
@@ -57,6 +68,9 @@ public class SettingsHUD : MonoBehaviour
             originalSaveText = saveButtonText.text;
         }
 
+        // Tự động tìm Sliders nếu chưa gán
+        AutoFindAudioSliders();
+
         // Tự động tìm Toggle FPS nếu chưa gán
         if (showFPSToggle == null)
         {
@@ -71,13 +85,31 @@ public class SettingsHUD : MonoBehaviour
             }
         }
 
-        // Cấu hình Slider
+        // Cấu hình Sensitivity Slider
         if (sensitivitySlider != null)
         {
             sensitivitySlider.minValue = 1.0f;
             sensitivitySlider.maxValue = 10.0f;
             sensitivitySlider.wholeNumbers = false;
             sensitivitySlider.onValueChanged.AddListener(OnSliderValueChanged);
+        }
+
+        // Cấu hình BGM Slider
+        if (bgmSlider != null)
+        {
+            bgmSlider.minValue = 0.0f;
+            bgmSlider.maxValue = 1.0f;
+            bgmSlider.wholeNumbers = false;
+            bgmSlider.onValueChanged.AddListener(OnBGMSliderChanged);
+        }
+
+        // Cấu hình SFX Slider
+        if (sfxSlider != null)
+        {
+            sfxSlider.minValue = 0.0f;
+            sfxSlider.maxValue = 1.0f;
+            sfxSlider.wholeNumbers = false;
+            sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
         }
 
         // Cấu hình Show FPS Toggle
@@ -101,6 +133,29 @@ public class SettingsHUD : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.onClick.AddListener(OnCloseClicked);
+        }
+    }
+
+    private void AutoFindAudioSliders()
+    {
+        var allSliders = GetComponentsInChildren<Slider>(true);
+        foreach (var s in allSliders)
+        {
+            string sName = s.gameObject.name.ToLower();
+            if ((sName.Contains("bgm") || sName.Contains("music")) && bgmSlider == null)
+            {
+                bgmSlider = s;
+                if (bgmValueText == null) bgmValueText = s.GetComponentInChildren<TextMeshProUGUI>();
+            }
+            else if ((sName.Contains("sfx") || sName.Contains("sound") || sName.Contains("effect")) && sfxSlider == null)
+            {
+                sfxSlider = s;
+                if (sfxValueText == null) sfxValueText = s.GetComponentInChildren<TextMeshProUGUI>();
+            }
+            else if (sName.Contains("sens") && sensitivitySlider == null)
+            {
+                sensitivitySlider = s;
+            }
         }
     }
 
@@ -147,6 +202,7 @@ public class SettingsHUD : MonoBehaviour
 
         if (SettingsManager.Instance != null)
         {
+            // 1. Graphics & FPS
             currentPendingShowFPS = SettingsManager.Instance.ShowFPSOnScreen;
             currentPendingFPS = SettingsManager.Instance.TargetFPS;
 
@@ -169,6 +225,62 @@ public class SettingsHUD : MonoBehaviour
                 };
                 fpsDropdown.SetValueWithoutNotify(index);
             }
+
+            // 2. Audio (BGM & SFX)
+            currentPendingBGM = SettingsManager.Instance.BGMVolume;
+            currentPendingSFX = SettingsManager.Instance.SFXVolume;
+
+            if (bgmSlider != null)
+            {
+                bgmSlider.SetValueWithoutNotify(currentPendingBGM);
+            }
+            UpdateBGMDisplay(currentPendingBGM);
+
+            if (sfxSlider != null)
+            {
+                sfxSlider.SetValueWithoutNotify(currentPendingSFX);
+            }
+            UpdateSFXDisplay(currentPendingSFX);
+        }
+    }
+
+    private void OnBGMSliderChanged(float val)
+    {
+        currentPendingBGM = Mathf.Clamp01(val);
+        UpdateBGMDisplay(currentPendingBGM);
+
+        // Áp dụng thử nghiệm âm lượng thời gian thực (chưa ghi đè file JSON)
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.SetBGMVolume(currentPendingBGM, false);
+        }
+    }
+
+    private void OnSFXSliderChanged(float val)
+    {
+        currentPendingSFX = Mathf.Clamp01(val);
+        UpdateSFXDisplay(currentPendingSFX);
+
+        // Áp dụng thử nghiệm âm lượng thời gian thực (chưa ghi đè file JSON)
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.SetSFXVolume(currentPendingSFX, false);
+        }
+    }
+
+    private void UpdateBGMDisplay(float value)
+    {
+        if (bgmValueText != null)
+        {
+            bgmValueText.text = $"{Mathf.RoundToInt(value * 100f)}%";
+        }
+    }
+
+    private void UpdateSFXDisplay(float value)
+    {
+        if (sfxValueText != null)
+        {
+            sfxValueText.text = $"{Mathf.RoundToInt(value * 100f)}%";
         }
     }
 
@@ -228,8 +340,8 @@ public class SettingsHUD : MonoBehaviour
 
         if (SettingsManager.Instance != null)
         {
-            SettingsManager.Instance.SetAllSettings(currentPendingSensitivity, currentPendingFPS, currentPendingShowFPS);
-            Debug.Log($"[SettingsHUD] Đã lưu Settings: Sensitivity = {currentPendingSensitivity}, FPS = {currentPendingFPS}, ShowFPS = {currentPendingShowFPS}");
+            SettingsManager.Instance.SetAllSettings(currentPendingSensitivity, currentPendingFPS, currentPendingShowFPS, currentPendingBGM, currentPendingSFX);
+            Debug.Log($"[SettingsHUD] Đã lưu Settings: Sensitivity={currentPendingSensitivity}, FPS={currentPendingFPS}, BGM={currentPendingBGM}, SFX={currentPendingSFX}");
         }
 
         // Hiển thị 'Saved' trong 1 giây rồi quay lại 'Save'
@@ -260,6 +372,10 @@ public class SettingsHUD : MonoBehaviour
 
         // Huỷ bỏ các thay đổi chưa bấm Save (revert lại)
         LoadCurrentSettingsToUI();
+        if (SettingsManager.Instance != null)
+        {
+            SettingsManager.Instance.ApplyAudioSettings();
+        }
         ClosePanel();
 
         // Bật lại Panel trước đó (như Main Menu)

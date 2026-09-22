@@ -70,6 +70,11 @@ public class DoorController : MonoBehaviour, IInteractable
             audioSource.playOnAwake = false;
         }
 
+        if (audioSource != null && audioSource.outputAudioMixerGroup == null && SettingsManager.Instance != null && SettingsManager.Instance.sfxGroup != null)
+        {
+            audioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+        }
+
         // Tự động tìm child model nếu chưa gán
         if (doorChildModel == null && transform.childCount > 0)
         {

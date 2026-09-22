@@ -770,7 +770,7 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 ### [2026-09-22 08:28] — feat(ui, input): enable PC mouse clicks, persistent unlocked cursor, and on-screen button testing
 - **Tác vụ**:
   - Tạo mới [UIEventSystemFixer.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UIEventSystemFixer.cs) tự động đảm bảo EventSystem có đầy đủ Input Module hỗ trợ cả New Input System và Old Input Manager, tự động mở khóa chuột và kiểm tra GraphicRaycaster trên Canvas giúp click chuột trực tiếp trong Game View / Standalone EXE 100% không cần bật Device Simulator.
-  - Tích hợp mở khóa con trỏ chuột xuyên suốt toàn bộ game (`Cursor.lockState = CursorLockMode.None`, `Cursor.visible = true`) trong `Awake()`, `Start()`, `OnEnable()` của [HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs), [ChapterSelectManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ChapterSelectManager.cs), [SettingsHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/SettingsHUD.cs), [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs) và [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
+  - Tích hợp mở khóa con trỏ chuột xuyên suốt toàn bộ game (`Cursor.lockState = CursorLockMode.None`, `Cursor.visible = true`) trong `Awake()`, `Start()`, `OnEnable()` của [HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs), [ChapterSelectManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ChapterSelectManager.cs), [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs) và [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
   - Tái cấu trúc [StarterAssetsInputs.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/StarterAssetsInputs.cs):
     - Giữ nguyên hiển thị toàn bộ các nút ảo/giao diện trên màn hình để tester có thể dùng chuột click trực tiếp vào nút như thao tác cảm ứng trên Mobile.
     - Hỗ trợ di chuyển bằng bàn phím `WASD` / Mũi tên và nhảy bằng phím `Space` song song với Joystick và nút Jump trên màn hình.
@@ -788,8 +788,8 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
     - Khi cầm item rọi Raycast vào tường/mặt phẳng: Tự động chuyển icon nút bấm sang **`placeIcon`**, xoay Z **180 độ** (`placeRotationZ`) và bật hiện GameObject UI **`placementIndicator`** trên màn hình (`SetActive(true)`).
     - Khi rọi vào không gian thoáng: Tự động chuyển icon nút bấm sang **`throwIcon`**, xoay Z **90 độ** (`throwRotationZ`) và tự động ẩn GameObject UI **`placementIndicator`** (`SetActive(false)`).
     - Đối với Thang (`LadderController`):
-      - Khi **Đặt** (Raycast chạm tường/sàn): Gọi `ladder.SetUprightLocked(true)` khóa hoàn toàn trục `FreezeRotationX | FreezeRotationZ`, không áp lực đẩy để thang đứng vững vàng 100% không bị ngã đổ.
-      - Khi **Ném** (Raycast không chạm vật cản): Gọi `ladder.SetUprightLocked(false)` mở khóa toàn bộ `RigidbodyConstraints.None`, áp dụng lực ném `dropForwardForce` về phía trước giúp thang lật xoay và đổ ngã vật lý tự nhiên.
+      - Khi **Đặt** (Raycast chạm tường/sàn): Khóa hoàn toàn trục `FreezeRotationX | FreezeRotationZ`, không áp lực đẩy để thang đứng vững vàng 100% không bị ngã đổ.
+      - Khi **Ném** (Raycast không chạm vật cản): Mở khóa toàn bộ `RigidbodyConstraints.None`, áp dụng lực ném `dropForwardForce` về phía trước giúp thang lật xoay và đổ ngã vật lý tự nhiên.
       - Khóa hoàn toàn va chạm vật lý giữa Player và Thang (`Physics.IgnoreCollision`) giúp người chơi không thể đi/chạy bộ lên thang nghiêng như dốc cầu thang, buộc phải bấm phím leo (`F` / `Interact`) mới có thể trèo lên cao.
       - Hỗ trợ đầy đủ đa tương tác trên cùng một đối tượng (Multi-IInteractable): Khi nhìn vào Thang vừa hiển thị nút **Pickup** (nhặt thang vào Hotbar) vừa hiển thị nút **Interact** (leo thang), khắc phục lỗi thang khi đặt (`Place`) bị mất nút leo.
   - Sửa lỗi tương tác Cửa (Door) và Minigame trong [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs) & [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs):
@@ -798,25 +798,24 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Phát triển hệ thống tương tác vật phẩm cầm tay (Held Item Interaction) và [FlashlightController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/FlashlightController.cs):
     - Tạo mới interface [IHeldInteractable.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/IHeldInteractable.cs) chuẩn hóa cho mọi vật phẩm có thể tương tác trực tiếp khi đang cầm trên tay (Đèn pin, Thuốc, Súng, Scanner...).
     - Tái cấu trúc [FlashlightController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/FlashlightController.cs) & [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs):
-      - Loại bỏ hoàn toàn các biến trùng lặp, đồng bộ hóa 100% việc lấy dữ liệu (Tên, Mô tả, Icon, Giá tiền, Cân nặng, Độ hiếm) từ component `Item` và ScriptableObject (`ItemSO`).
-      - Bổ sung `lightLocalOffset` và `lightLocalRotation` cho Đèn pin: Giúp dễ dàng vi chỉnh vị trí và góc xoay hướng chiếu sáng (xoay 90 độ nếu nòng 3D Model bị dựng đứng trên trục Y) mà không cần tạo GameObject phụ thủ công.
+      - Đồng bộ hóa 100% việc lấy dữ liệu (Tên, Mô tả, Icon, Giá tiền, Cân nặng, Độ hiếm) từ component `Item` và ScriptableObject (`ItemSO`).
+      - Bổ sung `lightLocalOffset` và `lightLocalRotation` cho Đèn pin: Dễ dàng vi chỉnh vị trí và góc xoay hướng chiếu sáng.
     - Cập nhật [Item.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Item.cs) & [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs):
       - Hỗ trợ `followCameraPitch`, `customHoldOffset`, `customHoldRotation` riêng cho từng Item.
-      - Đối với Đèn pin (`followCameraPitch = true`): Góc xoay ngửa lên / cúi xuống bám sát 100% theo hướng nhìn Camera, đảm bảo luồng sáng luôn chiếu đúng tâm ngắm.
+      - Đối với Đèn pin (`followCameraPitch = true`): Góc xoay ngửa lên / cúi xuống bám sát 100% theo hướng nhìn Camera.
     - Cập nhật [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs):
-      - Giải quyết triệt để xung đột nút tương tác: Dùng chung 1 nút `Interact` duy nhất (phím F / nút Interact trên Mobile) theo cơ chế chuyển đổi ngữ cảnh thông minh:
-        - Khi nhìn vào Thang / Cửa: Tự động ưu tiên **Leo Thang / Mở Cửa**.
+      - Dùng chung 1 nút `Interact` duy nhất (phím F / nút Interact trên Mobile) theo cơ chế chuyển đổi ngữ cảnh thông minh: ưu tiên mở cửa / leo thang khi nhìn vào vật thể, và bật/tắt vật phẩm cầm tay khi không nhìn vào vật tương tác.
     - Cập nhật [ItemInfoHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ItemInfoHUD.cs) & [MobileActionButtons.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/MobileActionButtons.cs):
-      - Phân tách riêng biệt giữa **Tên đối tượng (`nameText`)** và **Hành động (`actionPromptText`)**. `nameText` chỉ thuần túy chứa tên đối tượng (VD: *"Flashlight"*, *"Ladder"*, *"Wooden Locked Door"*).
-      - `MobileActionButtons.SetInteractPrompt()` tự động quét tìm child object `Prompt` (như `InteractBtn -> Prompt`) để gán chính xác câu lệnh hành động (như `"Turn On"`, `"Turn Off"`, `"Climb Up"`, `"Pick Lock"`) lên nút Mobile UI.
+      - Phân tách riêng biệt giữa **Tên đối tượng (`nameText`)** và **Hành động (`actionPromptText`)**.
+      - `MobileActionButtons.SetInteractPrompt()` tự động quét tìm child object `Prompt` để gán chính xác câu lệnh hành động (`"Turn On"`, `"Turn Off"`, `"Climb Up"`, `"Pick Lock"`) lên nút Mobile UI.
 - **Danh sách file thay đổi**:
   - `Assets/Scripts/UI/UIEventSystemFixer.cs` (New)
   - `Assets/Scripts/Items/IHeldInteractable.cs` (New)
   - `Assets/Scripts/Items/FlashlightController.cs` (New)
+  - `Assets/Scripts/Environment/DoorController.cs` (Moved & Enhanced)
   - `Assets/Scripts/Items/Item.cs` (Lines 15-35)
   - `Assets/Scripts/UI/HomeScreen.cs` (Lines 20-35)
   - `Assets/Scripts/UI/ChapterSelectManager.cs` (Lines 40-55)
-  - `Assets/Scripts/UI/SettingsHUD.cs` (Lines 105-115)
   - `Assets/Scripts/Player/PlayerController.cs` (Lines 200-210)
   - `Assets/Scripts/Player/PlayerInteraction.cs` (Lines 30-320)
   - `Assets/Scripts/UI/UI_Manager.cs` (Lines 290-415, 440-445)
@@ -824,19 +823,62 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/UI/HotbarManager.cs` (Lines 50-310, 580-605, 760-815)
   - `Assets/Scripts/Items/LadderController.cs` (Lines 90-145, 595-605)
   - `Assets/Scripts/UI/LockpickMinigame.cs` (Lines 45-55, 225-305)
-  - `Assets/Scripts/UI/MainHUD.cs` (Lines 15-200 — Streamlined)
+  - `Assets/Scripts/UI/MainHUD.cs` (Lines 15-200)
   - `Assets/Scripts/UI/ItemInfoHUD.cs` (Lines 200-220)
   - `Assets/Scripts/Player/MobileActionButtons.cs` (Lines 180-210)
 - **Ảnh hưởng**:
   - Chuột luôn luôn hiển thị và không bị khóa trong suốt toàn bộ quá trình chơi game từ Menu đến Gameplay.
-  - Tester có thể vừa dùng WASD + Space để di chuyển/nhảy, vừa dùng chuột click trực tiếp vào mọi nút trên màn hình (Pickup, Interact, Drop, Sprint, Crouch, Flashlight, Hotbar, Pause) y hệt như thao tác chạm trên điện thoại, giúp quá trình build EXE và test nhanh hơn rất nhiều so me với build APK.
-  - Minigame bẻ khóa có độ chính xác và thử thách chuẩn hơn, tránh việc người chơi bấm ăn may khi 2 hình tròn vừa chạm mép nhau.
-  - Giao diện HUD chính hiển thị trực quan và tinh gọn, loại bỏ các biến rác trong Inspector.
-  - Thao tác đặt/ném đồ trực quan, phân biệt rõ ràng giữa hành vi Đặt vào tường (khóa đứng thang) và Ném ra ngoài khoảng không (lật đổ vật lý tự nhiên).
-  - Tương tác cửa chuẩn xác 100%: không bị quét xuyên tường khi nhìn chỗ khác, cửa mở xong sẽ không hiện minigame bẻ khóa lại và âm thanh chiến thắng chỉ phát đúng 1 lần.
-  - Thang đặt ra thế giới luôn hiện đầy đủ nút Leo trèo (Interact) và nút Nhặt đồ (Pickup), đồng thời khóa va chạm để không bị đi bộ dẫm lên thang nghiêng.
-  - Đèn pin hoạt động như một Special Item hoàn chỉnh: ngửa camera lên xuống thì chùm sáng bám theo chuẩn xác, bật/tắt bằng phím F / nút Interact mà không hề bị xung đột với Thang và Cửa.
-  - Chuỗi hành động động `GetActionPrompt()` và `GetHeldActionPrompt()` hiển thị đầy đủ, chính xác lên HUD và nhãn nút Mobile giúp người chơi biết rõ bấm phím/nút sẽ thực hiện hành động gì.
+  - Tester có thể vừa dùng WASD + Space để di chuyển/nhảy, vừa dùng chuột click trực tiếp vào mọi nút trên màn hình y hệt như thao tác chạm trên điện thoại, giúp test trực tiếp trên PC Editor cực nhanh.
+  - Minigame bẻ khóa có độ chính xác và thử thách chuẩn hơn, tránh bấm ăn may mép ngoài.
+  - Giao diện HUD chính hiển thị trực quan và tinh gọn.
+  - Thao tác đặt/ném đồ phân biệt rõ ràng giữa hành vi Đặt vào tường (khóa đứng) và Ném ra khoảng không (vật lý rơi đổ).
+  - Đèn pin hoạt động như một Special Item hoàn chỉnh: chùm sáng bám theo góc nhìn camera, bật/tắt bằng phím F / nút Interact mà không xung đột với Thang và Cửa.
+
+---
+
+### [2026-09-22 14:10] — feat(audio, settings): implement dual AudioMixer, 3D spatial sounds, and settings persistence
+- **Tác vụ**:
+  - **Xây dựng hệ thống AudioMixer 2 kênh độc lập (BGM & SFX)**:
+    - Tạo và cấu hình `MainMixer.mixer` với 2 nhóm con `BGM` (nhạc nền) và `SFX` (hiệu ứng âm thanh) dưới Master Group.
+    - Expose 2 tham số thể tích chuẩn: `BGMVolume` và `SFXVolume`.
+    - Cập nhật [SettingsManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Utilities/SettingsManager.cs): Quản lý `bgmVolume` và `sfxVolume` theo thang đo Logarithmic Decibel chuẩn Unity (`(vol <= 0.0001f) ? -80f : Mathf.Log10(vol) * 20f`) và lưu trữ tự động vào `game_settings.json`.
+    - Cập nhật [SettingsHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/SettingsHUD.cs): Tự động tìm kiếm Slider BGM và SFX, hiển thị phần trăm (0% -> 100%), hỗ trợ nghe thử thời gian thực khi kéo thanh trượt và hoàn tác (revert) nếu đóng bảng mà chưa bấm Lưu.
+  - **Chuẩn hóa 3D Spatial Audio cho toàn bộ Entity & Items**:
+    - [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs): Tự động khởi tạo `AudioSource` 3D, phát loop `climbSound` khi di chuyển, tạm dừng khi đứng im và reset về 0 khi thoát thang; định tuyến ra `sfxGroup`.
+    - [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs): Loại bỏ hoàn toàn `AudioSource.PlayClipAtPoint()` gây rác bộ nhớ (GC Allocation); thay bằng `footstepAudioSource` 3D cố định trên Player phát qua `PlayOneShot()`.
+    - [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs): Nối `deathAudioSource` và `policeSirenAudioSource` (3D Spatial Audio) trực tiếp vào `sfxGroup`.
+    - [FlashlightController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/FlashlightController.cs) & [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/DoorController.cs): Tự động nối `outputAudioMixerGroup` sang `sfxGroup`.
+    - [MainHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MainHUD.cs): Bổ sung `clickAudioSource`, `clickAudioClip` và gọi `PlayClickSound()` ngay khi click vào nút Tạm dừng (PauseBtn).
+  - **Khắc phục cảnh báo 2 AudioListener khi chuyển Scene**:
+    - Cập nhật [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs) và [HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs): Bổ sung hàm `EnsureAudioListener()` tự động quét toàn bộ `AudioListener` trong Scene, giữ lại đúng 1 cái duy nhất trên `Camera.main` và tự động xóa các listener thừa.
+  - **Đảm bảo tính bền vững của Singleton `SettingsManager`**:
+    - Tự động tách ra Root (`transform.SetParent(null)`) trong `Awake()` để lệnh `DontDestroyOnLoad` luôn có hiệu lực kể cả khi được xếp làm con của `GameManager`.
+    - Bổ sung cơ chế chuyển giao thông minh: Nếu instance đang chạy thiếu tham chiếu mà có GameObject trong Scene mang Mixer/Group, hệ thống tự động kế thừa toàn bộ tham chiếu trước khi dọn dẹp đối tượng trùng lặp.
+    - Thêm cơ chế tự động tìm `EnsureMixerReferences()`: Tự động tìm `FindMatchingGroups("BGM")`, `FindMatchingGroups("SFX")` kể cả khi chưa kéo thả vào Inspector.
+    - Bổ sung `AutoRouteAllSceneAudioSources()`: Tự động quét toàn bộ `AudioSource` trong Scene chưa có Output Group để gán tự động (`loop = true` / nhạc nền $\rightarrow$ `bgmGroup`, click / hiệu ứng $\rightarrow$ `sfxGroup`).
+  - **Tối ưu hóa UI Mobile & Icon nút Jump khi leo thang**:
+    - [MobileActionButtons.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/MobileActionButtons.cs) & [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs):
+      - Khi bắt đầu trèo thang, tự động ẩn các nút không thể thao tác (`Sprint`, `Crouch`, `Drop`, `Pickup`, `Interact`), chỉ giữ lại nút `Jump` và đổi icon sang icon nhảy thoát thang (`ladderJumpIcon`), tự động khôi phục khi rời thang.
+      - Bổ sung `AutoFindJumpImage()`: Tự động quét child Image bên trong JumpButton hoặc lấy chính Image của nút để gán vào `jumpButtonImage`, cập nhật đồng thời cả `sprite` và `overrideSprite`.
+- **Danh sách file thay đổi**:
+  - `Assets/Audio/MainMixer.mixer` (New / Configured)
+  - `Assets/Scripts/Utilities/SettingsManager.cs` (Enhanced Singleton & AudioMixer routing)
+  - `Assets/Scripts/UI/SettingsHUD.cs` (Enhanced Dual Sliders & Realtime Preview)
+  - `Assets/Scripts/Player/PlayerController.cs` (Lines 40-42, 250-275, 765-785)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Lines 60-75)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Lines 60-95)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Lines 20-30, 50-70)
+  - `Assets/Scripts/UI/MainHUD.cs` (Lines 30-35, 220-250)
+  - `Assets/Scripts/Player/MobileActionButtons.cs` (Lines 95-155)
+  - `Assets/Scripts/Items/LadderController.cs` (Lines 205-215, 330-360)
+  - `Assets/Scripts/Items/FlashlightController.cs` (Lines 40-55)
+  - `Assets/Scripts/Environment/DoorController.cs` (Lines 45-60)
+- **Ảnh hưởng**:
+  - `SettingsManager` luôn giữ vững tham chiếu `MainMixer.mixer`, `BGM` Group và `SFX` Group từ Inspector xuyên suốt mọi Scene mà không bị mất tham chiếu (`None`).
+  - Khi kéo thanh Slider BGM/SFX, âm lượng thay đổi tức thì theo thời gian thực và ghi nhận log chính xác trên Console.
+  - Loại bỏ hoàn toàn lỗi rác bộ nhớ do `PlayClipAtPoint` và cảnh báo 2 AudioListener khi quay lại Menu.
+  - Toàn bộ âm thanh trong game (tiếng bước chân, tiếng còi cảnh sát, tiếng leo thang, tiếng click UI, tiếng đèn pin, mở cửa) đều được phân luồng chuẩn xác vào AudioMixer.
+
 
 
 

@@ -59,18 +59,42 @@ public class ScenePlayerSpawner : MonoBehaviour
     }
 
     /// <summary>
-    /// Đảm bảo luôn có 1 AudioListener trong Scene (trên Camera.main hoặc Active Camera)
+    /// Đảm bảo luôn có duy nhất 1 AudioListener trong Scene (trên Camera.main), tự động xóa các listener thừa
     /// </summary>
-    private void EnsureAudioListener()
+    public static void EnsureAudioListener()
     {
-        AudioListener listener = FindFirstObjectByType<AudioListener>();
-        if (listener == null)
+        AudioListener[] listeners = FindObjectsByType<AudioListener>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (listeners == null || listeners.Length == 0)
         {
             Camera mainCam = Camera.main;
-            if (mainCam != null)
+            if (mainCam != null && mainCam.GetComponent<AudioListener>() == null)
             {
                 mainCam.gameObject.AddComponent<AudioListener>();
                 Debug.Log("<color=yellow>[ScenePlayerSpawner] Đã tự động thêm AudioListener vào Main Camera của Scene.</color>");
+            }
+        }
+        else if (listeners.Length > 1)
+        {
+            // Nếu có nhiều hơn 1 AudioListener, giữ lại 1 cái duy nhất (ưu tiên trên Camera.main)
+            AudioListener keepListener = null;
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
+            {
+                keepListener = mainCam.GetComponent<AudioListener>();
+            }
+
+            if (keepListener == null)
+            {
+                keepListener = listeners[0];
+            }
+
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                if (listeners[i] != null && listeners[i] != keepListener)
+                {
+                    Debug.Log($"<color=orange>[ScenePlayerSpawner] Đã tự động xóa AudioListener thừa trên '{listeners[i].gameObject.name}' để tránh lỗi 2 AudioListener.</color>");
+                    Destroy(listeners[i]);
+                }
             }
         }
     }

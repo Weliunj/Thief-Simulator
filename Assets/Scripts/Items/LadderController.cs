@@ -69,6 +69,16 @@ public class LadderController : MonoBehaviour, IInteractable
     [Tooltip("Cho phép leo thang hay không. Nếu đang leo mà canClimb = false thì người chơi sẽ lập tức buông tay rơi tự do")]
     public bool canClimb = true;
 
+    [Header("🔊 3D Spatial Audio (Âm thanh phát tại thang)")]
+    public AudioSource audioSource;
+
+    [Tooltip("Âm thanh khi di chuyển trèo lên / xuống thang (Loop âm thanh bước chân leo thang)")]
+    public AudioClip climbSound;
+
+    [Header("🖼️ UI & Icon Settings")]
+    [Tooltip("Icon thay thế cho nút Jump trên mobile khi đang leo thang này (ví dụ icon nhảy thoát thang)")]
+    public Sprite ladderJumpIcon;
+
     [Header("🎯 Trạng thái")]
     public bool isClimbing = false;
 
@@ -87,14 +97,34 @@ public class LadderController : MonoBehaviour, IInteractable
     void Awake()
     {
         EnsureUpright();
+        InitializeAudio();
     }
 
     void Start()
     {
         EnsureUpright();
+        InitializeAudio();
         InitializePoints();
         FindPlayerReferences();
         SetLadderCollisionsIgnored(true);
+    }
+
+    private void InitializeAudio()
+    {
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.spatialBlend = 1.0f; // 3D Spatial Sound
+            audioSource.minDistance = 1.5f;
+            audioSource.maxDistance = 25f;
+            audioSource.playOnAwake = false;
+        }
+
+        if (audioSource != null && audioSource.outputAudioMixerGroup == null && SettingsManager.Instance != null && SettingsManager.Instance.sfxGroup != null)
+        {
+            audioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+        }
     }
 
     void OnEnable()
@@ -175,7 +205,7 @@ public class LadderController : MonoBehaviour, IInteractable
         }
         if (mobileActions == null)
         {
-            mobileActions = FindFirstObjectByType<MobileActionButtons>();
+            mobileActions = FindFirstObjectByType<MobileActionButtons>(FindObjectsInactive.Include);
         }
         if (mainCam == null)
         {
@@ -314,6 +344,11 @@ public class LadderController : MonoBehaviour, IInteractable
         isClimbing = true;
         playerController.isClimbingLadder = true;
 
+        if (mobileActions != null)
+        {
+            mobileActions.SetClimbingMode(true, ladderJumpIcon);
+        }
+
         // Tắt hiển thị model 3D đang cầm trên Hotbar (nếu có) để 2 tay rảnh bám thang leo
         if (playerController.hotbarManager != null)
         {
@@ -389,6 +424,14 @@ public class LadderController : MonoBehaviour, IInteractable
             playerController._animator.Update(0f);
             playerController._animator.speed = 0f;
         }
+
+        // Bắt đầu thiết lập sẵn climbSound loop
+        if (audioSource != null && climbSound != null)
+        {
+            audioSource.clip = climbSound;
+            audioSource.loop = true;
+            audioSource.time = 0f;
+        }
     }
 
     /// <summary>
@@ -435,6 +478,8 @@ public class LadderController : MonoBehaviour, IInteractable
         // 3. Xử lý Trèo LÊN (W / Joystick Up)
         if (verticalInput > 0.1f)
         {
+            UpdateClimbAudio(true);
+
             float delta = (climbSpeed * verticalInput * Time.deltaTime) / ladderLength;
             climbProgress = Mathf.Clamp01(climbProgress + delta);
 
@@ -468,6 +513,8 @@ public class LadderController : MonoBehaviour, IInteractable
         // 4. Xử lý Trèo XUỐNG (S / Joystick Down)
         else if (verticalInput < -0.1f)
         {
+            UpdateClimbAudio(true);
+
             float delta = (climbSpeed * Mathf.Abs(verticalInput) * Time.deltaTime) / ladderLength;
             climbProgress = Mathf.Clamp01(climbProgress - delta);
 
@@ -503,6 +550,8 @@ public class LadderController : MonoBehaviour, IInteractable
         // 5. ĐỨNG YÊN trên thang (khi nhả phím)
         else
         {
+            UpdateClimbAudio(false);
+
             if (playerController._animator != null)
             {
                 playerController._animator.speed = 0f; // Đóng băng animation tại frame hiện tại
@@ -510,6 +559,41 @@ public class LadderController : MonoBehaviour, IInteractable
                 {
                     playerController._animator.SetFloat("ClimbSpeed", 0f);
                 }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Cập nhật phát/tạm dừng âm thanh bước chân leo thang:
+    /// - Đang di chuyển: Phát tiếp tục (hoặc unpause)
+    /// - Đứng im: Tạm dừng (Pause), giữ nguyên vị trí time để không bị reset nghe từ đầu
+    /// </summary>
+    private void UpdateClimbAudio(bool isMoving)
+    {
+        if (audioSource == null || climbSound == null) return;
+
+        if (isMoving)
+        {
+            if (audioSource.clip != climbSound)
+            {
+                audioSource.clip = climbSound;
+                audioSource.loop = true;
+            }
+
+            if (!audioSource.isPlaying)
+            {
+                audioSource.UnPause();
+                if (!audioSource.isPlaying)
+                {
+                    audioSource.Play();
+                }
+            }
+        }
+        else
+        {
+            if (audioSource.isPlaying)
+            {
+                audioSource.Pause();
             }
         }
     }
@@ -592,12 +676,27 @@ public class LadderController : MonoBehaviour, IInteractable
     }
 
     /// <summary>
-    /// Kết thúc trạng thái leo thang, hồi phục tốc độ Animator và va chạm
+    /// Kết thúc trạng thái leo thang, hồi phục tốc độ Animator và va chạm, dừng và reset audio về 0
     /// </summary>
     public void StopClimbing()
     {
         isClimbing = false;
         SetLadderCollisionsIgnored(true);
+
+        // Dừng âm thanh leo thang và reset time playback về 0
+        if (audioSource != null)
+        {
+            if (audioSource.clip == climbSound && audioSource.isPlaying)
+            {
+                audioSource.Stop();
+            }
+            audioSource.time = 0f;
+        }
+
+        if (mobileActions != null)
+        {
+            mobileActions.SetClimbingMode(false);
+        }
 
         if (playerController != null)
         {

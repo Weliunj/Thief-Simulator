@@ -28,8 +28,10 @@ public class MainHUD : MonoBehaviour
     public TextMeshProUGUI timeText;
     public AudioSource alarmAudio;
 
-    [Header("⏸️ Controls")]
+    [Header("⏸️ Controls & Audio")]
     public Button pauseButton;
+    public AudioSource clickAudioSource;
+    public AudioClip clickAudioClip;
 
     [Header("⚠️ Warning Colors")]
     [Tooltip("Màu cơ bản khi giá trị an toàn")]
@@ -217,10 +219,37 @@ public class MainHUD : MonoBehaviour
 
     private void OnPauseButtonClicked()
     {
+        PlayClickSound();
+
         if (uiManager == null) uiManager = FindFirstObjectByType<UI_Manager>();
         if (uiManager != null)
         {
             uiManager.PauseGame();
+        }
+    }
+
+    private void PlayClickSound()
+    {
+        if (clickAudioSource != null)
+        {
+            if (clickAudioClip != null)
+            {
+                clickAudioSource.PlayOneShot(clickAudioClip);
+            }
+            else
+            {
+                clickAudioSource.Play();
+            }
+        }
+        else
+        {
+            // Tự động tìm AudioSource bất kỳ trên Canvas UI để phát
+            AudioSource anyAudio = GetComponentInParent<AudioSource>() ?? FindFirstObjectByType<AudioSource>();
+            if (anyAudio != null)
+            {
+                if (clickAudioClip != null) anyAudio.PlayOneShot(clickAudioClip);
+                else anyAudio.Play();
+            }
         }
     }
 }

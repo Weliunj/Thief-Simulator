@@ -102,6 +102,11 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
             audioSource.playOnAwake = false;
         }
 
+        if (audioSource != null && audioSource.outputAudioMixerGroup == null && SettingsManager.Instance != null && SettingsManager.Instance.sfxGroup != null)
+        {
+            audioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+        }
+
         // 3. Đảm bảo Item component tự động bật followCameraPitch
         if (itemComp != null)
         {

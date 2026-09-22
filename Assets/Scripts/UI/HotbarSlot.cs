@@ -19,7 +19,7 @@ public class HotbarSlot : MonoBehaviour
 
     [Header("🎨 Màu sắc")]
     public Color normalBgColor = new Color(0.2f, 0.2f, 0.2f, 0.8f);
-    public Color selectedBgColor = new Color(1.0f, 0.85f, 0.0f, 1.0f); // Màu vàng nổi bật
+    public Color selectedBgColor = new Color(1.0f, 0.9f, 0.0f, 0.9f); // Màu vàng nổi bật
 
     [Header("📦 Dữ liệu Item trong Slot")]
     public Item itemData;

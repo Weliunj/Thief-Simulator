@@ -58,6 +58,19 @@ public class PlayerDeathHandler : MonoBehaviour
         {
             originalCameraTargetLocalPos = cameraTarget.localPosition;
         }
+
+        // Kết nối AudioSource với SFX Mixer Group trong Settings
+        if (SettingsManager.Instance != null && SettingsManager.Instance.sfxGroup != null)
+        {
+            if (deathAudioSource != null && deathAudioSource.outputAudioMixerGroup == null)
+            {
+                deathAudioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+            }
+            if (policeSirenAudioSource != null && policeSirenAudioSource.outputAudioMixerGroup == null)
+            {
+                policeSirenAudioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+            }
+        }
     }
 
     void Update()
