@@ -879,6 +879,75 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Loại bỏ hoàn toàn lỗi rác bộ nhớ do `PlayClipAtPoint` và cảnh báo 2 AudioListener khi quay lại Menu.
   - Toàn bộ âm thanh trong game (tiếng bước chân, tiếng còi cảnh sát, tiếng leo thang, tiếng click UI, tiếng đèn pin, mở cửa) đều được phân luồng chuẩn xác vào AudioMixer.
 
+---
+
+### [2026-09-22 16:30] — feat(player, animation): procedural head and spine camera tracking (head look)
+- **Tác vụ**:
+  - Tạo mới component [PlayerHeadLook.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerHeadLook.cs):
+    - Tự động quét tìm xương `Head` và `Spine`/`Chest` từ Humanoid Avatar (`_animator.GetBoneTransform`) hoặc quét đệ quy qua cây phân cấp Hierarchy theo từ khóa `"head"`, `"spine"`, `"chest"`.
+    - Tính toán góc nhìn ngang (Yaw) và góc ngửa/cúi (Pitch) của Camera trong `LateUpdate()` sau khi Animator hoàn tất tính toán Animation cho frame.
+    - Phân bổ chuyển động tự nhiên giữa Đầu (`headWeight = 0.75f`) và Thân trên/Ngực (`spineWeight = 0.25f`).
+    - Giới hạn góc an toàn (Angle Clamping): Ngửa lên tối đa 60° (`maxUpPitch`), cúi xuống tối đa 45° (`maxDownPitch`), liếc trái/phải tối đa 75° (`maxYawAngle`) để tránh tình trạng vặn cổ phi thực tế khi quay camera ra sau lưng.
+    - Tích hợp nội suy làm mượt (`smoothSpeed = 12.0f`) và chuyển đổi trọng số (`weightTransitionSpeed = 6.0f`).
+    - Tự động tạm dừng xoay đầu khi nhân vật chết (`isDied`), khi giải đố minigame bẻ khóa (`isSolving`) hoặc khi đang leo thang (`isClimbingLadder`).
+  - Cập nhật [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs):
+    - Bổ sung trường `headLook` và tự động gắn component `PlayerHeadLook` khi khởi chạy nếu chưa có trên GameObject.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerHeadLook.cs` (New)
+  - `Assets/Scripts/Player/PlayerController.cs` (Lines 125-130, 245-255)
+- **Ảnh hưởng**:
+  - Đầu và ngực nhân vật Player xoay mượt mà theo góc ngửa/cúi và liếc theo hướng camera của người chơi, mang lại cảm giác nhân vật sống động và chân thực như game góc nhìn thứ 3 AAA.
+  - Hoạt động ổn định với mọi rig nhân vật và không phụ thuộc vào thiết lập IK Pass của Animator.
+
+---
+
+### [2026-09-22 17:15] — feat(player, character): dynamic material and texture skinning via PlayerSO
+- **Tác vụ**:
+  - Bổ sung các trường `characterMaterial` và `characterTexture` vào [PlayerSO.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerSO.cs), cho phép mỗi cấu hình nhân vật sử dụng chung một Prefab 3D gốc (`PlayerManager.prefab`) nhưng mang bộ trang phục / bảng màu Material khác nhau.
+  - Cập nhật [PlayerStats.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerStats.cs):
+    - Tích hợp phương thức `ApplyCharacterSkin(PlayerSO data)` tự động thay thế Material / Texture trên các `Renderer` / `SkinnedMeshRenderer` của nhân vật ngay khi khởi tạo (`InitializeFromData`), tự động bỏ qua các vật phẩm cầm tay trong Hotbar, Đèn pin, Particle và UI.
+    - Cung cấp hàm tiện ích tĩnh `PlayerStats.ApplySkinToModel(GameObject modelRoot, Material characterMaterial, Texture2D characterTexture)` hỗ trợ đổi skin nhanh cho Dummy 3D Model trong UI Menu Chọn Nhân Vật (Character Selection UI).
+  - Cập nhật [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs):
+    - Hỗ trợ đa tầng fallback Prefab: Tự động dùng `defaultPlayerData.characterPrefab` hoặc `fallbackPlayerPrefab` khi `characterPrefab` trong `PlayerSO` để trống (`null`).
+  - Cập nhật [Char1.asset](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Data/Characters/Char1.asset) mẫu với `palette1.mat`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerSO.cs` (Lines 28-36)
+  - `Assets/Scripts/Player/PlayerStats.cs` (Lines 102-152)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Lines 156-170)
+  - `Assets/Data/Characters/Char1.asset` (Lines 18-22)
+- **Ảnh hưởng**:
+  - Người phát triển có thể tạo vô số nhân vật mới (Char2, Char3, Char4...) chỉ bằng cách tạo 1 file `PlayerSO` (.asset) và kéo file Material (`palette2.mat`, `palette3.mat`...) vào mà không cần phải nhân bản thêm bất kỳ Prefab `PlayerManager` nào.
+  ### [2026-09-23 00:20] — feat(ui, character): character selection HUD system with gender tabs, slot selection, and mesh swap
+- **Tác vụ**:
+  - Tạo mới [CharacterSelectionHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/CharacterSelectionHUD.cs) quản lý toàn bộ giao diện Chọn Nhân Vật:
+    - `InfoPanel`: Hiển thị Tên (`NameText`), Mô tả (`DescText`), cùng 4 thanh chỉ số trực quan (`MoveSpeed`, `RunSpeed`, `Stamina`, `CarryWeight`) kèm Slider và Text số liệu tương ứng.
+    - `BottomPanel`: Xử lý Tab chuyển đổi Giới tính (`MaleBtn`, `FemaleBtn`) đổi màu nền con (Xanh dương đậm cho Nam, Hồng đậm cho Nữ), nút Lưu (`SaveBtn`) kèm hiệu ứng phản hồi visual `"Saved!"`, nút Đóng (`CloseBtn`), và nút `SkinBtn`.
+    - `ScrollView`: Quản lý danh sách các ô chọn nhân vật (`ContentMale`, `ContentFemale`), tự động highlight màu Vàng rực rỡ cho ô được chọn và trả các ô khác về màu mặc định.
+    - Hỗ trợ xem trước (Preview) 3D Model trong Scene HomeMenu theo thời gian thực khi bấm chọn nhân vật.
+    - Tự động dò tìm phân cấp Hierarchy (`AutoBindHierarchy`) giúp giảm thiểu thao tác kéo thả thủ công.
+    - Tích hợp hệ thống Âm thanh UI (`clickAudioSource`, `clickSoundClip`, `tabSwitchSoundClip`, `saveSoundClip`) kết nối trực tiếp với kênh SFX AudioMixerGroup của SettingsManager.
+  - Cập nhật [PlayerSO.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerSO.cs): Bổ sung `maleMesh` và `femaleMesh` để hỗ trợ đa dạng hóa ngoại hình theo giới tính.
+  - Cập nhật [PlayerStats.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerStats.cs): Tích hợp phương thức `ApplyCharacterMeshAndSkin()` và tiện ích tĩnh `ApplyMeshToModel()` để thay thế Mesh trực tiếp trên `SkinnedMeshRenderer` / `MeshFilter`.
+  - Cập nhật [GameSession.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Utilities/GameSession.cs) và [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs) để tự động lưu và đồng bộ lựa chọn nhân vật / giới tính xuyên Scene qua `PlayerPrefs` và `GameSession`.
+  - Cập nhật [HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs): Bổ sung `characterButton`, `characterSelectPanel`, và các hàm `Character_Clicked()`, `CloseCharacterSelect()` để mở và đóng Bảng Chọn Nhân Vật trực tiếp từ Menu chính.
+  - Cập nhật [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs):
+    - Tự động dò tìm AudioSource tại `AudioManager/FootStep` hoặc các GameObject con của Player.
+    - Bổ sung cơ chế phát tiếng bước chân theo nhịp di chuyển (`HandleProceduralFootsteps`), tự động hoạt động mượt mà cho mọi animation (kể cả animation tải về từ Mixamo không có `AnimationEvent`).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/CharacterSelectionHUD.cs` (New)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Lines 15-25, 80-140)
+  - `Assets/Scripts/Player/PlayerController.cs` (Lines 265-285, 660-670, 785-830)
+  - `Assets/Scripts/Player/PlayerSO.cs` (Lines 28-55)
+  - `Assets/Scripts/Player/PlayerStats.cs` (Lines 99-138)
+  - `Assets/Scripts/Utilities/GameSession.cs` (Lines 24-30)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Lines 15-25, 152-175)
+- **Ảnh hưởng**:
+  - Hoàn thiện trọn vẹn hệ thống UI Chọn Nhân Vật theo đúng cấu trúc Hierarchy Canvas của Project.
+  - Game chạy mượt mà với 1 Prefab duy nhất, tự động đổi Mesh và Skin theo đúng lựa chọn của người chơi.
+
+
+
+
 
 
 

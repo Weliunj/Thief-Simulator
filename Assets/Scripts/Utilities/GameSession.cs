@@ -24,6 +24,11 @@ public static class GameSession
     public static PlayerSO SelectedPlayer { get; set; }
 
     /// <summary>
+    /// Giới tính của nhân vật đang chọn (true = Male, false = Female)
+    /// </summary>
+    public static bool IsMale { get; set; } = true;
+
+    /// <summary>
     /// Thiết lập nhanh dữ liệu phiên chơi
     /// </summary>
     public static void SetSession(ChapterSO chapter, ChapterSO next = null, PlayerSO player = null)

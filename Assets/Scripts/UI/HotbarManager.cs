@@ -347,17 +347,35 @@ public class HotbarManager : MonoBehaviour
             playerController = FindFirstObjectByType<PlayerController>();
         }
 
+        if (mainCamera == null)
+        {
+            mainCamera = Camera.main;
+            if (mainCamera == null) mainCamera = FindFirstObjectByType<Camera>();
+        }
+
         if (itemHoldPoint == null)
         {
-            Transform existing = transform.Find("ItemHoldPoint");
-            if (existing != null)
+            // Đặt ItemHoldPoint dưới Camera.main hoặc Root World để KHÔNG BỊ SCALE bởi Canvas UI
+            if (mainCamera != null)
             {
-                itemHoldPoint = existing;
+                Transform existing = mainCamera.transform.Find("ItemHoldPoint");
+                if (existing != null)
+                {
+                    itemHoldPoint = existing;
+                }
+                else
+                {
+                    GameObject hpObj = new GameObject("ItemHoldPoint");
+                    hpObj.transform.SetParent(mainCamera.transform, false);
+                    hpObj.transform.localPosition = holdPointOffset;
+                    hpObj.transform.localRotation = Quaternion.Euler(holdPointRotation);
+                    itemHoldPoint = hpObj.transform;
+                }
             }
             else
             {
                 GameObject hpObj = new GameObject("ItemHoldPoint");
-                hpObj.transform.SetParent(transform, false);
+                hpObj.transform.SetParent(null); // World space
                 itemHoldPoint = hpObj.transform;
             }
         }

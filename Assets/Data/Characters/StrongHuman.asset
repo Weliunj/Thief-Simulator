@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eac8d81d51e33a74884e8e8056d5dfd4, type: 3}
+  m_Name: StrongHuman
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSO
+  characterId: char_03
+  characterName: Strong Human
+  avatar: {fileID: 0}
+  description: A strong human
+  characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
+  maleMesh: {fileID: 0}
+  femaleMesh: {fileID: 0}
+  maleMeshes:
+  - {fileID: 4300000, guid: bf560778e8c9e3b40ba95d0cc63a3665, type: 2}
+  - {fileID: 4300000, guid: 039076ca34355b24ab73eec2514f950b, type: 2}
+  - {fileID: 4300000, guid: 7c30964f9889f5a4aba308c7c9c97082, type: 2}
+  femaleMeshes:
+  - {fileID: 4300000, guid: b2c78190d09fe4b41a37a36872fc2985, type: 2}
+  - {fileID: 4300000, guid: bf66b274eb5a91e459dfe748ac0b131b, type: 2}
+  - {fileID: 4300000, guid: e56a878c59bc07743b5a23625912f489, type: 2}
+  characterMaterial: {fileID: 2100000, guid: b5196b4ed11c46f4eadd08cb98b4aba3, type: 2}
+  characterTexture: {fileID: 2800000, guid: 6e5fe2e8aa76b804d8454a6b80be6830, type: 3}
+  baseMoveSpeed: 2.3
+  baseSprintSpeed: 7
+  baseCrouchSpeed: 1.5
+  baseJumpHeight: 1.1
+  baseMaxStamina: 12
+  staminaDepletionRate: 3
+  staminaRegenRate: 2
+  staminaRegenCooldown: 1
+  baseMaxWeight: 80

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -25,8 +26,52 @@ public class PlayerSO : ScriptableObject
     public string description = "A rookie thief with agile footsteps and balanced stamina.";
 
     [Header("🎭 3D Character Model / Prefab")]
-    [Tooltip("Prefab nhân vật 3D tương ứng để Instantiate vào màn chơi")]
+    [Tooltip("Prefab nhân vật 3D tương ứng để Instantiate vào màn chơi (nếu để trống, tự động dùng Prefab mặc định)")]
     public GameObject characterPrefab;
+
+    [Tooltip("Mesh 3D chính cho phiên bản Nam (Male)")]
+    public Mesh maleMesh;
+
+    [Tooltip("Mesh 3D chính cho phiên bản Nữ (Female)")]
+    public Mesh femaleMesh;
+
+    [Header("🎭 3D Mesh Variants (Kiểu 1, Kiểu 2, Kiểu 3...)")]
+    [Tooltip("Danh sách các biến thể Mesh 3D cho Nam (VD: normal-man-1, normal-man-2, normal-man-3)")]
+    public List<Mesh> maleMeshes = new List<Mesh>();
+
+    [Tooltip("Danh sách các biến thể Mesh 3D cho Nữ (VD: normal-woman-1, normal-woman-2, normal-woman-3)")]
+    public List<Mesh> femaleMeshes = new List<Mesh>();
+
+    /// <summary>
+    /// Lấy Mesh 3D theo Giới tính và Chỉ số Biến thể (Variant Index)
+    /// </summary>
+    public Mesh GetMesh(bool isMale, int variantIndex = 0)
+    {
+        if (isMale)
+        {
+            if (maleMeshes != null && maleMeshes.Count > variantIndex && maleMeshes[variantIndex] != null)
+                return maleMeshes[variantIndex];
+            if (maleMesh != null) return maleMesh;
+            if (maleMeshes != null && maleMeshes.Count > 0 && maleMeshes[0] != null)
+                return maleMeshes[0];
+        }
+        else
+        {
+            if (femaleMeshes != null && femaleMeshes.Count > variantIndex && femaleMeshes[variantIndex] != null)
+                return femaleMeshes[variantIndex];
+            if (femaleMesh != null) return femaleMesh;
+            if (femaleMeshes != null && femaleMeshes.Count > 0 && femaleMeshes[0] != null)
+                return femaleMeshes[0];
+        }
+        return isMale ? maleMesh : femaleMesh;
+    }
+
+    [Header("🎨 Character Appearance / Skin")]
+    [Tooltip("Material đại diện cho trang phục / skin của nhân vật (Ví dụ: palette1.mat, palette2.mat...). Nếu để trống, dùng Material mặc định của Prefab.")]
+    public Material characterMaterial;
+
+    [Tooltip("Texture đại diện nếu chỉ muốn thay đổi Texture chính (_BaseMap / _MainTex) mà không cần tạo file Material riêng")]
+    public Texture2D characterTexture;
 
     [Header("🏃 Base Movement Stats")]
     [Tooltip("Tốc độ di chuyển cơ bản khi đi bộ")]

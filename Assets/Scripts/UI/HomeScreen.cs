@@ -12,10 +12,12 @@ public class HomeScreen : MonoBehaviour
     public Button playButton;
     public Button exitButton;
     public Button optionsButton;
+    public Button characterButton;
 
     [Header("🚪 Panels Reference")]
     public GameObject mainMenuPanel;
     public GameObject settingPanel;
+    public GameObject characterSelectPanel;
     public ChapterSelectManager chapterSelectManager;
 
     private void Awake()
@@ -77,6 +79,7 @@ public class HomeScreen : MonoBehaviour
         // Khởi động: Bật Main Menu, tắt tất cả các panel khác
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
         if (settingPanel != null) settingPanel.SetActive(false);
+        if (characterSelectPanel != null) characterSelectPanel.SetActive(false);
         if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
         {
             chapterSelectManager.chapterSelectPanel.SetActive(false);
@@ -98,6 +101,11 @@ public class HomeScreen : MonoBehaviour
             Transform o = transform.Find("OptionsButton") ?? transform.Find("OptionButton") ?? transform.Find("SettingButton") ?? transform.Find("SettingsBtn");
             if (o != null) optionsButton = o.GetComponent<Button>();
         }
+        if (characterButton == null)
+        {
+            Transform c = transform.Find("CharacterButton") ?? transform.Find("CharacterBtn") ?? transform.Find("CharBtn") ?? transform.Find("SkinBtn");
+            if (c != null) characterButton = c.GetComponent<Button>();
+        }
 
         if (playButton != null)
         {
@@ -116,6 +124,34 @@ public class HomeScreen : MonoBehaviour
             optionsButton.onClick.RemoveListener(Options_Clicked);
             optionsButton.onClick.AddListener(Options_Clicked);
         }
+
+        if (characterButton != null)
+        {
+            characterButton.onClick.RemoveListener(Character_Clicked);
+            characterButton.onClick.AddListener(Character_Clicked);
+        }
+    }
+
+    public void Character_Clicked()
+    {
+        PlayClickSound();
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (characterSelectPanel != null)
+        {
+            characterSelectPanel.SetActive(true);
+            CharacterSelectionHUD hud = characterSelectPanel.GetComponent<CharacterSelectionHUD>() ?? characterSelectPanel.GetComponentInChildren<CharacterSelectionHUD>(true);
+            if (hud != null)
+            {
+                hud.previousPanel = mainMenuPanel;
+            }
+        }
+    }
+
+    public void CloseCharacterSelect()
+    {
+        PlayClickSound();
+        if (characterSelectPanel != null) characterSelectPanel.SetActive(false);
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
     }
 
     public void Play_Clicked()

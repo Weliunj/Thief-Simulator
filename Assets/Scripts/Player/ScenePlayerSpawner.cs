@@ -14,7 +14,10 @@ using UnityEngine.Rendering.Universal;
 public class ScenePlayerSpawner : MonoBehaviour
 {
     [Header("👤 Player Configuration Reference")]
-    [Tooltip("Dữ liệu nhân vật mặc định nếu GameSession.SelectedPlayer là null")]
+    [Tooltip("Danh sách toàn bộ nhân vật (PlayerSO) để nạp từ PlayerPrefs")]
+    public List<PlayerSO> characterDatabase = new List<PlayerSO>();
+
+    [Tooltip("Dữ liệu nhân vật mặc định nếu GameSession.SelectedPlayer là null và database trống")]
     public PlayerSO defaultPlayerData;
 
     [Tooltip("Prefab nhân vật dự phòng nếu PlayerSO chưa được gán characterPrefab")]
@@ -149,14 +152,35 @@ public class ScenePlayerSpawner : MonoBehaviour
             }
         }
 
-        // 3. Lấy cấu hình PlayerSO (GameSession hoặc default)
-        PlayerSO activeData = GameSession.SelectedPlayer != null ? GameSession.SelectedPlayer : defaultPlayerData;
+        // 3. Lấy cấu hình PlayerSO (GameSession, PlayerPrefs hoặc default)
+        PlayerSO activeData = GameSession.SelectedPlayer;
+        if (activeData == null && characterDatabase != null && characterDatabase.Count > 0)
+        {
+            int savedIndex = PlayerPrefs.GetInt("SelectedCharIndex", 0);
+            int savedGender = PlayerPrefs.GetInt("SelectedGender", 0);
+            GameSession.IsMale = (savedGender == 0);
+
+            if (savedIndex >= 0 && savedIndex < characterDatabase.Count)
+            {
+                activeData = characterDatabase[savedIndex];
+                GameSession.SelectedPlayer = activeData;
+            }
+        }
+
+        if (activeData == null)
+        {
+            activeData = defaultPlayerData;
+        }
 
         // 4. Lấy Prefab cần Instantiate
         GameObject prefabToInstantiate = null;
         if (activeData != null && activeData.characterPrefab != null)
         {
             prefabToInstantiate = activeData.characterPrefab;
+        }
+        else if (defaultPlayerData != null && defaultPlayerData.characterPrefab != null)
+        {
+            prefabToInstantiate = defaultPlayerData.characterPrefab;
         }
         else if (fallbackPlayerPrefab != null)
         {

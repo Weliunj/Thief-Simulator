@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eac8d81d51e33a74884e8e8056d5dfd4, type: 3}
+  m_Name: FatHuman
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSO
+  characterId: char_02
+  characterName: Fat Human
+  avatar: {fileID: 0}
+  description: A fat human
+  characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
+  maleMesh: {fileID: 0}
+  femaleMesh: {fileID: 0}
+  maleMeshes:
+  - {fileID: 4300000, guid: 1c19609be8f7cfc45bfba5d1fa696f05, type: 2}
+  - {fileID: 4300000, guid: 31fa6743ae2f1c34f873937824c4725f, type: 2}
+  - {fileID: 4300000, guid: 4ae2a53cbb1c4984fa79681d2d5cf215, type: 2}
+  femaleMeshes:
+  - {fileID: 4300000, guid: 1bb78ba630b090742afddbf9dd300411, type: 2}
+  - {fileID: 4300000, guid: 7a0224eb44d835540856d3661c24efce, type: 2}
+  - {fileID: 4300000, guid: 8668ef7ccc19d1542b2c20c87a986105, type: 2}
+  characterMaterial: {fileID: 2100000, guid: b5196b4ed11c46f4eadd08cb98b4aba3, type: 2}
+  characterTexture: {fileID: 2800000, guid: 6e5fe2e8aa76b804d8454a6b80be6830, type: 3}
+  baseMoveSpeed: 1.7
+  baseSprintSpeed: 5
+  baseCrouchSpeed: 1.1
+  baseJumpHeight: 1
+  baseMaxStamina: 8
+  staminaDepletionRate: 3
+  staminaRegenRate: 2
+  staminaRegenCooldown: 1
+  baseMaxWeight: 60

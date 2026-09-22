@@ -125,6 +125,9 @@ namespace StarterAssets
         [Header("📱 Mobile Action Buttons")]
         public MobileActionButtons mobileActions;
 
+        [Header("👀 Head Look Settings")]
+        public PlayerHeadLook headLook;
+
         private CharacterController characterController;
         private Vector3 StartCenter;
         private float StartHeight;
@@ -244,6 +247,14 @@ namespace StarterAssets
             {
                 gameObject.AddComponent<PlayerInteraction>();
             }
+            if (GetComponent<PlayerHeadLook>() == null)
+            {
+                headLook = gameObject.AddComponent<PlayerHeadLook>();
+            }
+            else
+            {
+                headLook = GetComponent<PlayerHeadLook>();
+            }
             _input = GetComponent<StarterAssetsInputs>();
 #if ENABLE_INPUT_SYSTEM
             _playerInput = GetComponent<PlayerInput>();
@@ -254,7 +265,15 @@ namespace StarterAssets
             // Khởi tạo AudioSource cho tiếng bước chân / tiếp đất
             if (footstepAudioSource == null)
             {
-                footstepAudioSource = GetComponent<AudioSource>();
+                Transform footstepChild = transform.Find("AudioManager/FootStep") ?? transform.Find("FootStep") ?? transform.Find("AudioManager");
+                if (footstepChild != null)
+                {
+                    footstepAudioSource = footstepChild.GetComponent<AudioSource>();
+                }
+                if (footstepAudioSource == null)
+                {
+                    footstepAudioSource = GetComponentInChildren<AudioSource>(true);
+                }
                 if (footstepAudioSource == null)
                 {
                     footstepAudioSource = gameObject.AddComponent<AudioSource>();
@@ -645,6 +664,9 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
+
+            // Xử lý phát tiếng bước chân (Tự động thích ứng cả khi Animation không có AnimationEvent)
+            HandleProceduralFootsteps();
         }
 
         private void JumpAndGravity()
@@ -763,42 +785,106 @@ namespace StarterAssets
             }
         }
 
-        private void OnFootstep(AnimationEvent animationEvent)
+        private float _footstepTimer = 0.2f;
+        private bool _hasReceivedAnimFootstepEvent = false;
+
+        /// <summary>
+        /// Xử lý phát tiếng bước chân theo nhịp di chuyển (hoạt động kể cả khi animation clip không có Animation Event)
+        /// </summary>
+        private void HandleProceduralFootsteps()
         {
+            if (_hasReceivedAnimFootstepEvent) return; // Ưu tiên Animation Event nếu clip đã có
+
+            if (Grounded && _input != null && _input.move.sqrMagnitude > 0.01f && _speed > 0.4f)
+            {
+                _footstepTimer -= Time.deltaTime;
+                float stepInterval = _input.sprint ? 0.32f : (Crouching ? 0.58f : 0.44f);
+
+                if (_footstepTimer <= 0f)
+                {
+                    _footstepTimer = stepInterval;
+                    PlayFootstepSound();
+                }
+            }
+            else
+            {
+                _footstepTimer = 0.15f;
+            }
+        }
+
+        public void OnFootstep(AnimationEvent animationEvent)
+        {
+            _hasReceivedAnimFootstepEvent = true;
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
-                if (FootstepAudioClips != null && FootstepAudioClips.Length > 0)
+                PlayFootstepSound();
+            }
+        }
+
+        public void OnFootstep()
+        {
+            _hasReceivedAnimFootstepEvent = true;
+            PlayFootstepSound();
+        }
+
+        private void PlayFootstepSound()
+        {
+            AudioClip clipToPlay = null;
+
+            if (FootstepAudioClips != null && FootstepAudioClips.Length > 0)
+            {
+                var validClips = System.Array.FindAll(FootstepAudioClips, c => c != null);
+                if (validClips.Length > 0)
                 {
-                    var index = Random.Range(0, FootstepAudioClips.Length);
-                    if (FootstepAudioClips[index] != null)
-                    {
-                        if (footstepAudioSource != null)
-                        {
-                            footstepAudioSource.PlayOneShot(FootstepAudioClips[index], FootstepAudioVolume);
-                        }
-                        else
-                        {
-                            AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(_controller.center), FootstepAudioVolume);
-                        }
-                    }
+                    clipToPlay = validClips[Random.Range(0, validClips.Length)];
+                }
+            }
+
+            if (clipToPlay == null && footstepAudioSource != null && footstepAudioSource.clip != null)
+            {
+                clipToPlay = footstepAudioSource.clip;
+            }
+
+            if (clipToPlay != null)
+            {
+                float vol = FootstepAudioVolume > 0.01f ? FootstepAudioVolume : 0.5f;
+
+                if (footstepAudioSource != null)
+                {
+                    footstepAudioSource.PlayOneShot(clipToPlay, vol);
+                }
+                else
+                {
+                    AudioSource.PlayClipAtPoint(clipToPlay, transform.TransformPoint(_controller.center), vol);
                 }
             }
         }
 
-        private void OnLand(AnimationEvent animationEvent)
+        public void OnLand(AnimationEvent animationEvent)
         {
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
-                if (LandingAudioClip != null)
+                TriggerLandSound();
+            }
+        }
+
+        public void OnLand()
+        {
+            TriggerLandSound();
+        }
+
+        private void TriggerLandSound()
+        {
+            if (LandingAudioClip != null)
+            {
+                float vol = FootstepAudioVolume > 0.01f ? FootstepAudioVolume : 0.5f;
+                if (footstepAudioSource != null)
                 {
-                    if (footstepAudioSource != null)
-                    {
-                        footstepAudioSource.PlayOneShot(LandingAudioClip, FootstepAudioVolume);
-                    }
-                    else
-                    {
-                        AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), FootstepAudioVolume);
-                    }
+                    footstepAudioSource.PlayOneShot(LandingAudioClip, vol);
+                }
+                else
+                {
+                    AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(_controller.center), vol);
                 }
             }
         }

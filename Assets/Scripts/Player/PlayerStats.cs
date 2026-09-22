@@ -99,6 +99,85 @@ public class PlayerStats : MonoBehaviour
         canSprint = true;
 
         CalculateWeightSpeedPenalty();
+        ApplyCharacterMeshAndSkin(data);
+    }
+
+    /// <summary>
+    /// Áp dụng Mesh (Nam/Nữ) và Material/Texture của PlayerSO lên model 3D của Player
+    /// </summary>
+    public void ApplyCharacterMeshAndSkin(PlayerSO data)
+    {
+        if (data == null) return;
+
+        bool isMale = GameSession.IsMale;
+        Mesh targetMesh = data.GetMesh(isMale);
+        if (targetMesh != null)
+        {
+            ApplyMeshToModel(gameObject, targetMesh);
+        }
+
+        ApplySkinToModel(gameObject, data.characterMaterial, data.characterTexture);
+    }
+
+    /// <summary>
+    /// Tiện ích tĩnh: Áp dụng Mesh lên SkinnedMeshRenderer hoặc MeshFilter của model
+    /// </summary>
+    public static void ApplyMeshToModel(GameObject modelRoot, Mesh targetMesh)
+    {
+        if (modelRoot == null || targetMesh == null) return;
+
+        SkinnedMeshRenderer smr = modelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        if (smr != null)
+        {
+            smr.sharedMesh = targetMesh;
+            return;
+        }
+
+        MeshFilter mf = modelRoot.GetComponentInChildren<MeshFilter>(true);
+        if (mf != null)
+        {
+            mf.sharedMesh = targetMesh;
+        }
+    }
+
+    /// <summary>
+    /// Tiện ích tĩnh: Áp dụng Material / Texture lên bất kỳ GameObject / Dummy Preview Model nào (dùng cho cả UI Menu)
+    /// </summary>
+    public static void ApplySkinToModel(GameObject modelRoot, Material characterMaterial, Texture2D characterTexture = null)
+    {
+        if (modelRoot == null) return;
+        if (characterMaterial == null && characterTexture == null) return;
+
+        Renderer[] renderers = modelRoot.GetComponentsInChildren<Renderer>(true);
+        foreach (var rend in renderers)
+        {
+            if (rend == null) continue;
+
+            // Bỏ qua nếu là Item đang cầm trong Hotbar, Đèn pin, Particle, hoặc UI
+            if (rend.GetComponentInParent<Item>() != null) continue;
+            if (rend.GetComponentInParent<FlashlightController>() != null) continue;
+            if (rend is ParticleSystemRenderer || rend is TrailRenderer || rend is LineRenderer) continue;
+
+            if (characterMaterial != null)
+            {
+                rend.material = characterMaterial;
+            }
+            else if (characterTexture != null)
+            {
+                if (rend.material != null)
+                {
+                    rend.material.mainTexture = characterTexture;
+                    if (rend.material.HasProperty("_BaseMap"))
+                    {
+                        rend.material.SetTexture("_BaseMap", characterTexture);
+                    }
+                    if (rend.material.HasProperty("_MainTex"))
+                    {
+                        rend.material.SetTexture("_MainTex", characterTexture);
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>
