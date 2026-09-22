@@ -38,8 +38,28 @@ public class ChapterSelectManager : MonoBehaviour
 
     private int currentChapterIndex = 0;
 
+    private void Awake()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        if (FindFirstObjectByType<UIEventSystemFixer>() == null)
+        {
+            gameObject.AddComponent<UIEventSystemFixer>();
+        }
+    }
+
+    private void OnEnable()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
     void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         if (leftArrowButton != null) leftArrowButton.onClick.AddListener(PreviousChapter);
         if (rightArrowButton != null) rightArrowButton.onClick.AddListener(NextChapter);
         if (startChapterButton != null) startChapterButton.onClick.AddListener(PlayCurrentChapter);

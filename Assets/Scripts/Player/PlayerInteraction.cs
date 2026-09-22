@@ -131,7 +131,20 @@ public class PlayerInteraction : MonoBehaviour
         // Tạo tia Ray từ chính giữa màn hình (0.5, 0.5)
         Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-        RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, maxCameraRayDistance, interactLayer, QueryTriggerInteraction.Collide);
+        // 1. Bắn tia Raycast trực tiếp từ tâm ngắm để xác định vật cản che khuất (Line of Sight)
+        float maxAllowedDistance = maxPlayerReach;
+        if (Physics.Raycast(ray, out RaycastHit directHit, maxCameraRayDistance, interactLayer, QueryTriggerInteraction.Collide))
+        {
+            // Nếu tâm ngắm rọi trực tiếp vào một vật thể không phải interactable (như tường, sàn, cột)
+            IInteractable directInteractable = directHit.collider.GetComponentInParent<IInteractable>() ?? directHit.collider.GetComponent<IInteractable>();
+            if (directInteractable == null)
+            {
+                // Giới hạn tầm quét không được xuyên qua tường/vật cản phía trước
+                maxAllowedDistance = Mathf.Min(maxAllowedDistance, directHit.distance + 0.1f);
+            }
+        }
+
+        RaycastHit[] hits = Physics.SphereCastAll(ray, sphereCastRadius, maxAllowedDistance, interactLayer, QueryTriggerInteraction.Collide);
 
         IInteractable bestLoot = null;
         IInteractable bestSpecial = null;
@@ -147,27 +160,22 @@ public class PlayerInteraction : MonoBehaviour
                     continue;
                 }
 
-                // 2. Tìm TẤT CẢ components IInteractable trên đối tượng (Item, Ladder, LockpickDoor...)
+                // 2. Tìm tất cả components IInteractable trên chính Collider hoặc cấp cha (Item + LadderController...)
                 IInteractable[] interactables = hit.collider.GetComponentsInParent<IInteractable>();
                 if (interactables == null || interactables.Length == 0)
                 {
                     interactables = hit.collider.GetComponents<IInteractable>();
                 }
-                if (interactables == null || interactables.Length == 0)
-                {
-                    interactables = hit.collider.GetComponentsInChildren<IInteractable>();
-                }
 
                 if (interactables != null && interactables.Length > 0)
                 {
                     // 3. Kiểm tra khoảng cách từ người chơi đến điểm tiếp xúc (hit.point) hoặc Collider bề mặt
-                    // Lưu ý: Dùng hit.point hoặc ClosestPoint thay vì transform.position của vật thể (vì Cửa/Thang to có Pivot ở góc bản lề/chân)
                     Vector3 contactPoint = (hit.point != Vector3.zero) ? hit.point : hit.collider.ClosestPoint(transform.position);
                     float distToPlayer = Vector3.Distance(transform.position, contactPoint);
 
                     if (distToPlayer <= maxPlayerReach || hit.distance <= maxPlayerReach)
                     {
-                        // 4. XỬ LÝ KHI CÓ NHIỀU ITEM TRONG VÙNG QUÉT:
+                        // 4. XỬ LÝ KHI CÓ NHIỀU ITEM TRONG VÙNG QUÉT (Ưu tiên sát tâm ngắm nhất)
                         Vector3 toContact = contactPoint - ray.origin;
                         float distAlongRay = Vector3.Dot(toContact, ray.direction);
                         Vector3 pointOnRay = ray.origin + ray.direction * distAlongRay;
@@ -183,6 +191,10 @@ public class PlayerInteraction : MonoBehaviour
 
                             foreach (var it in interactables)
                             {
+                                if (it == null) continue;
+                                bool canInteract = it.CanInteract(playerController, out string failReason);
+                                if (!canInteract && failReason == "Already Unlocked") continue;
+
                                 if (it.IsLootItem())
                                 {
                                     if (bestLoot == null) bestLoot = it;
@@ -200,12 +212,12 @@ public class PlayerInteraction : MonoBehaviour
 
         currentLootItem = bestLoot;
         currentSpecialInteractable = bestSpecial;
-        currentInteractable = bestLoot ?? bestSpecial;
+        currentInteractable = bestSpecial ?? bestLoot;
 
         // Cập nhật thông tin vật phẩm được chọn lên UI HUD và Mobile Action Buttons
         if (currentLootItem != null || currentSpecialInteractable != null)
         {
-            IInteractable primary = currentLootItem ?? currentSpecialInteractable;
+            IInteractable primary = currentSpecialInteractable ?? currentLootItem;
             bool canInteract = primary.CanInteract(playerController, out string failReason);
 
             if (itemInfoHUD != null)
@@ -227,7 +239,7 @@ public class PlayerInteraction : MonoBehaviour
                 // Nút Interact (tương tác đặc biệt: Thang, Cửa, v.v.)
                 if (mobileActions.interactButton != null)
                 {
-                    bool showInteract = (currentSpecialInteractable != null);
+                    bool showInteract = (currentSpecialInteractable != null && currentSpecialInteractable.CanInteract(playerController, out _));
                     if (mobileActions.interactButton.gameObject.activeSelf != showInteract)
                         mobileActions.interactButton.gameObject.SetActive(showInteract);
                 }

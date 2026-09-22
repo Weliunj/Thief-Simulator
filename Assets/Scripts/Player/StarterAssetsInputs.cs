@@ -18,20 +18,27 @@ namespace StarterAssets
         public bool analogMovement;
 
         [Header("Mouse Cursor Settings")]
-        public bool cursorLocked = true;
-        public bool cursorInputForLook = true;
+        [Tooltip("Giữ chuột luôn mở khóa (None) để click các nút trên màn hình như cảm ứng")]
+        public bool cursorLocked = false;
+        public bool cursorInputForLook = false;
         
-        // --- THAY ĐỔI 1: Thêm biến chỉnh độ nhạy ---
         [Tooltip("Điều chỉnh tốc độ chuột/camera")]
         public float lookSensitivity = 1.0f;
 
         [Header("🕹️ Mobile Touch Controls")]
+        [Tooltip("Luôn hiển thị các nút ảo trên màn hình để click chuột test")]
+        public bool autoHideMobileControlsOnPC = false;
         public DynamicJoystick dynamicJoystick;
         public TouchLookZone touchLookZone;
         public MobileActionButtons mobileActions;
 
-        private void Start()
+        private void Awake()
         {
+            // Luôn mở khóa và hiển thị chuột xuyên suốt game
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            // Tự động tìm các UI Mobile nếu chưa kéo thả
             if (touchLookZone == null)
             {
                 touchLookZone = FindFirstObjectByType<TouchLookZone>(FindObjectsInactive.Include);
@@ -44,12 +51,21 @@ namespace StarterAssets
             {
                 mobileActions = FindFirstObjectByType<MobileActionButtons>(FindObjectsInactive.Include);
             }
+        }
+
+        private void Start()
+        {
+            // Luôn mở khóa và hiển thị chuột xuyên suốt game
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
 
             UpdateSensitivity(SettingsManager.Instance != null ? SettingsManager.Instance.Sensitivity : lookSensitivity);
         }
 
         private void OnEnable()
         {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
             SettingsManager.OnSensitivityChanged += UpdateSensitivity;
         }
 
@@ -65,22 +81,85 @@ namespace StarterAssets
 
         private void Update()
         {
+            // Luôn đảm bảo chuột hiển thị và không bị khóa
+            if (Cursor.lockState != CursorLockMode.None || !Cursor.visible)
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+
+            // --- 1. Phím tắt PC: Mở Menu Pause khi bấm ESC hoặc P ---
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.P))
+            {
+                UI_Manager uiManager = FindFirstObjectByType<UI_Manager>();
+                if (uiManager != null && !UI_Manager.isSolving)
+                {
+                    if (uiManager.isPaused) uiManager.ResumeGame();
+                    else uiManager.PauseGame();
+                }
+            }
+
+            // --- 2. Xử lý Input từ Bàn Phím PC (WASD di chuyển, Space nhảy) ---
+            HandlePCKeyboardInput();
+
+            // --- 3. Xử lý Input từ Mobile UI (Joystick, Touch Look Zone, Buttons) ---
+            HandleMobileTouchInput();
+        }
+
+        private void HandlePCKeyboardInput()
+        {
+            // Di chuyển bằng phím WASD / Mũi tên
+            float h = Input.GetAxisRaw("Horizontal");
+            float v = Input.GetAxisRaw("Vertical");
+            if (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f)
+            {
+                move = new Vector2(h, v).normalized;
+            }
+            else if (dynamicJoystick == null || !dynamicJoystick.IsPressed)
+            {
+                // Nếu cả bàn phím lẫn Joystick đều không bấm -> dừng di chuyển
+                move = Vector2.zero;
+            }
+
+            // Nhảy bằng phím Space
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                jump = true;
+            }
+
+            // Phím tắt bàn phím phụ trợ (vẫn hỗ trợ song song click chuột vào nút trên màn hình)
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+            {
+                sprint = true;
+            }
+            else if (mobileActions == null || !mobileActions.sprintHeld)
+            {
+                sprint = false;
+            }
+
+            if (Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.LeftControl))
+            {
+                crouch = true;
+            }
+            else if (mobileActions == null || !mobileActions.crouchHeld)
+            {
+                crouch = false;
+            }
+        }
+
+        private void HandleMobileTouchInput()
+        {
             // --- Mobile Joystick: Di chuyển ---
-            if (dynamicJoystick != null)
+            if (dynamicJoystick != null && dynamicJoystick.gameObject.activeInHierarchy)
             {
                 if (dynamicJoystick.IsPressed)
                 {
                     MoveInput(dynamicJoystick.Direction);
                 }
-                else
-                {
-                    // Khi thả tay → reset movement về zero để nhân vật dừng lại
-                    MoveInput(Vector2.zero);
-                }
             }
 
-            // --- Mobile Touch: Xoay camera ---
-            if (touchLookZone != null)
+            // --- Mobile Touch Look Zone: Vuốt chuột/ngón tay ở nửa phải màn hình để xoay camera ---
+            if (touchLookZone != null && touchLookZone.gameObject.activeInHierarchy)
             {
                 if (touchLookZone.IsTouching)
                 {
@@ -93,31 +172,38 @@ namespace StarterAssets
             }
 
             // --- Mobile Action Buttons: Jump, Sprint, Crouch ---
-            if (mobileActions != null)
+            if (mobileActions != null && mobileActions.gameObject.activeInHierarchy)
             {
-                // Jump: bấm 1 lần → set true (ThirdPersonController sẽ tự reset)
                 if (mobileActions.jumpPressed)
                 {
                     JumpInput(true);
                 }
 
-                // Sprint: giữ = true, thả = false
-                SprintInput(mobileActions.sprintHeld);
+                if (mobileActions.sprintHeld)
+                {
+                    SprintInput(true);
+                }
 
-                // Crouch: giữ/toggle = true, thả = false
-                CrouchInput(mobileActions.crouchHeld);
+                if (mobileActions.crouchHeld)
+                {
+                    CrouchInput(true);
+                }
             }
         }
 
 #if ENABLE_INPUT_SYSTEM
         public void OnMove(InputValue value)
         {
-            MoveInput(value.Get<Vector2>());
+            Vector2 v = value.Get<Vector2>();
+            if (v.sqrMagnitude > 0.01f || (dynamicJoystick == null || !dynamicJoystick.IsPressed))
+            {
+                MoveInput(v);
+            }
         }
 
         public void OnLook(InputValue value)
         {
-            if(cursorInputForLook)
+            if (cursorInputForLook)
             {
                 LookInput(value.Get<Vector2>() * lookSensitivity);
             }
@@ -138,7 +224,6 @@ namespace StarterAssets
             CrouchInput(value.isPressed);
         }
 #endif
-
 
         public void MoveInput(Vector2 newMoveDirection)
         {
@@ -167,12 +252,15 @@ namespace StarterAssets
         
         private void OnApplicationFocus(bool hasFocus)
         {
-            SetCursorState(cursorLocked);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
 
-        private void SetCursorState(bool newState)
+        public void SetCursorLocked(bool locked)
         {
-            Cursor.lockState = newState ? CursorLockMode.Locked : CursorLockMode.None;
+            cursorLocked = false;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
 }

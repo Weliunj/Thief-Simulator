@@ -805,7 +805,7 @@ MonoBehaviour:
     m_Bits: 475
   CinemachineCameraTarget: {fileID: 3877543929574957915}
   crouchCameraYOffset: -0.8
-  TopClamp: 70
+  TopClamp: 80
   BottomClamp: -70
   CameraAngleOverride: 0
   LockCameraPosition: 0
@@ -861,6 +861,7 @@ MonoBehaviour:
   cursorLocked: 0
   cursorInputForLook: 1
   lookSensitivity: 1.8
+  autoHideMobileControlsOnPC: 0
   dynamicJoystick: {fileID: 0}
   touchLookZone: {fileID: 0}
   mobileActions: {fileID: 0}

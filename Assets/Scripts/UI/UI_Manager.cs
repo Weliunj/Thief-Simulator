@@ -291,8 +291,8 @@ public class UI_Manager : MonoBehaviour
         if (!isSolving && !isDiedHandled && !isWinHandled)
         {
             SetMainHUDActive(true);
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
 
@@ -380,8 +380,8 @@ public class UI_Manager : MonoBehaviour
                 if (!isPaused && !isDiedHandled && !isWinHandled)
                 {
                     SetMainHUDActive(true);
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
                 }
                 if (door != null) door.OnUnlockSuccess();
             },
@@ -391,8 +391,8 @@ public class UI_Manager : MonoBehaviour
                 if (!isPaused && !isDiedHandled && !isWinHandled)
                 {
                     SetMainHUDActive(true);
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
                 }
                 if (door != null) door.OnUnlockFailed();
             },
@@ -406,8 +406,8 @@ public class UI_Manager : MonoBehaviour
         if (!isPaused && !isDiedHandled && !isWinHandled)
         {
             SetMainHUDActive(true);
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
         if (lockpickMinigame != null)
         {
@@ -440,6 +440,8 @@ public class UI_Manager : MonoBehaviour
     {
         Time.timeScale = 1f;
         isPaused = false;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
         GameSession.ClearSession();
         SceneManager.LoadScene("HomeMenu");
     }

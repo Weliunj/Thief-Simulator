@@ -764,3 +764,62 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Nút Crouch trên Mobile và bàn phím (C / Ctrl) hoạt động mượt mà, chuyển đổi tư thế và hạ thấp camera chính xác.
   - Cấu trúc Player chuẩn Single Responsibility Principle: tách biệt hoàn toàn giữa Điều khiển di chuyển (PlayerController), Chỉ số trạng thái (PlayerStats) và Quản lý vật phẩm balo (PlayerInventory).
   - Khởi tạo và sinh nhân vật động linh hoạt thông qua `ScenePlayerSpawner`, sẵn sàng cho cấu trúc Multiplayer / PUN2 về sau.
+
+---
+
+### [2026-09-22 08:28] — feat(ui, input): enable PC mouse clicks, persistent unlocked cursor, and on-screen button testing
+- **Tác vụ**:
+  - Tạo mới [UIEventSystemFixer.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UIEventSystemFixer.cs) tự động đảm bảo EventSystem có đầy đủ Input Module hỗ trợ cả New Input System và Old Input Manager, tự động mở khóa chuột và kiểm tra GraphicRaycaster trên Canvas giúp click chuột trực tiếp trong Game View / Standalone EXE 100% không cần bật Device Simulator.
+  - Tích hợp mở khóa con trỏ chuột xuyên suốt toàn bộ game (`Cursor.lockState = CursorLockMode.None`, `Cursor.visible = true`) trong `Awake()`, `Start()`, `OnEnable()` của [HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs), [ChapterSelectManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ChapterSelectManager.cs), [SettingsHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/SettingsHUD.cs), [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs) và [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
+  - Tái cấu trúc [StarterAssetsInputs.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/StarterAssetsInputs.cs):
+    - Giữ nguyên hiển thị toàn bộ các nút ảo/giao diện trên màn hình để tester có thể dùng chuột click trực tiếp vào nút như thao tác cảm ứng trên Mobile.
+    - Hỗ trợ di chuyển bằng bàn phím `WASD` / Mũi tên và nhảy bằng phím `Space` song song với Joystick và nút Jump trên màn hình.
+    - Khắc phục lỗi Joystick và TouchZone ghi đè Vector2.zero mỗi frame khi không chạm.
+    - Hỗ trợ phím `Escape` / `P` để mở menu Pause trong trận.
+  - Cập nhật [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs): Hỗ trợ lăn chuột (`Mouse ScrollWheel`) để chuyển đổi qua lại giữa các ô Hotbar trên PC.
+  - Cập nhật [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs):
+    - Khắc phục lỗi bấm trúng quá dễ do kiểm tra va chạm mép ngoài (`BoundingBox` mép-với-mép của 2 hình tròn).
+    - Thay thế bằng thuật toán đo khoảng cách tâm (`hitPrecision = 0.65f`), yêu cầu vòng tròn Indicator phải lồng sâu vào trong vùng Target mới tính là trúng đích, chạm nhẹ viền ngoài sẽ tính là trượt.
+    - Hỗ trợ thêm phím `F` bên cạnh `Space` và `E` để bẻ khóa trên PC.
+  - Tối ưu và tinh gọn [MainHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MainHUD.cs):
+    - Loại bỏ hoàn toàn các trường `maxStaminaText`, `maxKgText`, `targetPointText` dư thừa.
+    - Tinh gọn Inspector chỉ còn 3 trường text chính (`currStamina`, `currKg`, `currPointText`) tự động hiển thị chuỗi gộp `HiệnTại/TốiĐa` (`10/10`, `0/100Kg`, `0/400`).
+  - Cải tiến cơ chế Đặt (Place) / Ném (Throw) và vật lý Thang trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) & [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs):
+    - Khi cầm item rọi Raycast vào tường/mặt phẳng: Tự động chuyển icon nút bấm sang **`placeIcon`**, xoay Z **180 độ** (`placeRotationZ`) và bật hiện GameObject UI **`placementIndicator`** trên màn hình (`SetActive(true)`).
+    - Khi rọi vào không gian thoáng: Tự động chuyển icon nút bấm sang **`throwIcon`**, xoay Z **90 độ** (`throwRotationZ`) và tự động ẩn GameObject UI **`placementIndicator`** (`SetActive(false)`).
+    - Đối với Thang (`LadderController`):
+      - Khi **Đặt** (Raycast chạm tường/sàn): Gọi `ladder.SetUprightLocked(true)` khóa hoàn toàn trục `FreezeRotationX | FreezeRotationZ`, không áp lực đẩy để thang đứng vững vàng 100% không bị ngã đổ.
+      - Khi **Ném** (Raycast không chạm vật cản): Gọi `ladder.SetUprightLocked(false)` mở khóa toàn bộ `RigidbodyConstraints.None`, áp dụng lực ném `dropForwardForce` về phía trước giúp thang lật xoay và đổ ngã vật lý tự nhiên.
+      - Khóa hoàn toàn va chạm vật lý giữa Player và Thang (`Physics.IgnoreCollision`) giúp người chơi không thể đi/chạy bộ lên thang nghiêng như dốc cầu thang, buộc phải bấm phím leo (`F` / `Interact`) mới có thể trèo lên cao.
+      - Hỗ trợ đầy đủ đa tương tác trên cùng một đối tượng (Multi-IInteractable): Khi nhìn vào Thang vừa hiển thị nút **Pickup** (nhặt thang vào Hotbar) vừa hiển thị nút **Interact** (leo thang), khắc phục lỗi thang khi đặt (`Place`) bị mất nút leo.
+  - Sửa lỗi tương tác Cửa (Door) và Minigame trong [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs) & [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs):
+    - Khắc phục lỗi nhìn vào tường nhà vẫn bắt trúng Cửa: Loại bỏ hàm tìm con `GetComponentsInChildren` nguy hiểm trên Collider va chạm (trước đây bắn trúng tường nhà `House` sẽ quét xuống tất cả cửa con bên trong).
+    - Bổ sung cơ chế kiểm tra tầm nhìn (Line-of-Sight occlusion check): Nếu có tường/vật cản che chắn trực tiếp trước mặt, tia quét sẽ bị chặn lại và không thể tương tác xuyên thấu qua tường.
+    - Khắc phục lỗi Cửa đã mở vẫn hiện chữ "Pick Lock" và mở minigame: Tự động bỏ qua các cửa có `isUnlocked == true`, ẩn hoàn toàn nút tương tác và không cho phép kích hoạt minigame sau khi đã mở khóa thành công.
+    - Loại bỏ lệnh phát âm thanh trùng lặp trong [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs), đảm bảo âm thanh mở khóa thành công (`victorySound`) chỉ phát duy nhất 1 lần từ `DoorController.OnUnlockSuccess()`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/UIEventSystemFixer.cs` (New)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Lines 20-35)
+  - `Assets/Scripts/UI/ChapterSelectManager.cs` (Lines 40-55)
+  - `Assets/Scripts/UI/SettingsHUD.cs` (Lines 105-115)
+  - `Assets/Scripts/Player/PlayerController.cs` (Lines 200-210)
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Lines 130-245)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Lines 290-415, 440-445)
+  - `Assets/Scripts/Player/StarterAssetsInputs.cs` (Rewritten / Enhanced)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Lines 50-190, 235-255, 580-605, 760-815)
+  - `Assets/Scripts/Items/LadderController.cs` (Lines 90-145, 595-605)
+  - `Assets/Scripts/UI/LockpickMinigame.cs` (Lines 45-55, 225-305)
+  - `Assets/Scripts/UI/MainHUD.cs` (Lines 15-200 — Streamlined)
+- **Ảnh hưởng**:
+  - Chuột luôn luôn hiển thị và không bị khóa trong suốt toàn bộ quá trình chơi game từ Menu đến Gameplay.
+  - Tester có thể vừa dùng WASD + Space để di chuyển/nhảy, vừa dùng chuột click trực tiếp vào mọi nút trên màn hình (Pickup, Interact, Drop, Sprint, Crouch, Flashlight, Hotbar, Pause) y hệt như thao tác chạm trên điện thoại, giúp quá trình build EXE và test nhanh hơn rất nhiều so với build APK.
+  - Minigame bẻ khóa có độ chính xác và thử thách chuẩn hơn, tránh việc người chơi bấm ăn may khi 2 hình tròn vừa chạm mép nhau.
+  - Giao diện HUD chính hiển thị trực quan và tinh gọn, loại bỏ các biến rác trong Inspector.
+  - Thao tác đặt/ném đồ trực quan, phân biệt rõ ràng giữa hành vi Đặt vào tường (khóa đứng thang) và Ném ra ngoài khoảng không (lật đổ vật lý tự nhiên).
+  - Tương tác cửa chuẩn xác 100%: không bị quét xuyên tường khi nhìn chỗ khác, cửa mở xong sẽ không hiện minigame bẻ khóa lại và âm thanh chiến thắng chỉ phát đúng 1 lần.
+  - Thang đặt ra thế giới luôn hiện đầy đủ nút Leo trèo (Interact) và nút Nhặt đồ (Pickup), đồng thời khóa va chạm để không bị đi bộ dẫm lên thang nghiêng.
+
+
+
+
+

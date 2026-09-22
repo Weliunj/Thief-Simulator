@@ -4,26 +4,27 @@ using UnityEngine.UI;
 
 /// <summary>
 /// Quản lý giao diện HUD chính trong trận đấu (mainHUD):
-/// - Hiển thị Stamina, Cân nặng (Kg), Điểm số (Point), và Thời gian đếm ngược (Time_T)
+/// - Hiển thị Stamina (HiệnTại/TốiĐa), Cân nặng (HiệnTại/TốiĐa Kg), Điểm số (HiệnTại/TốiĐa), và Thời gian đếm ngược
 /// - Cảnh báo đổi màu động khi Thể lực cạn hoặc Quá tải trọng lượng
 /// - Xử lý nút bấm Tạm dừng (PauseBtn)
 /// - Quản lý bật/tắt toàn bộ MainHUD
 /// </summary>
 public class MainHUD : MonoBehaviour
 {
-    [Header("🔋 Stamina UI")]
+    [Header("🔋 Stamina UI (HiệnTại/TốiĐa)")]
+    [Tooltip("Text hiển thị thể lực (VD: 10/10, 7/10)")]
     public TextMeshProUGUI currStamina;
-    public TextMeshProUGUI maxStaminaText;
 
-    [Header("🏋️ Weight UI")]
+    [Header("🏋️ Weight UI (HiệnTại/TốiĐa Kg)")]
+    [Tooltip("Text hiển thị tải trọng (VD: 0/100Kg, 25/100Kg)")]
     public TextMeshProUGUI currKg;
-    public TextMeshProUGUI maxKgText;
 
-    [Header("🌟 Point UI")]
+    [Header("🌟 Point UI (HiệnTại/TốiĐa)")]
+    [Tooltip("Text hiển thị điểm số (VD: 0/400, 150/400)")]
     public TextMeshProUGUI currPointText;
-    public TextMeshProUGUI targetPointText;
 
     [Header("⏰ Time UI")]
+    [Tooltip("Text hiển thị thời gian đếm ngược (VD: 04:59)")]
     public TextMeshProUGUI timeText;
     public AudioSource alarmAudio;
 
@@ -36,7 +37,7 @@ public class MainHUD : MonoBehaviour
     [Tooltip("Màu cảnh báo khi sắp cạn thể lực hoặc quá tải")]
     public Color alertColor = Color.red;
     [Range(0f, 1f)]
-    [Tooltip("Ngưỡng bắt đầu đổi màu (0.5 = 50%)")]
+    [Tooltip("Ngưỡng bắt đầu đổi màu cảnh báo (0.5 = 50%)")]
     public float warnThreshold = 0.5f;
 
     private UI_Manager uiManager;
@@ -86,71 +87,43 @@ public class MainHUD : MonoBehaviour
                 string parentName = t.transform.parent != null ? t.transform.parent.name.ToLower() : "";
 
                 // Stamina
-                if (parentName.Contains("stamina") || objName.Contains("stamina"))
+                if (currStamina == null && (parentName.Contains("stamina") || objName.Contains("stamina")))
                 {
-                    if (objName.Contains("curr") || objName == "stamina" || objName == "text" || objName == "value")
-                    {
-                        if (currStamina == null) currStamina = t;
-                    }
-                    else if (objName.Contains("max") || objName.Contains("total"))
-                    {
-                        if (maxStaminaText == null) maxStaminaText = t;
-                    }
+                    currStamina = t;
                 }
                 // Kg / Weight
-                else if (parentName.Contains("kg") || objName.Contains("kg") || parentName.Contains("weight"))
+                else if (currKg == null && (parentName.Contains("kg") || objName.Contains("kg") || parentName.Contains("weight")))
                 {
-                    if (objName.Contains("curr") || objName == "kg" || objName == "text" || objName == "value")
-                    {
-                        if (currKg == null) currKg = t;
-                    }
-                    else if (objName.Contains("max") || objName.Contains("total"))
-                    {
-                        if (maxKgText == null) maxKgText = t;
-                    }
+                    currKg = t;
                 }
                 // Point
-                else if (parentName.Contains("point") || objName.Contains("point"))
+                else if (currPointText == null && (parentName.Contains("point") || objName.Contains("point")))
                 {
-                    if (objName.Contains("target") || objName.Contains("total") || objName.Contains("max"))
-                    {
-                        if (targetPointText == null) targetPointText = t;
-                    }
-                    else
-                    {
-                        if (currPointText == null) currPointText = t;
-                    }
+                    currPointText = t;
                 }
                 // Time
-                else if (parentName.Contains("time") || objName.Contains("time"))
+                else if (timeText == null && (parentName.Contains("time") || objName.Contains("time")))
                 {
-                    if (timeText == null) timeText = t;
+                    timeText = t;
                 }
             }
         }
     }
 
     /// <summary>
-    /// Khởi tạo các giá trị Max (Target) ban đầu từ PlayerStats
+    /// Khởi tạo các giá trị ban đầu từ PlayerStats
     /// </summary>
     public void InitializeMaxValues(PlayerStats ps)
     {
-        if (ps == null) return;
-
-        if (maxStaminaText != null) maxStaminaText.text = $"{ps.MaxStamina:F0}";
-        if (maxKgText != null) maxKgText.text = $"{ps.Maxweight}";
-        if (targetPointText != null) targetPointText.text = $"{ps.totalpoint}";
+        UpdateHUD(ps);
     }
 
     /// <summary>
-    /// Khởi tạo các giá trị Max (Target) ban đầu từ PlayerSO (fallback)
+    /// Khởi tạo các giá trị ban đầu từ PlayerSO (fallback)
     /// </summary>
     public void InitializeMaxValues(PlayerSO pm)
     {
-        if (pm == null) return;
-
-        if (maxStaminaText != null) maxStaminaText.text = $"{pm.baseMaxStamina:F0}";
-        if (maxKgText != null) maxKgText.text = $"{pm.baseMaxWeight}";
+        UpdateHUD(pm);
     }
 
     /// <summary>
@@ -160,10 +133,11 @@ public class MainHUD : MonoBehaviour
     {
         if (ps == null) return;
 
-        // 1. Cập nhật Thể lực (Stamina)
+        // 1. Cập nhật Thể lực (Stamina: HiệnTại/TốiĐa)
         if (currStamina != null)
         {
-            currStamina.text = $"{ps.currentStamina:F1}";
+            currStamina.text = $"{ps.currentStamina:F0}/{ps.maxStamina:F0}";
+
             if (ps.maxStamina > 0f)
             {
                 float sNorm = Mathf.Clamp01(ps.currentStamina / ps.maxStamina);
@@ -177,10 +151,11 @@ public class MainHUD : MonoBehaviour
             }
         }
 
-        // 2. Cập nhật Cân nặng (Kg)
+        // 2. Cập nhật Cân nặng (Kg: HiệnTại/TốiĐaKg)
         if (currKg != null)
         {
-            currKg.text = $"{ps.currentWeight}";
+            currKg.text = $"{ps.currentWeight}/{ps.maxWeight}Kg";
+
             if (ps.maxWeight > 0)
             {
                 float wNorm = Mathf.Clamp01((float)ps.currentWeight / (float)ps.maxWeight);
@@ -194,13 +169,13 @@ public class MainHUD : MonoBehaviour
             }
         }
 
-        // 3. Cập nhật Điểm số (Point)
+        // 3. Cập nhật Điểm số (Point: HiệnTại/TốiĐa)
         if (currPointText != null)
         {
-            currPointText.text = $"{ps.currPoint}";
+            currPointText.text = $"{ps.currPoint}/{ps.totalpoint}";
         }
 
-        // 4. Cập nhật Thời gian (Time)
+        // 4. Cập nhật Thời gian (Time: MM:SS)
         if (timeText != null)
         {
             int minutes = Mathf.FloorToInt(ps.currentTime / 60f);
@@ -220,14 +195,14 @@ public class MainHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Cập nhật thông số HUD động mỗi frame từ PlayerSO (fallback)
+    /// Cập nhật thông số HUD động từ PlayerSO (fallback)
     /// </summary>
     public void UpdateHUD(PlayerSO pm)
     {
         if (pm == null) return;
 
-        if (currStamina != null) currStamina.text = $"{pm.baseMaxStamina:F1}";
-        if (currKg != null) currKg.text = "0";
+        if (currStamina != null) currStamina.text = $"{pm.baseMaxStamina:F0}/{pm.baseMaxStamina:F0}";
+        if (currKg != null) currKg.text = $"0/{pm.baseMaxWeight}Kg";
     }
 
     public void Show()

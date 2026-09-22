@@ -94,11 +94,13 @@ public class LadderController : MonoBehaviour, IInteractable
         EnsureUpright();
         InitializePoints();
         FindPlayerReferences();
+        SetLadderCollisionsIgnored(true);
     }
 
     void OnEnable()
     {
         EnsureUpright();
+        SetLadderCollisionsIgnored(true);
     }
 
     /// <summary>
@@ -116,6 +118,27 @@ public class LadderController : MonoBehaviour, IInteractable
             if (!rb.isKinematic)
             {
                 rb.angularVelocity = Vector3.zero;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Bật/tắt chế độ khóa đứng thẳng:
+    /// - isLocked = true: Đặt vào tường/sàn -> Khóa trục X & Z để thang đứng vững không bị đổ.
+    /// - isLocked = false: Ném ra không gian -> Vật lý tự do (None), thang có thể xoay và lật đổ tự nhiên.
+    /// </summary>
+    public void SetUprightLocked(bool isLocked)
+    {
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            if (isLocked)
+            {
+                EnsureUpright();
+            }
+            else
+            {
+                rb.constraints = RigidbodyConstraints.None;
             }
         }
     }
@@ -574,7 +597,7 @@ public class LadderController : MonoBehaviour, IInteractable
     public void StopClimbing()
     {
         isClimbing = false;
-        SetLadderCollisionsIgnored(false);
+        SetLadderCollisionsIgnored(true);
 
         if (playerController != null)
         {

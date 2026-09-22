@@ -47,9 +47,27 @@ public class HotbarManager : MonoBehaviour
     [Tooltip("Góc xoay 3D của vật phẩm khi cầm trên tay")]
     public Vector3 holdPointRotation = new Vector3(5f, -15f, 0f);
 
-    [Header("🔽 Drop Settings")]
-    [Tooltip("Nút bấm Thả (Drop) - chỉ hiện khi đang chọn item")]
+    [Header("🔽 Drop & Placement Settings")]
+    [Tooltip("Nút bấm Thả/Đặt (Drop/Place) - chỉ hiện khi đang chọn item")]
     public Button dropButton;
+
+    [Tooltip("Image component hiển thị icon trên nút Drop/Place")]
+    public Image dropButtonIcon;
+
+    [Tooltip("Sprite icon hiển thị khi ở trạng thái Ném (không có vật cản)")]
+    public Sprite throwIcon;
+
+    [Tooltip("Sprite icon hiển thị khi ở trạng thái Đặt (chạm tường/sàn)")]
+    public Sprite placeIcon;
+
+    [Tooltip("Góc xoay Z của icon khi ở trạng thái Ném (mặc định 90 độ)")]
+    public float throwRotationZ = 90f;
+
+    [Tooltip("Góc xoay Z của icon khi ở trạng thái Đặt (mặc định 180 độ)")]
+    public float placeRotationZ = 180f;
+
+    [Tooltip("GameObject UI hiển thị trên màn hình khi ở trạng thái Đặt (Place), tự động ẩn/hiện như nút Pickup")]
+    public GameObject placementIndicator;
 
     [Tooltip("Lực ném về phía trước khi không có vật cản")]
     [Range(0f, 10f)]
@@ -109,6 +127,25 @@ public class HotbarManager : MonoBehaviour
         {
             dropButton.onClick.AddListener(DropSelectedItem);
             dropButton.gameObject.SetActive(false); // Ẩn mặc định
+
+            if (dropButtonIcon == null)
+            {
+                var imgs = dropButton.GetComponentsInChildren<Image>(true);
+                foreach (var img in imgs)
+                {
+                    if (img != dropButton.image)
+                    {
+                        dropButtonIcon = img;
+                        break;
+                    }
+                }
+                if (dropButtonIcon == null) dropButtonIcon = dropButton.image;
+            }
+        }
+
+        if (placementIndicator != null)
+        {
+            placementIndicator.SetActive(false);
         }
 
         // LayerMask mặc định loại trừ Player, UI, TransparentFX
@@ -128,8 +165,8 @@ public class HotbarManager : MonoBehaviour
             DropSelectedItem();
         }
 
-        // Vẽ tia Raycast debug trong Scene View khi đang chọn item
-        if (showDebugRay && currentSelectedIndex >= 0 && mainCamera != null)
+        // Kiểm tra raycast kiểm tra vật cản và cập nhật UI Đặt / Ném
+        if (currentSelectedIndex >= 0 && mainCamera != null)
         {
             Vector3 dir = mainCamera.transform.forward;
             Vector3 origin = mainCamera.transform.position;
@@ -151,15 +188,57 @@ public class HotbarManager : MonoBehaviour
                 break;
             }
 
-            if (foundObstacle)
+            // Cập nhật icon nút Drop (Đặt vs Ném)
+            UpdateDropButtonVisual(foundObstacle);
+
+            // Bật/tắt GameObject hiển thị trên UI khi ở trạng thái Đặt (Place)
+            if (placementIndicator != null)
             {
-                // Màu Đỏ: Phát hiện vật cản trước mặt (sẽ đặt item tại chỗ chạm)
-                Debug.DrawLine(origin, validHit.point, Color.red);
+                if (placementIndicator.activeSelf != foundObstacle)
+                {
+                    placementIndicator.SetActive(foundObstacle);
+                }
+            }
+
+            if (showDebugRay)
+            {
+                if (foundObstacle)
+                {
+                    // Màu Đỏ: Phát hiện vật cản trước mặt (sẽ đặt item tại chỗ chạm)
+                    Debug.DrawLine(origin, validHit.point, Color.red);
+                }
+                else
+                {
+                    // Màu Xanh Lá: Không gian thoáng (sẽ ném item về phía trước)
+                    Debug.DrawRay(origin, dir * maxDropDistance, Color.green);
+                }
+            }
+        }
+        else
+        {
+            if (placementIndicator != null && placementIndicator.activeSelf)
+            {
+                placementIndicator.SetActive(false);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Cập nhật hiển thị icon nút thả (Ném vs Đặt) và góc xoay tương ứng
+    /// </summary>
+    public void UpdateDropButtonVisual(bool hasObstacle)
+    {
+        if (dropButtonIcon != null)
+        {
+            if (hasObstacle)
+            {
+                if (placeIcon != null) dropButtonIcon.sprite = placeIcon;
+                dropButtonIcon.rectTransform.localEulerAngles = new Vector3(0f, 0f, placeRotationZ);
             }
             else
             {
-                // Màu Xanh Lá: Không gian thoáng (sẽ ném item về phía trước)
-                Debug.DrawRay(origin, dir * maxDropDistance, Color.green);
+                if (throwIcon != null) dropButtonIcon.sprite = throwIcon;
+                dropButtonIcon.rectTransform.localEulerAngles = new Vector3(0f, 0f, throwRotationZ);
             }
         }
     }
@@ -495,6 +574,11 @@ public class HotbarManager : MonoBehaviour
         HideHeldModel();
         UpdateHeldItemInfoUI(null, null);
 
+        if (placementIndicator != null)
+        {
+            placementIndicator.SetActive(false);
+        }
+
         if (dropButton != null)
         {
             dropButton.gameObject.SetActive(false);
@@ -661,7 +745,8 @@ public class HotbarManager : MonoBehaviour
         forwardDir.y = 0f; // Triệt tiêu độ nghiêng theo phương thẳng đứng khi spawn
         Quaternion dropRot = (forwardDir.sqrMagnitude > 0.001f) ? Quaternion.LookRotation(forwardDir) : Quaternion.identity;
 
-        bool isLadder = itemObj.GetComponent<LadderController>() != null || itemObj.GetComponentInChildren<LadderController>() != null;
+        LadderController ladder = itemObj.GetComponent<LadderController>() ?? itemObj.GetComponentInChildren<LadderController>();
+        bool isLadder = ladder != null;
         if (isLadder)
         {
             dropRot = Quaternion.Euler(0f, dropRot.eulerAngles.y, 0f);
@@ -684,23 +769,28 @@ public class HotbarManager : MonoBehaviour
 
             if (isLadder)
             {
-                // Thang: Khóa hoàn toàn góc nghiêng X và Z để thang luôn luôn đứng thẳng khi đặt
-                rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
-                var ladder = itemObj.GetComponent<LadderController>() ?? itemObj.GetComponentInChildren<LadderController>();
-                if (ladder != null) ladder.EnsureUpright();
+                if (hasObstacle)
+                {
+                    // Chạm tường/sàn -> Khóa trục X & Z để thang đứng vững không bị đổ ngã
+                    ladder.SetUprightLocked(true);
+                }
+                else
+                {
+                    // Ném ra không gian thoáng -> Vật lý tự do, cho phép thang xoay lật và đổ ngã tự nhiên
+                    ladder.SetUprightLocked(false);
+                    rb.AddForce(forwardDir * dropForwardForce, ForceMode.Impulse);
+                }
             }
             else
             {
                 // Các vật phẩm thường: Cho phép tự do xoay, nghiêng, lăn và va chạm tự nhiên
                 rb.constraints = RigidbodyConstraints.None;
-            }
 
-            // Nếu không có vật cản trước mặt -> Thả/ném nhẹ theo hướng nhìn
-            if (!hasObstacle)
-            {
-                float force = isLadder ? 0.3f : dropForwardForce;
-                Vector3 appliedDirection = isLadder ? forwardDir : dropDirection;
-                rb.AddForce(appliedDirection * force, ForceMode.Impulse);
+                // Nếu không có vật cản trước mặt -> Ném nhẹ theo hướng nhìn
+                if (!hasObstacle)
+                {
+                    rb.AddForce(dropDirection * dropForwardForce, ForceMode.Impulse);
+                }
             }
         }
 
@@ -753,6 +843,22 @@ public class HotbarManager : MonoBehaviour
             {
                 OnSlotClicked(i);
             }
+        }
+
+        // Lăn chuột (Mouse Scroll Wheel) để cuộn chọn slot trên PC
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (slots.Count > 0 && Mathf.Abs(scroll) > 0.01f)
+        {
+            int nextIndex = currentSelectedIndex;
+            if (scroll < 0f) // Lăn xuống -> Slot tiếp theo
+            {
+                nextIndex = (currentSelectedIndex < 0) ? 0 : (currentSelectedIndex + 1) % slots.Count;
+            }
+            else if (scroll > 0f) // Lăn lên -> Slot trước đó
+            {
+                nextIndex = (currentSelectedIndex < 0) ? (slots.Count - 1) : (currentSelectedIndex - 1 + slots.Count) % slots.Count;
+            }
+            OnSlotClicked(nextIndex);
         }
 
         // Phím Q hoặc G để Drop item đang chọn

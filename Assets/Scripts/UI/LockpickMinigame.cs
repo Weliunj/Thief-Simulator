@@ -47,6 +47,9 @@ public class LockpickMinigame : MonoBehaviour
     public float baseSpeed = 400f;                  // Tốc độ ban đầu
     public float speedMultiplierPerStage = 1.5f;    // Tăng tốc mỗi stage
     public float targetScaleReductionPerStage = 0.15f; // Tỉ lệ thu nhỏ target mỗi stage
+    [Tooltip("Độ khắt khe khi bấm trúng (0.4 = rất chuẩn tâm, 0.65 = cân bằng đòi hỏi 2 vòng tròn lồng vào nhau, 1.0 = tâm indicator trong target). Tránh việc chỉ chạm nhẹ mép ngoài cũng tính trúng")]
+    [Range(0.2f, 1.2f)]
+    public float hitPrecision = 0.65f;
     [Tooltip("Thời gian chờ (giây) trước khi bắt đầu di chuyển sang stage tiếp theo")]
     public float stageTransitionDelay = 1.0f;       // Delay 1s trước khi sang stage tiếp theo
     [Tooltip("Tự động đóng Minigame khi bấm trượt/sai để người chơi chạy trốn NPC")]
@@ -223,9 +226,9 @@ public class LockpickMinigame : MonoBehaviour
         // 1. Di chuyển thanh chạy qua lại
         MoveIndicator();
 
-        // 2. Nhận tương tác phím trên PC (Space / E).
-        // KHÔNG nhận chạm/click bừa trên màn hình - Mobile bắt buộc bấm đúng lockpickButton!
-        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.E))
+        // 2. Nhận tương tác phím trên PC (Space / E / F).
+        // Mobile bắt buộc bấm đúng lockpickButton để tránh click nhầm.
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.F))
         {
             AttemptUnlock();
         }
@@ -257,17 +260,28 @@ public class LockpickMinigame : MonoBehaviour
 
     private void AttemptUnlock()
     {
-        float indicatorHalfWidth = (indicatorRect.rect.width * indicatorRect.localScale.x) / 2f;
         float targetHalfWidth = (targetZoneRect.rect.width * targetZoneRect.localScale.x) / 2f;
-
+        float targetCenterX = targetZoneRect.anchoredPosition.x;
         float currentX = indicatorRect.anchoredPosition.x;
-        float indicatorMin = Mathf.Min(lastIndicatorX, currentX) - indicatorHalfWidth;
-        float indicatorMax = Mathf.Max(lastIndicatorX, currentX) + indicatorHalfWidth;
 
-        float targetMin = targetZoneRect.anchoredPosition.x - targetHalfWidth;
-        float targetMax = targetZoneRect.anchoredPosition.x + targetHalfWidth;
+        // Tính khoảng cách gần nhất giữa tâm Indicator và tâm Target trong frame này
+        // (xét cả vị trí frame trước lastIndicatorX để chống lọt frame khi chạy tốc độ cao)
+        float minX = Mathf.Min(lastIndicatorX, currentX);
+        float maxX = Mathf.Max(lastIndicatorX, currentX);
 
-        bool isHit = (indicatorMin <= targetMax) && (indicatorMax >= targetMin);
+        float closestDistance;
+        if (targetCenterX >= minX && targetCenterX <= maxX)
+        {
+            closestDistance = 0f; // Tâm Indicator đi xuyên qua chính diện Target
+        }
+        else
+        {
+            closestDistance = Mathf.Min(Mathf.Abs(minX - targetCenterX), Mathf.Abs(maxX - targetCenterX));
+        }
+
+        // Bán kính vùng trúng hợp lệ: yêu cầu 2 vòng tròn phải lồng sâu vào nhau thay vì chỉ chạm nhẹ mép ngoài
+        float allowedHitRadius = targetHalfWidth * hitPrecision;
+        bool isHit = closestDistance <= allowedHitRadius;
 
         if (isHit)
         {
@@ -282,8 +296,6 @@ public class LockpickMinigame : MonoBehaviour
                 // Trúng lần 3 (Hoàn thành) -> Hiện đủ cả 3 ảnh và đóng panel
                 isWaitingNextStage = true;
                 UpdateProgressIcons(totalStages);
-
-                if (currentDoor != null) currentDoor.PlayVictorySound();
 
                 if (statusText != null) statusText.text = "<color=green>LOCK PICKED SUCCESSFULLY!</color>";
                 

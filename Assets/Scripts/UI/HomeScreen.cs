@@ -18,8 +18,30 @@ public class HomeScreen : MonoBehaviour
     public GameObject settingPanel;
     public ChapterSelectManager chapterSelectManager;
 
+    private void Awake()
+    {
+        // Luôn mở khóa chuột khi vào màn hình Menu
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        // Tự động đảm bảo EventSystem hoạt động
+        if (FindFirstObjectByType<UIEventSystemFixer>() == null)
+        {
+            gameObject.AddComponent<UIEventSystemFixer>();
+        }
+    }
+
+    private void OnEnable()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
     void Start()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // Tự động tìm AudioSources nếu chưa được kéo vào Inspector
         if (audioSources == null || audioSources.Length == 0)
         {

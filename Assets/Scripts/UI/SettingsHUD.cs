@@ -106,6 +106,9 @@ public class SettingsHUD : MonoBehaviour
 
     private void OnEnable()
     {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
         // Khi mở bảng Settings lên, load giá trị hiện tại đã lưu
         LoadCurrentSettingsToUI();
         ResetSaveButtonText();
