@@ -15,7 +15,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &6410275141777627212
 Transform:
@@ -145,7 +145,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &79521046628339591
 Transform:
@@ -229,14 +229,13 @@ GameObject:
   m_Component:
   - component: {fileID: 4949934326902249424}
   - component: {fileID: 1799935899007365018}
-  - component: {fileID: 3329072219907102854}
   - component: {fileID: 4201365758413010162}
   m_Layer: 0
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &4949934326902249424
 Transform:
@@ -276,26 +275,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.3679572, y: 2.1084144, z: 0.12253833}
   m_Center: {x: -0.000119805336, y: 1.0113562, z: 0.0022211075}
---- !u!114 &3329072219907102854
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8577628722364368169}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 0
-  m_Area: 0
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 1
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!114 &4201365758413010162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -313,13 +292,24 @@ MonoBehaviour:
   description: A locked door. Requires lockpicking to open.
   doorIcon: {fileID: 0}
   rewardPoints: 0
+  isUnlocked: 0
+  isOpen: 0
   doorChildModel: {fileID: 79521046628339591}
   openRotationOffset: {x: 0, y: 90, z: 0}
-  openSpeed: 3
+  openSpeed: 4
   smoothOpen: 1
+  disableColliderWhenOpen: 1
+  enableAutoOpen: 1
+  autoOpenRadius: 1.4
+  detectionCenterOffset: {x: 0, y: 1, z: 0}
+  checkInterval: 0.15
+  detectionLayerMask:
+    serializedVersion: 2
+    m_Bits: 72
   audioSource: {fileID: 3814928655061778962}
   hitSound: {fileID: 8300000, guid: 1cc422dbe6ec25246a5b0638e58424f9, type: 3}
   missSound: {fileID: 8300000, guid: ed1bd3a22e501f34bb5c8e7aebd7be37, type: 3}
-  victorySound: {fileID: 8300000, guid: d27f6616460b2f341b547fd2857851bf, type: 3}
+  victorySound: {fileID: 8300000, guid: f64beb6fcd359c94d82cf48ac3834960, type: 3}
+  openDoorSound: {fileID: 8300000, guid: d27f6616460b2f341b547fd2857851bf, type: 3}
+  closeDoorSound: {fileID: 8300000, guid: 3562293cd975d12498a0ff02cb3e8a8d, type: 3}
   callRange: 13
-  isUnlocked: 0

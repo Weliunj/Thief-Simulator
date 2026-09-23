@@ -168,8 +168,8 @@ MonoBehaviour:
   MinKg: 1
   MaxKg: 10
   followCameraPitch: 0
-  useCustomHoldOffset: 0
-  customHoldOffset: {x: 0, y: 0, z: 0}
+  useCustomHoldOffset: 1
+  customHoldOffset: {x: 0, y: 2.18, z: 0.56}
   useCustomHoldRotation: 0
   customHoldRotation: {x: 0, y: 0, z: 0}
 --- !u!114 &8596207279984169289
@@ -202,6 +202,7 @@ MonoBehaviour:
   audioSource: {fileID: 3670627727627477724}
   climbSound: {fileID: 8300000, guid: ac64528cf4fe8dc48a0efdf51be4cd07, type: 3}
   ladderJumpIcon: {fileID: 2086712602, guid: 57e5ac4fe39ae75498aeba1d893978e2, type: 3}
+  isPlaced: 1
   isClimbing: 0
 --- !u!54 &2185304470884496703
 Rigidbody:

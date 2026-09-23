@@ -896,7 +896,14 @@ public class HotbarManager : MonoBehaviour
         bool isLadder = ladder != null;
         if (isLadder)
         {
-            dropRot = Quaternion.Euler(0f, dropRot.eulerAngles.y, 0f);
+            if (hasObstacle)
+            {
+                dropRot = Quaternion.Euler(0f, dropRot.eulerAngles.y, 0f);
+            }
+            else
+            {
+                dropRot = (mainCamera != null) ? mainCamera.transform.rotation : dropRot;
+            }
         }
 
         // Thả item ra ngoài thế giới
@@ -918,14 +925,15 @@ public class HotbarManager : MonoBehaviour
             {
                 if (hasObstacle)
                 {
-                    // Chạm tường/sàn -> Khóa trục X & Z để thang đứng vững không bị đổ ngã
-                    ladder.SetUprightLocked(true);
+                    // Chạm tường/sàn -> Đặt thang cẩn thận (Place): Khóa đứng thẳng và bật quyền leo trèo
+                    ladder.SetPlaced(true);
                 }
                 else
                 {
-                    // Ném ra không gian thoáng -> Vật lý tự do, cho phép thang xoay lật và đổ ngã tự nhiên
-                    ladder.SetUprightLocked(false);
+                    // Ném ra không gian thoáng -> Ném tự do (Drop): Vật lý tự do, thang lật đổ và KHÔNG cho phép leo
+                    ladder.SetPlaced(false);
                     rb.AddForce(forwardDir * dropForwardForce, ForceMode.Impulse);
+                    rb.AddTorque(Random.insideUnitSphere * 1.5f, ForceMode.Impulse);
                 }
             }
             else

@@ -145,6 +145,12 @@ public class PlayerInventory : MonoBehaviour
             UpdateWeight();
 
             Item itemComp = itemObj.GetComponent<Item>();
+            var ladderComp = itemObj.GetComponent<LadderController>() ?? itemObj.GetComponentInChildren<LadderController>();
+            if (ladderComp != null)
+            {
+                ladderComp.SetPlaced(false);
+            }
+
             if (hotbarManager != null)
             {
                 hotbarManager.AddItem(itemObj, itemComp);
@@ -222,9 +228,9 @@ public class PlayerInventory : MonoBehaviour
 
                 if (isLadder)
                 {
-                    rbDrop.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                    rbDrop.constraints = RigidbodyConstraints.None;
                     var ladder = itemToDrop.GetComponent<LadderController>() ?? itemToDrop.GetComponentInChildren<LadderController>();
-                    if (ladder != null) ladder.EnsureUpright();
+                    if (ladder != null) ladder.SetPlaced(false);
                     rbDrop.AddForce(transform.forward * 0.5f, ForceMode.Impulse);
                 }
                 else
@@ -288,9 +294,9 @@ public class PlayerInventory : MonoBehaviour
 
                 if (isLadder)
                 {
-                    rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+                    rb.constraints = RigidbodyConstraints.None;
                     var ladder = item.GetComponent<LadderController>() ?? item.GetComponentInChildren<LadderController>();
-                    if (ladder != null) ladder.EnsureUpright();
+                    if (ladder != null) ladder.SetPlaced(false);
                     rb.AddForce(Vector3.up * 0.5f, ForceMode.Impulse);
                 }
                 else

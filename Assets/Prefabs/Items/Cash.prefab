@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 4579758588410287528}
   - component: {fileID: 6175699101147150312}
   - component: {fileID: 8126733965292105438}
-  - component: {fileID: 574409016998293141}
   m_Layer: 8
   m_Name: Cash
   m_TagString: item
@@ -58,6 +57,11 @@ MonoBehaviour:
   MaxPrice: 100
   MinKg: 1
   MaxKg: 10
+  followCameraPitch: 0
+  useCustomHoldOffset: 0
+  customHoldOffset: {x: 0, y: 0, z: 0}
+  useCustomHoldRotation: 0
+  customHoldRotation: {x: 0, y: 0, z: 0}
 --- !u!54 &6175699101147150312
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -106,26 +110,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.11817169, y: 0.25899863, z: 0.06694317}
   m_Center: {x: 0.0007097721, y: 0.00051677227, z: -0.0013467073}
---- !u!114 &574409016998293141
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6263703980385329713}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 1
-  m_Area: 0
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 1
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!1 &7662218897222207607
 GameObject:
   m_ObjectHideFlags: 0

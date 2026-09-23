@@ -227,7 +227,21 @@ public class PlayerInteraction : MonoBehaviour
         // Cập nhật thông tin vật phẩm được chọn lên UI HUD và Mobile Action Buttons
         if (currentLootItem != null || currentSpecialInteractable != null)
         {
-            IInteractable primary = currentSpecialInteractable ?? currentLootItem;
+            // Ưu tiên hiển thị: Nếu Special Interactable (Thang, Cửa) có thể tương tác được -> chọn Special Interactable.
+            // Nếu Special không thể tương tác (ví dụ Thang đang bị vứt dưới đất chưa Place) nhưng có Loot Item -> ưu tiên Loot Item (để nhặt).
+            IInteractable primary = null;
+            if (currentSpecialInteractable != null && currentSpecialInteractable.CanInteract(playerController, out _))
+            {
+                primary = currentSpecialInteractable;
+            }
+            else if (currentLootItem != null)
+            {
+                primary = currentLootItem;
+            }
+            else
+            {
+                primary = currentSpecialInteractable;
+            }
             bool canInteract = primary.CanInteract(playerController, out string failReason);
 
             if (itemInfoHUD != null)

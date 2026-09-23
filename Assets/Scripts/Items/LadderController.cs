@@ -80,6 +80,8 @@ public class LadderController : MonoBehaviour, IInteractable
     public Sprite ladderJumpIcon;
 
     [Header("🎯 Trạng thái")]
+    [Tooltip("Đánh dấu thang đã được đặt cẩn thận (Place) hay chỉ bị vứt/ném tự do (Drop). Chỉ thang đã Place mới cho phép tương tác leo trèo.")]
+    public bool isPlaced = true;
     public bool isClimbing = false;
 
     private PlayerController playerController;
@@ -153,12 +155,28 @@ public class LadderController : MonoBehaviour, IInteractable
     }
 
     /// <summary>
+    /// Thiết lập trạng thái thang đã được đặt (Place) hay ném/vứt tự do (Drop).
+    /// - isPlaced = true: Thang được dựng vào tường/sàn -> Khóa đứng thẳng và cho phép tương tác leo trèo.
+    /// - isPlaced = false: Thang bị ném tự do -> Vật lý tự do (None) và KHÔNG cho phép leo trèo (chỉ có thể nhặt).
+    /// </summary>
+    public void SetPlaced(bool placed)
+    {
+        isPlaced = placed;
+        SetUprightLocked(placed);
+        if (!placed && isClimbing)
+        {
+            StopClimbing();
+        }
+    }
+
+    /// <summary>
     /// Bật/tắt chế độ khóa đứng thẳng:
     /// - isLocked = true: Đặt vào tường/sàn -> Khóa trục X & Z để thang đứng vững không bị đổ.
     /// - isLocked = false: Ném ra không gian -> Vật lý tự do (None), thang có thể xoay và lật đổ tự nhiên.
     /// </summary>
     public void SetUprightLocked(bool isLocked)
     {
+        isPlaced = isLocked;
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -308,7 +326,7 @@ public class LadderController : MonoBehaviour, IInteractable
     /// </summary>
     private void CheckClimbInput()
     {
-        if (pointA == null || pointB == null || playerController == null) return;
+        if (!isPlaced || !canClimb || pointA == null || pointB == null || playerController == null) return;
 
         float distToA = Vector3.Distance(playerController.transform.position, pointA.position);
         float distToB = Vector3.Distance(playerController.transform.position, pointB.position);
@@ -337,7 +355,7 @@ public class LadderController : MonoBehaviour, IInteractable
     /// </summary>
     public void StartClimbing(Transform startPoint)
     {
-        if (!canClimb || playerController == null || pointA == null || pointB == null || reClimbCooldownTimer > 0f) return;
+        if (!isPlaced || !canClimb || playerController == null || pointA == null || pointB == null || reClimbCooldownTimer > 0f) return;
         if (playerController != null && !playerController.canClimb) return;
 
         FindPlayerReferences();
@@ -772,6 +790,11 @@ public class LadderController : MonoBehaviour, IInteractable
     public bool CanInteract(PlayerController player, out string failReason)
     {
         failReason = "";
+        if (!isPlaced)
+        {
+            failReason = "Thang chưa được dựng";
+            return false;
+        }
         if (!canClimb || (player != null && !player.canClimb))
         {
             failReason = "Cannot climb";
@@ -798,6 +821,7 @@ public class LadderController : MonoBehaviour, IInteractable
 
     public void Interact(PlayerController player)
     {
+        if (!isPlaced) return;
         if (playerController == null) playerController = player;
         if (pointA == null || pointB == null || reClimbCooldownTimer > 0f) return;
 

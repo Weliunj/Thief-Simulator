@@ -101,7 +101,6 @@ GameObject:
   - component: {fileID: 9096139737802833058}
   - component: {fileID: 6610689904457395312}
   - component: {fileID: 8645671414868137286}
-  - component: {fileID: 3934547536201121107}
   - component: {fileID: 7161869797062877330}
   - component: {fileID: 1483096152487574183}
   - component: {fileID: 324535323473278797}
@@ -150,6 +149,11 @@ MonoBehaviour:
   MaxPrice: 100
   MinKg: 1
   MaxKg: 10
+  followCameraPitch: 0
+  useCustomHoldOffset: 0
+  customHoldOffset: {x: 0, y: 0, z: 0}
+  useCustomHoldRotation: 0
+  customHoldRotation: {x: 0, y: 0, z: 0}
 --- !u!54 &8645671414868137286
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -177,26 +181,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &3934547536201121107
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8462310194758362648}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 1
-  m_Area: 0
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 1
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!65 &7161869797062877330
 BoxCollider:
   m_ObjectHideFlags: 0

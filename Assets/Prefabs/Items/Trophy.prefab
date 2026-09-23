@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3164455219791109866}
   - component: {fileID: 3356516085484437847}
   - component: {fileID: 1097104834500032467}
-  - component: {fileID: 3984381607885467802}
   - component: {fileID: 1955164985692547032}
   m_Layer: 8
   m_Name: Trophy
@@ -58,6 +57,11 @@ MonoBehaviour:
   MaxPrice: 45
   MinKg: 10
   MaxKg: 15
+  followCameraPitch: 0
+  useCustomHoldOffset: 0
+  customHoldOffset: {x: 0, y: 0, z: 0}
+  useCustomHoldRotation: 0
+  customHoldRotation: {x: 0, y: 0, z: 0}
 --- !u!54 &1097104834500032467
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -85,26 +89,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &3984381607885467802
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2351362709971780688}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 1
-  m_Area: 0
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 1
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!136 &1955164985692547032
 CapsuleCollider:
   m_ObjectHideFlags: 0

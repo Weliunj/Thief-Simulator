@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1062757040507773886}
-  - component: {fileID: 7998398824484040975}
   - component: {fileID: 2099927502232740632}
   - component: {fileID: 1720941869749327353}
   - component: {fileID: 548587231684883942}
@@ -31,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 1.339, y: -1.323, z: 0.018}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.028826991, y: 1, z: 0.042038}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4807061633982952860}
@@ -39,26 +38,6 @@ Transform:
   - {fileID: 5242196474354108170}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7998398824484040975
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 234054094305887531}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
-  m_SerializedVersion: 0
-  m_OverrideArea: 1
-  m_Area: 0
-  m_OverrideGenerateLinks: 0
-  m_GenerateLinks: 0
-  m_IgnoreFromBuild: 1
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!54 &2099927502232740632
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -150,8 +129,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::FlashlightController
   flashlightLight: {fileID: 1297710822342574332}
   lightIntensity: 10
-  lightRange: 25
-  spotAngle: 55
+  lightRange: 10
+  spotAngle: 60
   lightColor: {r: 1, g: 0.98, b: 0.92, a: 1}
   isOn: 0
   lightLocalOffset: {x: 0, y: 0, z: 0}
@@ -203,8 +182,8 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 5
-  m_Range: 25
+  m_Intensity: 10
+  m_Range: 10
   m_SpotAngle: 55
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 0.5, y: 0.5}

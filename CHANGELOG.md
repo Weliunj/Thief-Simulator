@@ -1080,16 +1080,42 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
       - Chế độ `PlayerMesh`: Đồng bộ góc xoay Y của vật phẩm theo thân nhân vật (`playerController.transform.rotation`), giúp vật phẩm xoay với độ trễ tự nhiên theo góc quay của Mesh thay vì quay giật theo tốc độ camera.
       - Bổ sung nội suy `Vector3.Lerp` và `Quaternion.Slerp` với các tham số `rotationSmoothSpeed` (12) và `positionSmoothSpeed` (15) tạo quán tính tự nhiên khi di chuyển/đổi hướng.
       - Thêm cờ `isFirstFrameHeld` để gán tức thì vị trí khi vừa rút item từ hotbar, tránh hiện tượng vật phẩm bay lướt từ xa tới.
+  - **Chỉ cho phép tương tác/leo thang khi thang được ĐẶT (Place vào tường/vật cản) thay vì NÉM/THẢ tự do (Drop)**:
+    - [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs):
+      - Bổ sung biến trạng thái `isPlaced` (mặc định `true` cho thang dựng sẵn trong Scene map).
+      - Bổ sung phương thức `SetPlaced(bool placed)` để cập nhật trạng thái dựng thang và tự động khóa/mở trục xoay X & Z (`SetUprightLocked`).
+      - Trong `CanInteract()`, `CheckClimbInput()`, `StartClimbing()` và `Interact()`: Bắt buộc kiểm tra `if (!isPlaced) return;`, ngăn chặn hoàn toàn việc bám/leo thang khi thang bị thả/ném tự do nằm dưới đất.
+    - [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs):
+      - Khi thả thang bằng nút Drop: Nếu trước mặt có vật cản/tường (`hasObstacle == true`), kích hoạt `ladder.SetPlaced(true)` dựng thẳng thang và cho phép leo trèo.
+      - Nếu không gian thoáng (`hasObstacle == false`), kích hoạt `ladder.SetPlaced(false)` kèm lực đẩy và xoay tự nhiên (`rb.AddTorque`), thang rơi lật tự do và không thể leo.
+    - [PlayerInventory.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInventory.cs):
+      - Đặt `ladder.SetPlaced(false)` khi nhặt thang vào túi đồ (`TryPickupItem`) hoặc khi rớt vật phẩm lúc tử vong (`DropAllItemsOnDeath`) / vứt đồ trực tiếp (`DropLastItem`).
+    - [PlayerInteraction.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInteraction.cs):
+      - Tối ưu lựa chọn `primary`: Khi nhìn vào thang đang bị vứt dưới đất (`!isPlaced`), hệ thống sẽ tự động ưu tiên `currentLootItem` để hiển thị prompt nhặt đồ `[E] Pick Up - Ladder` (và hiển thị nút Pick Up trên Mobile) thay vì hiển thị cảnh báo không thể leo.
+  - **Nâng cấp Cửa thông minh (Smart Door): Cơ chế 1 Collider duy nhất, tự động mở/đóng cho NPC và Player đã bẻ khóa, tự động chắn tầm nhìn**:
+    - [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/DoorController.cs):
+      - Loại bỏ hoàn toàn Trigger Collider phụ (tránh xung đột và vướng 2 Collider trên cửa, không làm lệch tia Raycast tâm ngắm).
+      - Sử dụng cơ chế quét khoảng cách `Physics.OverlapSphereNonAlloc` định kỳ (`checkInterval = 0.15s`) trong bán kính `autoOpenRadius` (2.5m) với tâm quét tùy chỉnh `detectionCenterOffset` (mặc định `(0, 1.0, 0)` nâng tâm lên ngang người) kèm Gizmo trực quan trong Scene:
+        - **NPC (kid, adult, Npc)**: Khi đi tới gần, cửa tự động nhận diện và xoay mở mượt mà (`SetDoorOpen(true)`), NPC không bị kẹt khi tuần tra hoặc truy đuổi.
+        - **Player**: Khi cửa chưa bẻ khóa (`!isUnlocked`), cửa giữ nguyên trạng thái đóng và hiển thị prompt `[F] Pick Lock`. Khi đã bẻ khóa (`isUnlocked`), Player chỉ cần đi lại gần là cửa tự động mở.
+        - **Khi rời xa cửa**: Khi không còn ai đứng trong bán kính quét, cửa tự động xoay đóng lại (`SetDoorOpen(false)`).
+      - Bổ sung cờ `disableColliderWhenOpen = true` và phương thức `SetDoorCollidersActive`: Tự động tắt Collider khi cửa mở (đảm bảo Player/NPC đi qua thông thoáng 100% không bị vướng mép) và tự động bật lại Collider khi cửa đã đóng kín để chắn đường và cản tầm nhìn (Line of Sight của NPC).
 - **Danh sách file thay đổi**:
   - `Assets/Scripts/Utilities/ScreenshotUtility.cs` (Lines 29-58)
   - `Assets/Scripts/UI/UI_Manager.cs` (Lines 440-455)
   - `Assets/Scripts/UI/AuthHUD.cs` (Lines 102-118)
-  - `Assets/Scripts/UI/HotbarManager.cs` (Lines 40-95, 290-375, 450-480, 725-805)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Lines 40-95, 290-375, 450-480, 725-805, 895-935)
+  - `Assets/Scripts/Items/LadderController.cs` (Lines 80-86, 155-175, 305-345, 770-805)
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Lines 228-245)
+  - `Assets/Scripts/Player/PlayerInventory.cs` (Lines 145-155, 220-230, 285-295)
+  - `Assets/Scripts/Environment/DoorController.cs` (Lines 1-285)
 - **Ảnh hưởng**:
   - Khi thoát về Menu và vào lại Map, không còn hiện tượng model vật phẩm cũ kẹt lơ lửng trước màn hình.
   - Không còn màn hình Loading HUD chạy lại khi thoát từ trận đấu về sảnh chính nếu tài khoản đã đăng nhập.
   - Chuyển đổi giữa các slot trong Hotbar mượt mà, không bị mất/xóa nhầm vật phẩm.
   - Vật phẩm cầm trên tay di chuyển và xoay có độ trễ quán tính tự nhiên, ăn khớp với chuyển động quay thân của nhân vật thay vì bị khóa cứng theo camera.
+  - Thang chỉ có thể tương tác leo trèo khi được người chơi chủ động đặt (Place) vào bề mặt tường/sàn vật cản. Nếu ném/vứt tự do (Drop) ra đất, thang sẽ áp dụng vật lý tự do ngã đổ và chỉ có thể tương tác để nhặt lại vào túi (Pick Up) chứ không thể leo.
+  - Cửa tự động mở khi NPC hoặc Player (đã bẻ khóa) đến gần và tự động đóng khi rời đi. NPC di chuyển và truy đuổi qua cửa hoàn toàn mượt mà không bị kẹt NavMesh; cánh cửa đóng cản tầm nhìn giúp Player trốn thoát an toàn.
 
 
 
