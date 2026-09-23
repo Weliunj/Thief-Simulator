@@ -36,15 +36,7 @@ public class CharacterSelectionHUD : MonoBehaviour
     [Tooltip("Panel trước đó cần bật lại khi bấm nút Close (Ví dụ: MainMenuPanel)")]
     public GameObject previousPanel;
 
-    [Header("🎯 3D Preview Settings")]
-    [Tooltip("GameObject cha chứa toàn bộ mô hình đứng preview và chỗ đứng (bục đứng) trong Scene HomeMenu")]
-    public GameObject previewModelRoot;
 
-    [Tooltip("GameObject đối tượng con chứa Mesh nhân vật (Mặc định tự động tìm con tên 'Base' bên trong previewModelRoot)")]
-    public GameObject previewCharacterTarget;
-
-    [Tooltip("Tùy chọn: Tự động ẩn 3D Model ngoài sảnh khi mở bảng Chọn Nhân Vật (để không bị che khuất giao diện UI)")]
-    public bool hidePreviewModelWhenPanelOpens = true;
 
     [Header("🔊 Audio / SFX Settings")]
     [Tooltip("AudioSource phát tiếng click chung cho toàn bộ nút và slot (tự động kết nối SFX Group)")]
@@ -91,14 +83,11 @@ public class CharacterSelectionHUD : MonoBehaviour
     public Color tabInactiveColor = new Color(0.25f, 0.28f, 0.35f, 1f);  // Xám tối / Không chọn
 
     [Header("📜 Scroll View Settings")]
-    [Tooltip("Component ScrollRect chính (tự động đổi ô Content khi bấm Male/Female)")]
+    [Tooltip("Component ScrollRect chính")]
     public ScrollRect characterScrollRect;
 
-    [Tooltip("Content danh sách nhân vật Nam")]
-    public GameObject contentMale;
-
-    [Tooltip("Content danh sách nhân vật Nữ")]
-    public GameObject contentFemale;
+    [Tooltip("Content duy nhất chứa danh sách các Slot nhân vật")]
+    public GameObject content;
 
     [Header("🔲 Slot Colors")]
     public Color slotSelectedColor = new Color(1f, 0.84f, 0.0f, 1f); // Màu Vàng rực rỡ khi được chọn
@@ -108,12 +97,35 @@ public class CharacterSelectionHUD : MonoBehaviour
     [SerializeField] private bool isMaleSelected = true;
     [SerializeField] private int selectedCharacterIndex = 0;
 
-    private List<Button> maleSlotButtons = new List<Button>();
-    private List<Button> femaleSlotButtons = new List<Button>();
+    [Header("🗂️ Character Slots (Mỗi slot chứa Mesh & Avatar)")]
+    public List<CharacterSlotItem> slotItems = new List<CharacterSlotItem>();
+    public List<Button> slotButtons = new List<Button>();
     private Coroutine saveFeedbackCoroutine;
 
     public static CharacterSaveData CurrentSaveData { get; private set; } = new CharacterSaveData();
-    private static string SaveFilePath => Path.Combine(Application.persistentDataPath, "character_save.json");
+
+    /// <summary>
+    /// Đường dẫn file save theo UID của user hiện tại (delegate sang FirebaseDataService)
+    /// Fallback về legacy path nếu DataService chưa sẵn sàng
+    /// </summary>
+    private static string SaveFilePath
+    {
+        get
+        {
+            if (FirebaseDataService.Instance != null && !string.IsNullOrEmpty(FirebaseDataService.Instance.ActiveUserId))
+            {
+                string uid = FirebaseDataService.Instance.ActiveUserId;
+                string safeId = uid;
+                foreach (char c in Path.GetInvalidFileNameChars())
+                {
+                    safeId = safeId.Replace(c, '_');
+                }
+                return Path.Combine(Application.persistentDataPath, $"character_save_{safeId}.json");
+            }
+            // Fallback: legacy path
+            return Path.Combine(Application.persistentDataPath, "character_save.json");
+        }
+    }
 
     private const string PREF_KEY_CHAR_INDEX = "SelectedCharIndex";
     private const string PREF_KEY_GENDER = "SelectedGender"; // 0 = Male, 1 = Female
@@ -124,6 +136,25 @@ public class CharacterSelectionHUD : MonoBehaviour
         AutoBindHierarchy();
         LoadSavedSelection();
         ApplyLobbyModelVisuals();
+
+        FirebaseDataService.OnUserProfileLoaded += OnFirebaseProfileLoaded;
+    }
+
+    private void OnDestroy()
+    {
+        FirebaseDataService.OnUserProfileLoaded -= OnFirebaseProfileLoaded;
+    }
+
+    private void OnFirebaseProfileLoaded(UserGameProfile profile)
+    {
+        if (profile == null) return;
+        CurrentSaveData = new CharacterSaveData(); // Xóa sạch dữ liệu cache cũ trước khi nạp profile mới
+        LoadSavedSelection();
+        ApplyLobbyModelVisuals();
+        if (gameObject.activeInHierarchy)
+        {
+            RefreshUI();
+        }
     }
 
     private void Start()
@@ -160,13 +191,6 @@ public class CharacterSelectionHUD : MonoBehaviour
     private void OnEnable()
     {
         LoadSavedSelection();
-
-        // Luôn ẩn 3D model ngoài sảnh khi đang mở bảng chọn nhân vật (tránh che khuất UI)
-        if (previewModelRoot != null)
-        {
-            previewModelRoot.SetActive(false);
-        }
-
         SetupButtonListeners();
         RefreshUI();
     }
@@ -175,75 +199,24 @@ public class CharacterSelectionHUD : MonoBehaviour
     {
         RemoveButtonListeners();
 
-        // Khi đóng bảng chọn nhân vật, khôi phục lại hiển thị model ngoài sảnh theo nhân vật đã lưu
-        ApplyLobbyModelVisuals();
+        // Không tự động hiện lại model ở đây - trách nhiệm thuộc về HomeScreen (caller)
+        // Chỉ ẩn model để tránh phantom model khi panel bị disable
     }
 
     /// <summary>
-    /// Nạp dữ liệu đã lưu từ JSON và áp dụng trang phục cho 3D Model ngoài sảnh ngay khi vào game
+    /// (Tạm thời vô hiệu hóa theo yêu cầu)
     /// </summary>
     public void ApplyLobbyModelVisuals()
     {
-        LoadSavedSelection();
-
-        if (previewModelRoot != null)
-        {
-            previewModelRoot.SetActive(true);
-
-            PlayerSO activeSO = null;
-            if (characterList != null && characterList.Count > selectedCharacterIndex && selectedCharacterIndex >= 0)
-            {
-                activeSO = characterList[selectedCharacterIndex];
-            }
-            else if (characterList != null && characterList.Count > 0)
-            {
-                activeSO = characterList[0];
-            }
-
-            if (activeSO != null)
-            {
-                GameObject characterTarget = GetPreviewCharacterTarget();
-                if (characterTarget != null)
-                {
-                    Mesh targetMesh = activeSO.GetMesh(isMaleSelected);
-                    if (targetMesh != null)
-                    {
-                        PlayerStats.ApplyMeshToModel(characterTarget, targetMesh);
-                    }
-                    PlayerStats.ApplySkinToModel(characterTarget, activeSO.characterMaterial, activeSO.characterTexture);
-                }
-            }
-        }
+        // Tạm thời vô hiệu hóa xử lý 3D Lobby Model
     }
 
     /// <summary>
-    /// Lấy GameObject con chứa Mesh và Renderer của Nhân vật (ưu tiên tìm con tên 'Base' để không sửa nhầm chỗ đứng)
-    /// </summary>
-    public GameObject GetPreviewCharacterTarget()
-    {
-        if (previewCharacterTarget != null) return previewCharacterTarget;
-        if (previewModelRoot == null) return null;
-
-        // 1. Ưu tiên tìm đối tượng con tên "Base" (không phân biệt hoa/thường)
-        Transform baseTrans = FindChildRecursive(previewModelRoot.transform, "Base");
-        if (baseTrans != null) return baseTrans.gameObject;
-
-        // 2. Tìm đối tượng có SkinnedMeshRenderer (mesh body nhân vật)
-        SkinnedMeshRenderer smr = previewModelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
-        if (smr != null) return smr.gameObject;
-
-        return previewModelRoot;
-    }
-
-    /// <summary>
-    /// Bật hoặc ẩn 3D Model ngoài sảnh (chỉ hiện trên sảnh chính MainMenuPanel / Sảnh Online)
+    /// (Tạm thời vô hiệu hóa theo yêu cầu)
     /// </summary>
     public void SetLobbyModelVisible(bool visible)
     {
-        if (previewModelRoot != null)
-        {
-            previewModelRoot.SetActive(visible);
-        }
+        // Tạm thời vô hiệu hóa xử lý 3D Lobby Model
     }
 
     /// <summary>
@@ -314,7 +287,7 @@ public class CharacterSelectionHUD : MonoBehaviour
             if (closeBtn == null) closeBtn = bottomPanel.Find("CloseBtn")?.GetComponent<Button>();
         }
 
-        // 3. Dò tìm Scroll View Contents & Slots
+        // 3. Dò tìm Scroll View Content & Slots
         Transform scrollView = transform.Find("Scroll View") ?? transform.Find("ScrollView");
         if (scrollView != null)
         {
@@ -323,8 +296,7 @@ public class CharacterSelectionHUD : MonoBehaviour
             Transform viewport = scrollView.Find("Viewport") ?? scrollView;
             if (viewport != null)
             {
-                if (contentMale == null) contentMale = viewport.Find("ContentMale")?.gameObject;
-                if (contentFemale == null) contentFemale = viewport.Find("ContentFemale")?.gameObject;
+                if (content == null) content = viewport.Find("Content")?.gameObject ?? viewport.Find("ContentMale")?.gameObject;
             }
         }
 
@@ -332,44 +304,46 @@ public class CharacterSelectionHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Thu thập danh sách các nút Slot bên trong ContentMale và ContentFemale
+    /// Thu thập danh sách các nút Slot và CharacterSlotItem bên trong Content
     /// </summary>
     private void CollectSlotButtons()
     {
-        maleSlotButtons.Clear();
-        if (contentMale != null)
+        slotButtons.Clear();
+        slotItems.Clear();
+
+        if (content != null)
         {
-            foreach (Transform child in contentMale.transform)
+            int index = 0;
+            foreach (Transform child in content.transform)
             {
                 Button btn = child.GetComponent<Button>();
                 if (btn != null)
                 {
-                    maleSlotButtons.Add(btn);
+                    slotButtons.Add(btn);
                 }
-            }
-        }
 
-        femaleSlotButtons.Clear();
-        if (contentFemale != null)
-        {
-            foreach (Transform child in femaleFemaleTransform())
-            {
-                Button btn = child.GetComponent<Button>();
-                if (btn != null)
+                CharacterSlotItem item = child.GetComponent<CharacterSlotItem>();
+                if (item == null)
                 {
-                    femaleSlotButtons.Add(btn);
+                    item = child.gameObject.AddComponent<CharacterSlotItem>();
                 }
+
+                item.AutoBindReferences();
+
+                // Tự động liên kết PlayerSO từ characterList nếu slot chưa được gán
+                if (item.characterSO == null && characterList != null && index < characterList.Count)
+                {
+                    item.characterSO = characterList[index];
+                }
+
+                slotItems.Add(item);
+                index++;
             }
         }
-    }
-
-    private Transform femaleFemaleTransform()
-    {
-        return contentFemale != null ? contentFemale.transform : transform;
     }
 
     /// <summary>
-    /// Kiểm tra xem nhân vật đã được mở khóa chưa (mặc định = true, hoặc đã lưu trong JSON / PlayerPrefs)
+    /// Kiểm tra xem nhân vật đã được mở khóa chưa (theo UID hiện tại)
     /// </summary>
     public bool IsCharacterUnlocked(PlayerSO so)
     {
@@ -381,11 +355,16 @@ public class CharacterSelectionHUD : MonoBehaviour
             return true;
         }
 
-        return PlayerPrefs.GetInt("CharUnlocked_" + so.characterId, 0) == 1;
+        if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null && FirebaseDataService.Instance.CurrentUserProfile.unlockedCharacterIds != null)
+        {
+            return FirebaseDataService.Instance.CurrentUserProfile.unlockedCharacterIds.Contains(so.characterId);
+        }
+
+        return false;
     }
 
     /// <summary>
-    /// Mở khóa nhân vật và lưu vào JSON + PlayerPrefs
+    /// Mở khóa nhân vật và lưu vào JSON + Firebase của User hiện tại
     /// </summary>
     public void UnlockCharacter(PlayerSO so)
     {
@@ -403,8 +382,12 @@ public class CharacterSelectionHUD : MonoBehaviour
 
         SaveCharacterDataToJSON();
 
-        PlayerPrefs.SetInt("CharUnlocked_" + so.characterId, 1);
-        PlayerPrefs.Save();
+        // Đồng bộ mở khóa nhân vật lên Firebase Cloud
+        if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null)
+        {
+            FirebaseDataService.Instance.UnlockCharacter(so.characterId);
+        }
+
         Debug.Log($"<color=cyan>[CharacterSelectionHUD] Đã mở khóa thành công nhân vật: {so.characterName} (ID: {so.characterId})</color>");
     }
 
@@ -458,37 +441,18 @@ public class CharacterSelectionHUD : MonoBehaviour
         if (saveBtn != null) saveBtn.onClick.AddListener(OnSaveButtonClicked);
         if (closeBtn != null) closeBtn.onClick.AddListener(OnCloseButtonClicked);
 
-        // Gắn sự kiện cho các Slot Male
-        for (int i = 0; i < maleSlotButtons.Count; i++)
+        // Gắn sự kiện cho các Slot
+        for (int i = 0; i < slotButtons.Count; i++)
         {
             int index = i;
-            maleSlotButtons[i].onClick.AddListener(() => OnSlotClicked(index));
+            slotButtons[i].onClick.AddListener(() => OnSlotClicked(index));
 
             // Đăng ký riêng cho nút con Button bên trong LockImg -> Image để mở khóa
-            Transform lockImg = FindChildRecursive(maleSlotButtons[i].transform, "LockImg");
+            Transform lockImg = FindChildRecursive(slotButtons[i].transform, "LockImg");
             if (lockImg != null)
             {
                 Button lockBtn = FindChildRecursive(lockImg, "Image")?.GetComponent<Button>() ?? lockImg.GetComponent<Button>();
-                if (lockBtn != null && lockBtn != maleSlotButtons[i])
-                {
-                    lockBtn.onClick.RemoveAllListeners();
-                    lockBtn.onClick.AddListener(() => OnUnlockButtonClicked(index));
-                }
-            }
-        }
-
-        // Gắn sự kiện cho các Slot Female
-        for (int i = 0; i < femaleSlotButtons.Count; i++)
-        {
-            int index = i;
-            femaleSlotButtons[i].onClick.AddListener(() => OnSlotClicked(index));
-
-            // Đăng ký riêng cho nút con Button bên trong LockImg -> Image để mở khóa
-            Transform lockImg = FindChildRecursive(femaleSlotButtons[i].transform, "LockImg");
-            if (lockImg != null)
-            {
-                Button lockBtn = FindChildRecursive(lockImg, "Image")?.GetComponent<Button>() ?? lockImg.GetComponent<Button>();
-                if (lockBtn != null && lockBtn != femaleSlotButtons[i])
+                if (lockBtn != null && lockBtn != slotButtons[i])
                 {
                     lockBtn.onClick.RemoveAllListeners();
                     lockBtn.onClick.AddListener(() => OnUnlockButtonClicked(index));
@@ -507,20 +471,7 @@ public class CharacterSelectionHUD : MonoBehaviour
         if (saveBtn != null) saveBtn.onClick.RemoveListener(OnSaveButtonClicked);
         if (closeBtn != null) closeBtn.onClick.RemoveListener(OnCloseButtonClicked);
 
-        foreach (var btn in maleSlotButtons)
-        {
-            if (btn != null)
-            {
-                btn.onClick.RemoveAllListeners();
-                Transform lockImg = FindChildRecursive(btn.transform, "LockImg");
-                if (lockImg != null)
-                {
-                    Button lockBtn = FindChildRecursive(lockImg, "Image")?.GetComponent<Button>() ?? lockImg.GetComponent<Button>();
-                    if (lockBtn != null && lockBtn != btn) lockBtn.onClick.RemoveAllListeners();
-                }
-            }
-        }
-        foreach (var btn in femaleSlotButtons)
+        foreach (var btn in slotButtons)
         {
             if (btn != null)
             {
@@ -536,7 +487,7 @@ public class CharacterSelectionHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Đọc dữ liệu nhân vật đã lưu từ file JSON (character_save.json) và đồng bộ với GameSession / PlayerPrefs
+    /// Đọc dữ liệu nhân vật đã lưu từ file JSON (character_save.json) và đồng bộ với Firebase Cloud & GameSession
     /// </summary>
     public void LoadSavedSelection()
     {
@@ -558,6 +509,27 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             Debug.LogError($"[CharacterSelectionHUD] Lỗi khi đọc file JSON ({SaveFilePath}): {ex.Message}");
             CurrentSaveData = new CharacterSaveData();
+        }
+
+        // Ưu tiên nạp từ Firebase Cloud nếu đã có phiên đăng nhập
+        if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null && !string.IsNullOrEmpty(FirebaseDataService.Instance.CurrentUserProfile.uid))
+        {
+            var fbProfile = FirebaseDataService.Instance.CurrentUserProfile;
+            CurrentSaveData.selectedCharacterIndex = fbProfile.selectedCharacterIndex;
+            CurrentSaveData.selectedCharacterId = fbProfile.selectedCharacterId;
+            CurrentSaveData.isMale = fbProfile.isMale;
+
+            if (fbProfile.unlockedCharacterIds != null)
+            {
+                if (CurrentSaveData.unlockedCharacterIds == null) CurrentSaveData.unlockedCharacterIds = new List<string>();
+                foreach (var id in fbProfile.unlockedCharacterIds)
+                {
+                    if (!CurrentSaveData.unlockedCharacterIds.Contains(id))
+                    {
+                        CurrentSaveData.unlockedCharacterIds.Add(id);
+                    }
+                }
+            }
         }
 
         // Tự động đảm bảo tất cả nhân vật mở khóa mặc định (isUnlockedByDefault) đều có trong danh sách
@@ -596,7 +568,7 @@ public class CharacterSelectionHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Lưu trạng thái hiện tại vào file JSON (character_save.json)
+    /// Lưu trạng thái hiện tại vào file JSON (character_save.json) và đồng bộ lên Firebase Cloud
     /// </summary>
     public void SaveCharacterDataToJSON()
     {
@@ -612,6 +584,13 @@ public class CharacterSelectionHUD : MonoBehaviour
             string json = JsonUtility.ToJson(CurrentSaveData, true);
             File.WriteAllText(SaveFilePath, json);
             Debug.Log($"<color=cyan>[CharacterSelectionHUD] Đã lưu thông tin nhân vật vào JSON ({SaveFilePath}):\n{json}</color>");
+
+            // Đồng bộ trực tiếp lên Firebase Realtime Database
+            if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null)
+            {
+                string charId = !string.IsNullOrEmpty(CurrentSaveData.selectedCharacterId) ? CurrentSaveData.selectedCharacterId : "char_01";
+                FirebaseDataService.Instance.SetSelectedCharacter(charId, selectedCharacterIndex, isMaleSelected);
+            }
         }
         catch (System.Exception ex)
         {
@@ -650,14 +629,49 @@ public class CharacterSelectionHUD : MonoBehaviour
     /// <summary>
     /// Bấm trực tiếp vào nút ổ khóa Image trong LockImg để mở khóa
     /// </summary>
-    public void OnUnlockButtonClicked(int index)
+    public async void OnUnlockButtonClicked(int index)
     {
         if (index >= 0 && index < characterList.Count)
         {
             PlayerSO so = characterList[index];
             if (!IsCharacterUnlocked(so))
             {
+                // Kiểm tra số tiền hiện tại của người chơi
+                int currentCash = FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null
+                    ? FirebaseDataService.Instance.CurrentUserProfile.cash
+                    : PlayerPrefs.GetInt("PlayerCash", 0);
+
+                if (so.unlockPrice > 0 && currentCash < so.unlockPrice)
+                {
+                    Debug.LogWarning($"<color=red>[CharacterSelectionHUD] Không đủ tiền mua {so.characterName}! Cần ${so.unlockPrice}, hiện có ${currentCash}</color>");
+                    PlayClickSound();
+                    return;
+                }
+
+                // Trừ tiền khi mua
+                if (so.unlockPrice > 0)
+                {
+                    if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null)
+                    {
+                        bool spendOk = await FirebaseDataService.Instance.TrySpendCash(so.unlockPrice);
+                        if (!spendOk)
+                        {
+                            Debug.LogWarning("[CharacterSelectionHUD] Trừ tiền thất bại!");
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        PlayerPrefs.SetInt("PlayerCash", currentCash - so.unlockPrice);
+                        PlayerPrefs.Save();
+                    }
+                }
+
                 UnlockCharacter(so);
+
+                // Cập nhật lại UI tiền mặt ngoài HomeScreen nếu có
+                HomeScreen home = FindFirstObjectByType<HomeScreen>(FindObjectsInactive.Include);
+                if (home != null) home.RefreshProfileUI();
             }
 
             selectedCharacterIndex = index;
@@ -698,7 +712,12 @@ public class CharacterSelectionHUD : MonoBehaviour
             return;
         }
 
-        // Nếu ô đang chọn ĐÃ mở khóa -> Lưu vào JSON + PlayerPrefs và hiển thị "Saved" chữ trắng
+        // Nếu ô đang chọn ĐÃ mở khóa -> Truyền Mesh & Avatar từ Slot sang PlayerSO rồi Lưu
+        if (slotItems != null && slotItems.Count > selectedCharacterIndex && slotItems[selectedCharacterIndex] != null)
+        {
+            slotItems[selectedCharacterIndex].ApplyDataToPlayerSO();
+        }
+
         SaveCharacterDataToJSON();
 
         PlayerPrefs.SetInt(PREF_KEY_CHAR_INDEX, selectedCharacterIndex);
@@ -774,23 +793,6 @@ public class CharacterSelectionHUD : MonoBehaviour
     public void RefreshUI()
     {
         // 1. Cập nhật Tab Giới tính & Đổi màu Button con
-        if (contentMale != null) contentMale.SetActive(isMaleSelected);
-        if (contentFemale != null) contentFemale.SetActive(!isMaleSelected);
-
-        // Tự động hoán đổi Content của ScrollRect sang Content của Giới tính đang chọn
-        if (characterScrollRect != null)
-        {
-            GameObject activeContent = isMaleSelected ? contentMale : contentFemale;
-            if (activeContent != null)
-            {
-                RectTransform rt = activeContent.GetComponent<RectTransform>();
-                if (rt != null && characterScrollRect.content != rt)
-                {
-                    characterScrollRect.content = rt;
-                }
-            }
-        }
-
         if (maleBtnChildImage != null)
         {
             maleBtnChildImage.color = isMaleSelected ? maleActiveColor : tabInactiveColor;
@@ -801,20 +803,55 @@ public class CharacterSelectionHUD : MonoBehaviour
             femaleBtnChildImage.color = !isMaleSelected ? femaleActiveColor : tabInactiveColor;
         }
 
-        // 2. Cập nhật trạng thái Khóa (LockImg) và màu các Slot
-        UpdateSlotsLockVisuals(maleSlotButtons);
-        UpdateSlotsLockVisuals(femaleSlotButtons);
-
-        List<Button> activeSlotButtons = isMaleSelected ? maleSlotButtons : femaleSlotButtons;
-        for (int i = 0; i < activeSlotButtons.Count; i++)
+        // 2. Cập nhật Icon/Avatar, trạng thái Khóa (LockImg), giá tiền và màu các Slot
+        for (int i = 0; i < slotButtons.Count; i++)
         {
-            if (activeSlotButtons[i] == null) continue;
+            if (slotButtons[i] == null) continue;
 
-            Image slotImg = activeSlotButtons[i].GetComponent<Image>();
-            if (slotImg != null)
+            bool isSelected = (i == selectedCharacterIndex);
+            bool isUnlocked = (i < characterList.Count) && IsCharacterUnlocked(characterList[i]);
+
+            // Nếu có component CharacterSlotItem trên Slot -> Cập nhật trực tiếp qua component
+            if (i < slotItems.Count && slotItems[i] != null)
             {
-                bool isSelected = (i == selectedCharacterIndex);
-                slotImg.color = isSelected ? slotSelectedColor : slotDefaultColor;
+                slotItems[i].UpdateSlotUI(isMaleSelected, isSelected, isUnlocked, slotSelectedColor, slotDefaultColor);
+            }
+            else
+            {
+                // Fallback nếu chưa gắn component
+                Image slotImg = slotButtons[i].GetComponent<Image>();
+                if (slotImg != null) slotImg.color = isSelected ? slotSelectedColor : slotDefaultColor;
+
+                if (i < characterList.Count && characterList[i] != null)
+                {
+                    PlayerSO so = characterList[i];
+                    Sprite activeAvatar = so.GetAvatar(isMaleSelected);
+
+                    Transform iconTrans = FindChildRecursive(slotButtons[i].transform, "Icon") 
+                        ?? FindChildRecursive(slotButtons[i].transform, "Avatar") 
+                        ?? FindChildRecursive(slotButtons[i].transform, "Image");
+
+                    if (iconTrans != null)
+                    {
+                        Image iconImg = iconTrans.GetComponent<Image>();
+                        if (iconImg != null && activeAvatar != null) iconImg.sprite = activeAvatar;
+                    }
+
+                    Transform lockImg = FindChildRecursive(slotButtons[i].transform, "LockImg");
+                    if (lockImg != null)
+                    {
+                        lockImg.gameObject.SetActive(!isUnlocked);
+                        if (!isUnlocked)
+                        {
+                            Transform priceTrans = FindChildRecursive(lockImg, "Price");
+                            if (priceTrans != null)
+                            {
+                                TextMeshProUGUI priceTmp = priceTrans.GetComponent<TextMeshProUGUI>();
+                                if (priceTmp != null) priceTmp.text = $"${so.unlockPrice}";
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -823,49 +860,6 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             PlayerSO activeSO = characterList[selectedCharacterIndex];
             UpdateInfoPanel(activeSO);
-            UpdatePreviewModel(activeSO);
-        }
-    }
-
-    /// <summary>
-    /// Cập nhật hiển thị UI Khóa (LockImg) và giá tiền cho từng Slot
-    /// </summary>
-    private void UpdateSlotsLockVisuals(List<Button> slotButtons)
-    {
-        for (int i = 0; i < slotButtons.Count; i++)
-        {
-            if (slotButtons[i] == null) continue;
-
-            // Tìm GameObject cha LockImg bằng hàm đệ quy an toàn
-            Transform lockImg = FindChildRecursive(slotButtons[i].transform, "LockImg");
-
-            if (lockImg != null)
-            {
-                bool isUnlocked = (i < characterList.Count) && IsCharacterUnlocked(characterList[i]);
-                lockImg.gameObject.SetActive(!isUnlocked);
-
-                // Nếu đang khóa và có Text/TextMeshPro Price con, cập nhật số tiền
-                if (!isUnlocked && i < characterList.Count && characterList[i] != null)
-                {
-                    Transform priceTrans = FindChildRecursive(lockImg, "Price");
-                    if (priceTrans != null)
-                    {
-                        TextMeshProUGUI priceTmp = priceTrans.GetComponent<TextMeshProUGUI>();
-                        if (priceTmp != null)
-                        {
-                            priceTmp.text = $"${characterList[i].unlockPrice}";
-                        }
-                        else
-                        {
-                            Text priceLegacy = priceTrans.GetComponent<Text>();
-                            if (priceLegacy != null)
-                            {
-                                priceLegacy.text = $"${characterList[i].unlockPrice}";
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 
@@ -928,19 +922,5 @@ public class CharacterSelectionHUD : MonoBehaviour
         }
     }
 
-    private void UpdatePreviewModel(PlayerSO so)
-    {
-        if (previewModelRoot == null || so == null) return;
 
-        GameObject characterTarget = GetPreviewCharacterTarget();
-        if (characterTarget == null) return;
-
-        Mesh targetMesh = so.GetMesh(isMaleSelected);
-        if (targetMesh != null)
-        {
-            PlayerStats.ApplyMeshToModel(characterTarget, targetMesh);
-        }
-
-        PlayerStats.ApplySkinToModel(characterTarget, so.characterMaterial, so.characterTexture);
-    }
 }

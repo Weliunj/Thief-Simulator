@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 public class HomeScreen : MonoBehaviour
 {
@@ -13,12 +14,26 @@ public class HomeScreen : MonoBehaviour
     public Button exitButton;
     public Button optionsButton;
     public Button characterButton;
+    public Button multiplayerButton; // Nút Chơi mạng (Multiplayer)
+    public Button infoButton;        // Nút mở Hồ sơ / InfoPanel (Avatar hoặc Profile Icon)
+
+    [Header("👤 Player Info Display (Lobby)")]
+    public TextMeshProUGUI playerNameText; // Text hiển thị Tên người chơi ngoài HomeScreen
+    public TextMeshProUGUI playerCashText; // Text hiển thị Tiền Cash ngoài HomeScreen (nếu có)
+
+    [Header("🧪 Network Test / Simulation")]
+    [Tooltip("Tích vào đây để giả lập Mất Mạng (Offline) ngay trong Unity Editor để kiểm tra nút Multiplayer mờ đi")]
+    public bool simulateOffline = false;
 
     [Header("🚪 Panels Reference")]
+    public GameObject authPanel; // Panel Đăng nhập / Đăng ký
     public GameObject mainMenuPanel;
     public GameObject settingPanel;
     public GameObject characterSelectPanel;
+    public GameObject infoPanel; // Panel Hồ sơ / Thông tin người chơi (InfoPanel)
     public ChapterSelectManager chapterSelectManager;
+
+    private float networkCheckTimer = 0f;
 
     private void Awake()
     {
@@ -76,21 +91,36 @@ public class HomeScreen : MonoBehaviour
             }
         }
 
-        // Khởi động: Bật Main Menu, tắt tất cả các panel khác
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+        // Tự động tìm AuthPanel nếu chưa kéo
+        if (authPanel == null)
+        {
+            Transform a = transform.Find("AuthPanel") ?? transform.Find("AuthHUD") ?? transform.Find("LoginPanel");
+            if (a != null) authPanel = a.gameObject;
+        }
+
+        bool isAlreadyLoggedIn = FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.IsLoggedIn;
+
+        // Khởi động: Nếu chưa đăng nhập và có AuthPanel -> Bật AuthPanel, tắt Main Menu
+        if (authPanel != null && !isAlreadyLoggedIn)
+        {
+            authPanel.SetActive(true);
+            if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        }
+        else
+        {
+            if (authPanel != null) authPanel.SetActive(false);
+            if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+        }
+
         if (settingPanel != null) settingPanel.SetActive(false);
         if (characterSelectPanel != null) characterSelectPanel.SetActive(false);
+        if (infoPanel != null) infoPanel.SetActive(false);
         if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
         {
             chapterSelectManager.chapterSelectPanel.SetActive(false);
         }
 
-        // Tự động load và áp dụng Mesh/Material đã lưu vào 3D Model ngoài sảnh ngay khi vào game
-        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
-        if (charHud != null)
-        {
-            charHud.ApplyLobbyModelVisuals();
-        }
+
 
         // Tự động tìm các Buttons nếu chưa gán
         if (playButton == null)
@@ -113,30 +143,183 @@ public class HomeScreen : MonoBehaviour
             Transform c = transform.Find("CharacterButton") ?? transform.Find("CharacterBtn") ?? transform.Find("CharBtn") ?? transform.Find("SkinBtn");
             if (c != null) characterButton = c.GetComponent<Button>();
         }
+        if (multiplayerButton == null)
+        {
+            Transform m = transform.Find("MultiplayerButton") ?? transform.Find("MultiplayerBtn") ?? transform.Find("OnlineButton") ?? transform.Find("OnlineBtn") ?? transform.Find("CoopBtn");
+            if (m != null) multiplayerButton = m.GetComponent<Button>();
+        }
+        if (infoPanel == null)
+        {
+            Transform info = transform.Find("InfoPanel") ?? transform.Find("ProfilePanel") ?? transform.Find("UserInfoPanel");
+            if (info != null)
+            {
+                infoPanel = info.gameObject;
+                infoPanel.SetActive(false);
+            }
+        }
 
+        if (infoButton == null)
+        {
+            Transform ib = transform.Find("InfoButton") ?? transform.Find("InfoBtn") ?? transform.Find("ProfileButton") ?? transform.Find("ProfileBtn") ?? transform.Find("AvatarButton");
+            if (ib != null) infoButton = ib.GetComponent<Button>();
+        }
+
+        if (playerNameText == null)
+        {
+            Transform pnt = transform.Find("PlayerNameText") ?? transform.Find("UsernameText") ?? transform.Find("NameText");
+            if (pnt != null) playerNameText = pnt.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (playerCashText == null)
+        {
+            Transform pct = transform.Find("PlayerCashText") ?? transform.Find("CashText") ?? transform.Find("GoldText");
+            if (pct != null) playerCashText = pct.GetComponent<TextMeshProUGUI>();
+        }
+
+        // Đăng ký sự kiện Click cho toàn bộ các nút trên HomeScreen
         if (playButton != null)
         {
             playButton.onClick.RemoveListener(Play_Clicked);
             playButton.onClick.AddListener(Play_Clicked);
         }
-
         if (exitButton != null)
         {
             exitButton.onClick.RemoveListener(Exit_Clicked);
             exitButton.onClick.AddListener(Exit_Clicked);
         }
-
         if (optionsButton != null)
         {
             optionsButton.onClick.RemoveListener(Options_Clicked);
             optionsButton.onClick.AddListener(Options_Clicked);
         }
-
         if (characterButton != null)
         {
             characterButton.onClick.RemoveListener(Character_Clicked);
             characterButton.onClick.AddListener(Character_Clicked);
         }
+        if (multiplayerButton != null)
+        {
+            multiplayerButton.onClick.RemoveListener(Multiplayer_Clicked);
+            multiplayerButton.onClick.AddListener(Multiplayer_Clicked);
+        }
+        if (infoButton != null)
+        {
+            infoButton.onClick.RemoveListener(Info_Clicked);
+            infoButton.onClick.AddListener(Info_Clicked);
+        }
+
+        // Lắng nghe sự kiện đồng bộ từ Firebase để tự động cập nhật Tên và Tiền trên HomeScreen
+        FirebaseDataService.OnUserProfileLoaded += OnUserProfileChanged;
+        FirebaseDataService.OnUserProfileUpdated += OnUserProfileChanged;
+        FirebaseAuthService.OnUserSignedIn += OnUserSignedInChanged;
+
+        UpdatePlayerProfileVisuals();
+        UpdateNetworkButtonsVisuals();
+    }
+
+    private void OnDestroy()
+    {
+        FirebaseDataService.OnUserProfileLoaded -= OnUserProfileChanged;
+        FirebaseDataService.OnUserProfileUpdated -= OnUserProfileChanged;
+        FirebaseAuthService.OnUserSignedIn -= OnUserSignedInChanged;
+    }
+
+    private void OnUserProfileChanged(UserGameProfile profile)
+    {
+        UpdatePlayerProfileVisuals();
+    }
+
+    private void OnUserSignedInChanged(Firebase.Auth.FirebaseUser user)
+    {
+        UpdatePlayerProfileVisuals();
+    }
+
+    /// <summary>
+    /// Cập nhật Tên người chơi và Tiền mặt hiển thị trực tiếp ngoài HomeScreen
+    /// </summary>
+    public void UpdatePlayerProfileVisuals()
+    {
+        string username = "Thief";
+        int cash = 0;
+
+        if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null)
+        {
+            username = FirebaseDataService.Instance.CurrentUserProfile.username;
+            cash = FirebaseDataService.Instance.CurrentUserProfile.cash;
+        }
+        else if (FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.CurrentUser != null)
+        {
+            username = string.IsNullOrEmpty(FirebaseAuthService.Instance.CurrentUser.DisplayName) ? "Thief" : FirebaseAuthService.Instance.CurrentUser.DisplayName;
+        }
+
+        if (playerNameText != null) playerNameText.text = username;
+        if (playerCashText != null) playerCashText.text = $"${cash}";
+    }
+
+    /// <summary>
+    /// Alias để các HUD khác có thể gọi đồng bộ
+    /// </summary>
+    public void RefreshProfileUI() => UpdatePlayerProfileVisuals();
+
+    private void Update()
+    {
+        // Phím tắt Test: Bấm 'M' để cộng 1.000$ Cash
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            if (FirebaseDataService.Instance != null)
+            {
+                FirebaseDataService.Instance.AddCash(1000);
+                UpdatePlayerProfileVisuals();
+                Debug.Log("<color=green>[CHEAT TEST] Đã bấm 'M' → Cộng +1,000$ Tiền mặt!</color>");
+            }
+        }
+
+        // Kiểm tra trạng thái mạng định kỳ mỗi 0.5s để cập nhật độ sáng/mờ của nút Multiplayer
+        networkCheckTimer += Time.unscaledDeltaTime;
+        if (networkCheckTimer >= 0.5f)
+        {
+            networkCheckTimer = 0f;
+            UpdateNetworkButtonsVisuals();
+        }
+    }
+
+    /// <summary>
+    /// Cập nhật hiển thị (sáng/mờ/khóa) của các nút Online/Multiplayer dựa trên kết nối mạng
+    /// </summary>
+    public void UpdateNetworkButtonsVisuals()
+    {
+        bool isOnline = !simulateOffline && FirebaseAuthService.IsNetworkAvailable;
+
+        if (multiplayerButton != null)
+        {
+            multiplayerButton.interactable = isOnline;
+
+            // Làm mờ Image của Button khi mất mạng
+            Image btnImg = multiplayerButton.GetComponent<Image>();
+            if (btnImg != null)
+            {
+                btnImg.color = isOnline ? Color.white : new Color(1f, 1f, 1f, 0.38f);
+            }
+
+            // Làm mờ Text con của Button
+            TMPro.TextMeshProUGUI btnText = multiplayerButton.GetComponentInChildren<TMPro.TextMeshProUGUI>(true);
+            if (btnText != null)
+            {
+                btnText.alpha = isOnline ? 1.0f : 0.4f;
+            }
+        }
+    }
+
+    public void Multiplayer_Clicked()
+    {
+        PlayClickSound();
+        if (!FirebaseAuthService.IsNetworkAvailable || simulateOffline)
+        {
+            Debug.LogWarning("[HomeScreen] Không thể vào chế độ Multiplayer vì không có kết nối mạng!");
+            return;
+        }
+
+        Debug.Log("<color=cyan>[HomeScreen] Mở sảnh Multiplayer Online (Task 2.1)!</color>");
     }
 
     public void Character_Clicked()
@@ -144,7 +327,6 @@ public class HomeScreen : MonoBehaviour
         PlayClickSound();
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
 
-        // Ẩn 3D model ngoài sảnh khi mở bảng Chọn nhân vật
         CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
         if (hud != null)
         {
@@ -175,6 +357,47 @@ public class HomeScreen : MonoBehaviour
         }
     }
 
+    public void Info_Clicked()
+    {
+        PlayClickSound();
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+
+        // Ẩn 3D model ngoài sảnh khi mở InfoPanel
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.SetLobbyModelVisible(false);
+        }
+
+        if (infoPanel != null)
+        {
+            infoPanel.SetActive(true);
+            ProfileHUD pHud = infoPanel.GetComponent<ProfileHUD>() ?? infoPanel.GetComponentInChildren<ProfileHUD>(true);
+            if (pHud != null)
+            {
+                pHud.mainMenuPanel = mainMenuPanel;
+                pHud.authPanel = authPanel;
+                pHud.RefreshProfileUI();
+            }
+        }
+    }
+
+    public void CloseInfoPanel()
+    {
+        PlayClickSound();
+        if (infoPanel != null) infoPanel.SetActive(false);
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+
+        // Hiện lại 3D model ngoài sảnh chính
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.ApplyLobbyModelVisuals();
+        }
+
+        UpdatePlayerProfileVisuals();
+    }
+
     public void Play_Clicked()
     {
         PlayClickSound();
@@ -199,6 +422,10 @@ public class HomeScreen : MonoBehaviour
     public void Exit_Clicked()
     {
         PlayClickSound();
+        if (FirebaseDataService.Instance != null)
+        {
+            FirebaseDataService.Instance.SaveLocalSnapshot();
+        }
         Debug.Log("Exit Game");
         StartCoroutine(QuitAfterDelay(0.5f));
     }

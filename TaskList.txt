@@ -1,0 +1,63 @@
+🔹 GIAI ĐOẠN 1: Firebase Auth & User Profile (Làm đầu tiên)
+Mục tiêu: Quản lý tài khoản, định danh người chơi (UID, Tên, Cấp độ, Tiền, Nhân vật đã chọn).
+
+ Task 1.1: Tích hợp Firebase SDK (Firebase Auth, Firebase Firestore / Realtime Database) vào Unity.
+ Task 1.2: Xây dựng UI Đăng ký / Đăng nhập / Quên mật khẩu / Đăng nhập ẩn danh (Guest).
+ Task 1.3: Tạo UserManager / PlayerDataService:
+Lưu và tải thông tin người chơi lên Firebase (Nickname, Gold, Inventory, Nhân vật đang chọn từ PlayerSO).
+Tự động đồng bộ với 
+
+GameSession.cs
+ khi vào game.
+
+
+
+
+
+
+
+
+
+
+🔹 GIAI ĐOẠN 2: Tích hợp PUN2 & Tái Cấu Trúc Network (Cốt lõi quyết định)
+Mục tiêu: Biến các hệ thống Gameplay hiện tại thành Multiplayer an toàn.
+
+ Task 2.1 — Photon Lobby & Matchmaking:
+Cài đặt PUN2 & PhotonServerSettings.
+Tạo NetworkLobbyHUD: Tạo phòng (Create Room), Danh sách phòng (Room List), Tham gia phòng bằng mã (Join by Code), Ready/Start Game.
+ Task 2.2 — Network Player Synchronization:
+Gắn PhotonView, PhotonTransformView, PhotonAnimatorView lên Prefab Player.
+Sửa 
+
+PlayerController.cs
+: Chỉ nhận input và điều khiển Camera nếu photonView.IsMine.
+Đồng bộ ngoại hình (Mesh + Material theo giới tính) qua CustomProperties của Photon Player.
+ Task 2.3 — Network Interaction & Items:
+Đồng bộ nhặt đồ (Pickup / Hotbar): Khi 1 người nhặt item, gọi RPC / PhotonNetwork.Destroy để biến mất trên màn hình các player khác.
+Đồng bộ mở Cửa (
+
+DoorController.cs
+) và leo Thang (
+
+LadderController.cs
+) qua RPC ([PunRPC]).
+🔹 GIAI ĐOẠN 3: Rework AI (Network Synchronized AI)
+Mục tiêu: AI tuần tra, phát hiện và săn đuổi bất kỳ người chơi nào trong phòng.
+
+ Task 3.1 — MasterClient AI Authority:
+Cấu trúc AI chỉ tính toán NavMesh / Logic truy đuổi trên máy của Host (MasterClient) để tránh xung đột desync, các Client khác chỉ nhận vị trí và animation qua PhotonView.
+ Task 3.2 — Multi-Target Detection & Alert:
+Nâng cấp tầm nhìn FOV và thính giác (Hearing footsteps/sound): Phát hiện bất kỳ tên trộm nào gây ồn gần nhất.
+Cơ chế báo động (Alarm/Siren) sync cho cả phòng.
+ Task 3.3 — Bắt giữ & Cứu đồng đội (Downed & Revive State):
+Khi bị AI bắt: Chuyển player sang trạng thái Bị Bắt / Còng Tay (IsCuffed), cho phép đồng đội khác lại gần bấm nút tương tác để giải cứu.
+🔹 GIAI ĐOẠN 4: Rework Intro & Chapter 1 (Hoàn thiện nội dung)
+Mục tiêu: Đưa người chơi qua cốt truyện, intro và màn chơi trộm đồ co-op hoàn chỉnh.
+
+ Task 4.1 — Flow Chuyển Cảnh Mượt Mà:
+Đồng bộ PhotonNetwork.LoadLevel khi Host bắt đầu màn chơi.
+Rework Intro Cutscene: Có thể xem intro đơn hoặc skip đồng loạt để vào map cùng lúc.
+ Task 4.2 — Rework Chapter 1 Gameplay:
+Spawner đồ đạc ngẫu nhiên đồng bộ hạt giống (Random Seed) giữa các máy.
+Mục tiêu nhiệm vụ chung (Shared Loot Goal: Ví dụ trộm đủ $5,000 để mở cổng tẩu thoát).
+Điểm tập kết xe tẩu thoát (Escape Van Trigger) yêu cầu tất cả người chơi còn sống bước vào để thắng màn chơi.

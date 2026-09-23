@@ -1029,6 +1029,43 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Model 3D chỉ xuất hiện tại Sảnh chính (MainMenu) và sảnh Online (sau này), hoàn toàn không che khuất tầm nhìn khi người chơi mở Settings, Chapter Selection hay Character Selection.
   - Bục đứng / Chỗ đứng không còn bị đổi nhầm Mesh hoặc bị áp đè Material của nhân vật.
 
+---
+
+### [2026-09-23 10:50] — feat(network, auth): implement Firebase Auth, Realtime Database sync, and AuthHUD UI
+- **Tác vụ**:
+  - **Tích hợp Firebase Authentication & Database (Task 1.1 & 1.2)**:
+    - Tạo `UserGameProfile.cs` định dạng dữ liệu người chơi chuẩn hóa trên Cloud (UID, Username, Email, Cash, Nhân vật đang chọn, Danh sách nhân vật đã mở khóa, Chapter tiến trình).
+    - Tạo `FirebaseAuthService.cs` quản lý toàn bộ luồng xác thực: Đăng ký (Email/Password), Đăng nhập, Đăng nhập Khách (Guest / Anonymous), Quên mật khẩu (Reset Password qua Email), Đăng xuất.
+    - Xử lý ánh xạ các mã lỗi `AuthError` của Firebase sang thông báo tiếng Việt thân thiện, rõ ràng.
+  - **Đồng bộ Dữ liệu Người chơi 2 chiều (Task 1.3)**:
+    - Tạo `FirebaseDataService.cs` kết nối Firebase Realtime Database (`users/{uid}`).
+    - Tự động đồng bộ 2 chiều giữa dữ liệu đám mây (Cloud) và file lưu cục bộ `character_save.json` + `GameSession`.
+    - Hỗ trợ các tiện ích gameplay: `AddCash()`, `TrySpendCash()`, `UnlockCharacter()`, `SetSelectedCharacter()`.
+  - **Giao diện Đăng nhập & Đăng ký (AuthHUD) & Quản lý nút Multiplayer theo mạng**:
+    - Tạo `AuthHUD.cs` điều phối chuyển đổi mượt mà giữa form Đăng nhập, form Đăng ký, và form Quên mật khẩu.
+    - Xử lý trạng thái Loading Spinner và tự động ẩn khi đăng nhập thành công để mở Main Menu.
+    - Tạo `UISpinnerRotator.cs` xoay ảnh spinner dạng giật từng bước (mặc định 2 FPS, góc -45°/bước) mang phong cách cổ điển.
+    - Thêm cơ chế tự động làm mờ và khóa `multiplayerButton` khi mất mạng trong `HomeScreen.cs`, kèm biến `simulateOffline` cho phép test bật/tắt mạng trực tiếp trong Unity Editor Inspector.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Network/UserGameProfile.cs` (New)
+  - `Assets/Scripts/Network/FirebaseAuthService.cs` (New/Modified: Tự động gửi Email Verification chống email ảo, kiểm tra IsEmailVerified trước khi cho phép đăng nhập, hỗ trợ Re-send verification link)
+  - `Assets/Scripts/Network/FirebaseDataService.cs` (New/Modified: Hỗ trợ cấu hình Realtime Database khu vực Singapore asia-southeast1, tối ưu an toàn Null-Safe)
+  - `Assets/Scripts/UI/AuthHUD.cs` (New/Modified: Chuyển hướng người chơi sau khi đăng ký chờ xác thực email)
+  - `Assets/Scripts/UI/CharacterSelectionHUD.cs` (Lines 120-185, 410-435, 550-645: Đồng bộ chọn & mở khóa nhân vật 2 chiều với Firebase Realtime Database, fix hiển thị 3D preview model)
+  - `Assets/Scripts/UI/ProfileHUD.cs` (New: Quản lý InfoPanel hồ sơ cá nhân, đổi tên, đăng xuất, đồng bộ dữ liệu đám mây thủ công và modal xóa tài khoản an toàn)
+  - `Assets/Scripts/UI/UISpinnerRotator.cs` (New)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Lines 13-30, 150-250, 310-360: Thêm InfoButton, PlayerNameText hiển thị tên trên sảnh chính, quản lý mở/đóng InfoPanel và tự động đồng bộ tên khi đổi profile)
+  - `.gitignore` (Lines 1-50)
+- **Ảnh hưởng**:
+  - Hoàn tất toàn bộ Giai đoạn 1 (Task 1.1, 1.2, 1.3) chuẩn bị cho hệ thống Multiplayer và Profile người chơi trực tuyến.
+  - Ngăn chặn hoàn toàn việc spam đăng ký tài khoản ảo nhờ quy trình Email Verification của Firebase.
+  - Nhân vật chọn và mở khóa được lưu trữ vĩnh viễn trên Cloud Firebase của người chơi.
+  - Người chơi có toàn quyền quản lý hồ sơ: đổi tên, đồng bộ dữ liệu hoặc xóa tài khoản trực tiếp từ HomeScreen.
+
+
+
+
+
 
 
 

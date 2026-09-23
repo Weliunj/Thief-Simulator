@@ -1,7 +1,50 @@
+# =========================================================================
+#                    UNITY PROJECT STANDARD .GITIGNORE
+# =========================================================================
+
+# Unity Temporary & Cache Folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Aa]ssets/AssetStoreTools*
+
+# Gradle & Android Resolver (EDM4U) Temporary Folders
+.gradle/
+PlayServicesResolverGradle/
+
+# Visual Studio & IDE Generated Files
 .vs/
-Library/
-obj/
-UserSettings/
-Temp/
-Logs/
-Builds/
+.idea/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+[Tt]humbs.db
+[Dd]esktop.ini
+
+# Crashlytics & Crash Dumps
+sysinfo.txt
+*.stackdump
+CrashReports/

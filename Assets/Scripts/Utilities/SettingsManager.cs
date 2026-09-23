@@ -9,7 +9,7 @@ public class SettingsData
     public float sensitivity = 2.0f;
     public int targetFPS = 60;
     public bool vSync = false;
-    public float renderScale = 0.85f;
+    public float renderScale = 1f;
     public bool showFPSOnScreen = true;
     public bool showFPSLog = false;
     public float bgmVolume = 0.8f; // 0.0 -> 1.0
