@@ -85,6 +85,13 @@ public class HomeScreen : MonoBehaviour
             chapterSelectManager.chapterSelectPanel.SetActive(false);
         }
 
+        // Tự động load và áp dụng Mesh/Material đã lưu vào 3D Model ngoài sảnh ngay khi vào game
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.ApplyLobbyModelVisuals();
+        }
+
         // Tự động tìm các Buttons nếu chưa gán
         if (playButton == null)
         {
@@ -136,10 +143,17 @@ public class HomeScreen : MonoBehaviour
     {
         PlayClickSound();
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+
+        // Ẩn 3D model ngoài sảnh khi mở bảng Chọn nhân vật
+        CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (hud != null)
+        {
+            hud.SetLobbyModelVisible(false);
+        }
+
         if (characterSelectPanel != null)
         {
             characterSelectPanel.SetActive(true);
-            CharacterSelectionHUD hud = characterSelectPanel.GetComponent<CharacterSelectionHUD>() ?? characterSelectPanel.GetComponentInChildren<CharacterSelectionHUD>(true);
             if (hud != null)
             {
                 hud.previousPanel = mainMenuPanel;
@@ -152,11 +166,25 @@ public class HomeScreen : MonoBehaviour
         PlayClickSound();
         if (characterSelectPanel != null) characterSelectPanel.SetActive(false);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+
+        // Hiện lại 3D model ngoài sảnh chính
+        CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (hud != null)
+        {
+            hud.ApplyLobbyModelVisuals();
+        }
     }
 
     public void Play_Clicked()
     {
         PlayClickSound();
+
+        // Ẩn 3D model ngoài sảnh khi chuyển sang màn hình Chapter Select
+        CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (hud != null)
+        {
+            hud.SetLobbyModelVisible(false);
+        }
 
         if (chapterSelectManager != null)
         {
@@ -182,6 +210,13 @@ public class HomeScreen : MonoBehaviour
         
         // Đóng Main Menu trước đó và mở Setting
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+
+        // Ẩn 3D model ngoài sảnh khi mở Setting để không che khuất UI
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.SetLobbyModelVisible(false);
+        }
         
         if (settingPanel != null)
         {

@@ -120,20 +120,33 @@ public class PlayerStats : MonoBehaviour
     }
 
     /// <summary>
-    /// Tiện ích tĩnh: Áp dụng Mesh lên SkinnedMeshRenderer hoặc MeshFilter của model
+    /// Tiện ích tĩnh: Áp dụng Mesh lên SkinnedMeshRenderer hoặc MeshFilter của model (tự động ưu tiên object con tên 'Base')
     /// </summary>
     public static void ApplyMeshToModel(GameObject modelRoot, Mesh targetMesh)
     {
         if (modelRoot == null || targetMesh == null) return;
 
-        SkinnedMeshRenderer smr = modelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        // Ưu tiên 1: Tìm đối tượng con tên "Base" (tránh thay nhầm Mesh của bục đứng / chỗ đứng)
+        Transform baseChild = null;
+        foreach (Transform t in modelRoot.GetComponentsInChildren<Transform>(true))
+        {
+            if (string.Equals(t.name, "Base", System.StringComparison.OrdinalIgnoreCase))
+            {
+                baseChild = t;
+                break;
+            }
+        }
+
+        GameObject targetObj = baseChild != null ? baseChild.gameObject : modelRoot;
+
+        SkinnedMeshRenderer smr = targetObj.GetComponentInChildren<SkinnedMeshRenderer>(true) ?? modelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
         if (smr != null)
         {
             smr.sharedMesh = targetMesh;
             return;
         }
 
-        MeshFilter mf = modelRoot.GetComponentInChildren<MeshFilter>(true);
+        MeshFilter mf = targetObj.GetComponentInChildren<MeshFilter>(true) ?? modelRoot.GetComponentInChildren<MeshFilter>(true);
         if (mf != null)
         {
             mf.sharedMesh = targetMesh;
@@ -141,14 +154,27 @@ public class PlayerStats : MonoBehaviour
     }
 
     /// <summary>
-    /// Tiện ích tĩnh: Áp dụng Material / Texture lên bất kỳ GameObject / Dummy Preview Model nào (dùng cho cả UI Menu)
+    /// Tiện ích tĩnh: Áp dụng Material / Texture lên Dummy Preview Model (tự động ưu tiên object con tên 'Base' để không đổi màu chỗ đứng)
     /// </summary>
     public static void ApplySkinToModel(GameObject modelRoot, Material characterMaterial, Texture2D characterTexture = null)
     {
         if (modelRoot == null) return;
         if (characterMaterial == null && characterTexture == null) return;
 
-        Renderer[] renderers = modelRoot.GetComponentsInChildren<Renderer>(true);
+        // Ưu tiên 1: Tìm đối tượng con tên "Base" (tránh đổi Material của bục đứng / chỗ đứng)
+        Transform baseChild = null;
+        foreach (Transform t in modelRoot.GetComponentsInChildren<Transform>(true))
+        {
+            if (string.Equals(t.name, "Base", System.StringComparison.OrdinalIgnoreCase))
+            {
+                baseChild = t;
+                break;
+            }
+        }
+
+        GameObject targetObj = baseChild != null ? baseChild.gameObject : modelRoot;
+
+        Renderer[] renderers = targetObj.GetComponentsInChildren<Renderer>(true);
         foreach (var rend in renderers)
         {
             if (rend == null) continue;

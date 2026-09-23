@@ -383,6 +383,13 @@ public class SettingsHUD : MonoBehaviour
         {
             previousPanel.SetActive(true);
         }
+
+        // Hiện lại 3D model ngoài sảnh chính
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.ApplyLobbyModelVisuals();
+        }
     }
 
     private void PlayClickSound()

@@ -15,10 +15,11 @@ MonoBehaviour:
   characterId: char_03
   characterName: Strong Human
   avatar: {fileID: 0}
-  description: A strong human
+  description: An elite powerhouse thief superior in every aspect, boasting top-tier
+    sprint speed, high stamina, and supreme carry capacity.
   characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
-  maleMesh: {fileID: 0}
-  femaleMesh: {fileID: 0}
+  isUnlockedByDefault: 0
+  unlockPrice: 3000
   maleMeshes:
   - {fileID: 4300000, guid: bf560778e8c9e3b40ba95d0cc63a3665, type: 2}
   - {fileID: 4300000, guid: 039076ca34355b24ab73eec2514f950b, type: 2}

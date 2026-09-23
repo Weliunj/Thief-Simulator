@@ -29,11 +29,12 @@ public class PlayerSO : ScriptableObject
     [Tooltip("Prefab nhân vật 3D tương ứng để Instantiate vào màn chơi (nếu để trống, tự động dùng Prefab mặc định)")]
     public GameObject characterPrefab;
 
-    [Tooltip("Mesh 3D chính cho phiên bản Nam (Male)")]
-    public Mesh maleMesh;
+    [Header("🔓 Unlock & Purchase Settings")]
+    [Tooltip("Nhân vật này có được mở khóa sẵn miễn phí không? (VD: Nhân vật mặc định = true)")]
+    public bool isUnlockedByDefault = false;
 
-    [Tooltip("Mesh 3D chính cho phiên bản Nữ (Female)")]
-    public Mesh femaleMesh;
+    [Tooltip("Giá tiền để mua/mở khóa nhân vật này ($)")]
+    public int unlockPrice = 1000;
 
     [Header("🎭 3D Mesh Variants (Kiểu 1, Kiểu 2, Kiểu 3...)")]
     [Tooltip("Danh sách các biến thể Mesh 3D cho Nam (VD: normal-man-1, normal-man-2, normal-man-3)")]
@@ -47,23 +48,14 @@ public class PlayerSO : ScriptableObject
     /// </summary>
     public Mesh GetMesh(bool isMale, int variantIndex = 0)
     {
-        if (isMale)
+        List<Mesh> list = isMale ? maleMeshes : femaleMeshes;
+        if (list != null && list.Count > 0)
         {
-            if (maleMeshes != null && maleMeshes.Count > variantIndex && maleMeshes[variantIndex] != null)
-                return maleMeshes[variantIndex];
-            if (maleMesh != null) return maleMesh;
-            if (maleMeshes != null && maleMeshes.Count > 0 && maleMeshes[0] != null)
-                return maleMeshes[0];
+            if (variantIndex >= 0 && variantIndex < list.Count && list[variantIndex] != null)
+                return list[variantIndex];
+            return list[0];
         }
-        else
-        {
-            if (femaleMeshes != null && femaleMeshes.Count > variantIndex && femaleMeshes[variantIndex] != null)
-                return femaleMeshes[variantIndex];
-            if (femaleMesh != null) return femaleMesh;
-            if (femaleMeshes != null && femaleMeshes.Count > 0 && femaleMeshes[0] != null)
-                return femaleMeshes[0];
-        }
-        return isMale ? maleMesh : femaleMesh;
+        return null;
     }
 
     [Header("🎨 Character Appearance / Skin")]

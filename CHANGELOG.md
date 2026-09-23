@@ -943,7 +943,93 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Lines 15-25, 152-175)
 - **Ảnh hưởng**:
   - Hoàn thiện trọn vẹn hệ thống UI Chọn Nhân Vật theo đúng cấu trúc Hierarchy Canvas của Project.
-  - Game chạy mượt mà với 1 Prefab duy nhất, tự động đổi Mesh và Skin theo đúng lựa chọn của người chơi.
+
+---
+
+### [2026-09-23 08:33] — feat(items): enhance immersive item descriptions tailored to item rarities and functions
+- **Tác vụ**:
+  - Viết lại toàn bộ mô tả (`description`) của tất cả 10 vật phẩm ScriptableObject (`.asset`) trong game theo phong cách tự nhiên, cuốn hút, bám sát cấp độ hiếm (`ItemRarity`) và công dụng trong gameplay Thief Simulator:
+    - `InkWell` (Trash): Bình mực cũ phủ bụi, giá trị thấp nhưng không bỏ sót.
+    - `CeramicVase` (Common): Bình gốm trang trí phổ thông, dễ vỡ nhưng dễ cầm đồ.
+    - `Ladder` (Common): Thang leo di động dùng vượt tường và trèo lên nóc nhà.
+    - `HealthKit` (Common): Hộp sơ cứu y tế gia đình nhỏ gọn.
+    - `FlashLight` (Uncommon): Đèn pin dã chiến chuyên dụng soi góc khuất ban đêm.
+    - `Knife` (Uncommon): Dao gọt đa năng tiện dụng phòng thân.
+    - `Cash` (Epic): Bọc tiền mặt giá trị cao không tính tải trọng.
+    - `GoldTrophy` (Epic): Cúp mạ vàng danh giá cho giới sưu tầm cổ vật (đồng thời sửa chính tả tên vật phẩm).
+    - `TreasureScroll` (Legendary): Mật tịch cổ ghi chép tọa độ các hầm kho báu.
+    - `GoldIngotStack` (Mythic): Chồng thỏi vàng 24K nguyên khối cực nặng nhưng trị giá cả một gia tài.
+- **Danh sách file thay đổi**:
+  - `Assets/Data/Items/InkWell.asset` (Line 18)
+  - `Assets/Data/Items/CeramicVase.asset` (Line 18)
+  - `Assets/Data/Items/Ladder.asset` (Line 18)
+  - `Assets/Data/Items/HealthKit.asset` (Line 18)
+  - `Assets/Data/Items/FlashLight.asset` (Line 18)
+  - `Assets/Data/Items/Knife.asset` (Line 18)
+  - `Assets/Data/Items/Cash.asset` (Line 18)
+
+---
+
+### [2026-09-23 08:50] — feat(ui, character): character unlocking system, default unlock flag, and slot lock icon management
+- **Tác vụ**:
+  - Cập nhật [PlayerSO.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerSO.cs):
+    - Thêm `isUnlockedByDefault` (cho phép nhân vật mặc định được mở khóa sẵn từ đầu) và `unlockPrice` (giá tiền mở khóa nhân vật).
+    - Tinh gọn hàm `GetMesh()` lấy trực tiếp từ 2 danh sách biến thể `maleMeshes` và `femaleMeshes`.
+  - Cập nhật [NormalHuman.asset](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Data/Characters/NormalHuman.asset), [FatHuman.asset](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Data/Characters/FatHuman.asset), [StrongHuman.asset](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Data/Characters/StrongHuman.asset): Cấu hình `NormalHuman` mở khóa mặc định (`isUnlockedByDefault: 1`), `FatHuman` ($1000) và `StrongHuman` ($1500).
+  - Cập nhật [CharacterSelectionHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/CharacterSelectionHUD.cs):
+    - Tự động quét tìm GameObject cha **`LockImg`** (chứa child **`Image`** có component Button và child **`Price`** hiển thị giá) trên từng Slot ở cả 2 tab `ContentMale` và `ContentFemale`.
+    - Tự động ẩn `LockImg` (`SetActive(false)`) cho các nhân vật đã mở khóa (như Slot 1 của `NormalHuman`), và hiện `LockImg` kèm tự động cập nhật text giá tiền `Price` (`$1000`, `$3000`) cho các nhân vật chưa sở hữu.
+    - Đăng ký sự kiện click trực tiếp vào nút Button `Image` con bên trong `LockImg` để mở khóa tức thì (lưu `PlayerPrefs`), tự động ẩn `LockImg` và chọn nhân vật.
+  - Cập nhật mô tả (`description`) cho 3 nhân vật:
+    - `NormalHuman`: Tên trộm cân bằng toàn diện, chỉ số cơ bản tiêu chuẩn cho người mới bắt đầu.
+    - `FatHuman`: Chỉ số di chuyển và thể lực thấp hơn nhưng sở hữu sức chứa balo khổng lồ (60 kg - gấp đôi bình thường).
+    - `StrongHuman`: Tên trộm ưu tú vượt trội về mọi mặt (tốc độ chạy nhanh nhất, thể lực dồi dào, sức chứa 80 kg).
+  - Tối ưu hóa phản hồi nút Lưu (**`SaveBtn`**):
+    - Khi chọn nhân vật ĐÃ mở khóa: Bấm Save hiển thị text `"Saved"` (màu trắng nguyên bản, không dấu `!`), sau 1.5s tự động trả về `"Save"`.
+    - Khi chọn nhân vật ĐANG BỊ KHÓA: Bấm Save giữ nguyên chữ `"Save"`, đồng thời hệ thống tự động lưu nhân vật mặc định ở Slot 1 (`NormalHuman`) vào `PlayerPrefs` và `GameSession` để đảm bảo game luôn có nhân vật hợp lệ khi vào trận.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerSO.cs` (Lines 32-58)
+  - `Assets/Scripts/UI/CharacterSelectionHUD.cs` (Lines 265-385, 460-535)
+  - `Assets/Data/Characters/NormalHuman.asset` (Lines 18-21)
+  - `Assets/Data/Characters/FatHuman.asset` (Lines 18-21)
+  - `Assets/Data/Characters/StrongHuman.asset` (Lines 18-21)
+- **Ảnh hưởng**:
+  - Nhân vật mặc định (Slot 1) tự động tắt icon ổ khóa cho cả giới tính Nam và Nữ.
+  - Các nhân vật bị khóa sẽ hiển thị icon ổ khóa và tự động mở khóa mượt mà khi người chơi bấm vào slot.
+  - Bảng InfoPanel hiển thị mô tả rõ ràng ưu/nhược điểm và vai trò chiến thuật của từng nhân vật.
+  - Trải nghiệm bấm Save mượt mà, không bị đổi màu lòe loẹt và luôn an toàn fallback về nhân vật mặc định nếu người chơi chưa sở hữu nhân vật đang xem.
+
+---
+
+### [2026-09-23 09:18] — feat(ui, character): character JSON persistence, lobby model auto-load, and preview visibility toggle
+- **Tác vụ**:
+  - **Hệ thống Lưu trữ JSON (`character_save.json`)**:
+    - Khởi tạo class `CharacterSaveData` tuần tự hóa lưu trữ thông tin:
+      - `selectedCharacterId`: ID nhân vật đang chọn (VD: `char_01`, `char_02`, `char_03`).
+      - `selectedCharacterIndex`: Index của nhân vật trong danh sách.
+      - `isMale`: Giới tính đang chọn (`true` = Nam, `false` = Nữ).
+      - `unlockedCharacterIds`: Danh sách toàn bộ các ID nhân vật đã được mở khóa.
+    - Cài đặt 2 phương thức `LoadSavedSelection()` và `SaveCharacterDataToJSON()` sử dụng `JsonUtility` đọc/ghi trực tiếp vào đường dẫn `Application.persistentDataPath/character_save.json`.
+    - Tự động đồng bộ song song với `GameSession` và `PlayerPrefs` để tương thích toàn bộ hệ thống gameplay.
+    - Bổ sung Context Menu `Reset All Character Unlocks (For Testing)` trên component để xóa cache JSON & PlayerPrefs về mặc định.
+  - **Tự động áp dụng trang phục cho 3D Model ngoài sảnh (`ApplyLobbyModelVisuals`)**:
+    - Ngay khi vào màn hình chính `HomeMenu` (trong `HomeScreen.Start()` và `CharacterSelectionHUD.Awake()`), model 3D đứng ngoài sảnh (`previewModelRoot`) sẽ được nạp ngay lập tức dữ liệu nhân vật đã lưu trong JSON (Mesh nam/nữ + Material/Texture tương ứng) mà không cần người chơi phải mở bảng chọn nhân vật mới cập nhật.
+  - **Tùy chọn ẩn model ngoài sảnh khi mở bảng chọn nhân vật (`hidePreviewModelWhenPanelOpens`)**:
+    - Thêm biến `public bool hidePreviewModelWhenPanelOpens` trong Inspector của `CharacterSelectionHUD`.
+    - Khi mở bảng chọn (`OnEnable`), nếu bật tùy chọn này sẽ tự động ẩn model ngoài sảnh (`previewModelRoot.SetActive(false)`), và khi đóng bảng (`OnDisable` / `OnCloseButtonClicked` / `HomeScreen.CloseCharacterSelect`) sẽ tự động khôi phục hiển thị model theo nhân vật đã lưu, hỗ trợ chuẩn bị cho việc hiển thị model sảnh Online co-op sau này.
+    - Bắt buộc ẩn 3D model ngoài sảnh (`previewModelRoot.SetActive(false)`) ngay khi mở bảng Character Selection, Settings, và Chapter Selection, loại bỏ hoàn toàn khả năng bị bật đè do cache scene Inspector.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/CharacterSelectionHUD.cs` (Lines 39-47, 160-230, 904-920)
+  - `Assets/Scripts/Player/PlayerStats.cs` (Lines 122-185)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Lines 85-94, 140-210)
+  - `Assets/Scripts/UI/SettingsHUD.cs` (Lines 370-390)
+  - `Assets/Scripts/UI/ChapterSelectManager.cs` (Lines 70-90)
+- **Ảnh hưởng**:
+  - Dữ liệu nhân vật và mở khóa được tổ chức trong file JSON sạch sẽ, dễ đồng bộ lên Firebase/Photon PUN2.
+  - Model 3D chỉ xuất hiện tại Sảnh chính (MainMenu) và sảnh Online (sau này), hoàn toàn không che khuất tầm nhìn khi người chơi mở Settings, Chapter Selection hay Character Selection.
+  - Bục đứng / Chỗ đứng không còn bị đổi nhầm Mesh hoặc bị áp đè Material của nhân vật.
+
+
 
 
 

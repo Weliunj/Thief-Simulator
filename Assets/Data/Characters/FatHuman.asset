@@ -15,10 +15,11 @@ MonoBehaviour:
   characterId: char_02
   characterName: Fat Human
   avatar: {fileID: 0}
-  description: A fat human
+  description: Slower with lower base stamina, but boasts massive physical strength
+    capable of carrying heavy loot.
   characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
-  maleMesh: {fileID: 0}
-  femaleMesh: {fileID: 0}
+  isUnlockedByDefault: 0
+  unlockPrice: 1500
   maleMeshes:
   - {fileID: 4300000, guid: 1c19609be8f7cfc45bfba5d1fa696f05, type: 2}
   - {fileID: 4300000, guid: 31fa6743ae2f1c34f873937824c4725f, type: 2}

@@ -73,6 +73,14 @@ public class ChapterSelectManager : MonoBehaviour
         PlayClickSound();
         if (chapterSelectPanel != null) chapterSelectPanel.SetActive(true);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+
+        // Ẩn 3D model ngoài sảnh khi vào màn hình chọn Chapter
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.SetLobbyModelVisible(false);
+        }
+
         UpdateChapterUI();
     }
 
@@ -81,6 +89,13 @@ public class ChapterSelectManager : MonoBehaviour
         PlayClickSound();
         if (chapterSelectPanel != null) chapterSelectPanel.SetActive(false);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+
+        // Hiện lại 3D model ngoài sảnh chính
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.ApplyLobbyModelVisuals();
+        }
     }
 
     public void NextChapter()

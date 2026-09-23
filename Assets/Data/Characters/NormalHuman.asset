@@ -15,10 +15,10 @@ MonoBehaviour:
   characterId: char_01
   characterName: Normal Human
   avatar: {fileID: 0}
-  description: A normal human
+  description: A balanced and agile all-rounder thief. Standard stats across the board, ideal for any beginner heist.
   characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
-  maleMesh: {fileID: 0}
-  femaleMesh: {fileID: 0}
+  isUnlockedByDefault: 1
+  unlockPrice: 0
   maleMeshes:
   - {fileID: 4300000, guid: 2f61417073545d64d95684bfd769baa1, type: 2}
   - {fileID: 4300000, guid: 2bb6ae854329f6546b214b7b94b89f8c, type: 2}
