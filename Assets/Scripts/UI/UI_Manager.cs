@@ -443,6 +443,13 @@ public class UI_Manager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         GameSession.ClearSession();
+
+        HotbarManager hotbar = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
+        if (hotbar != null)
+        {
+            hotbar.ClearAllSlots();
+        }
+
         SceneManager.LoadScene("HomeMenu");
     }
 }

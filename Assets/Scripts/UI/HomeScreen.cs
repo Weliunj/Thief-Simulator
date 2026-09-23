@@ -55,6 +55,52 @@ public class HomeScreen : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+        FirebaseDataService.OnLoggedOutFromAnotherDevice += HandleLoggedOutFromAnotherDevice;
+        FirebaseDataService.OnUserProfileLoaded += OnUserProfileChanged;
+        FirebaseDataService.OnUserProfileUpdated += OnUserProfileChanged;
+        FirebaseAuthService.OnUserSignedIn += OnUserSignedInChanged;
+    }
+
+    private void OnDisable()
+    {
+        FirebaseDataService.OnLoggedOutFromAnotherDevice -= HandleLoggedOutFromAnotherDevice;
+        FirebaseDataService.OnUserProfileLoaded -= OnUserProfileChanged;
+        FirebaseDataService.OnUserProfileUpdated -= OnUserProfileChanged;
+        FirebaseAuthService.OnUserSignedIn -= OnUserSignedInChanged;
+    }
+
+    private void HandleLoggedOutFromAnotherDevice()
+    {
+        Debug.LogWarning("<color=yellow>[HomeScreen] Nhận thông báo đăng nhập trên thiết bị khác -> Chuyển về màn hình AuthHUD.</color>");
+
+        // 1. Đóng toàn bộ các bảng trong sảnh
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (infoPanel != null) infoPanel.SetActive(false);
+        if (characterSelectPanel != null) characterSelectPanel.SetActive(false);
+        if (settingPanel != null) settingPanel.SetActive(false);
+        if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
+        {
+            chapterSelectManager.chapterSelectPanel.SetActive(false);
+        }
+
+        // 2. Mở lại AuthHUD
+        if (authPanel == null)
+        {
+            AuthHUD existingHUD = FindFirstObjectByType<AuthHUD>(FindObjectsInactive.Include);
+            if (existingHUD != null) authPanel = existingHUD.gameObject;
+        }
+
+        if (authPanel != null)
+        {
+            authPanel.SetActive(true);
+            AuthHUD hud = authPanel.GetComponent<AuthHUD>() ?? FindFirstObjectByType<AuthHUD>(FindObjectsInactive.Include);
+            if (hud != null)
+            {
+                hud.ShowLoginPanel(clearStatus: false);
+                hud.ShowStatus("This account was logged in on another device. You have been logged out.", true, permanent: true);
+                if (hud.loginPasswordInput != null) hud.loginPasswordInput.text = "";
+            }
+        }
     }
 
     void Start()
@@ -208,30 +254,43 @@ public class HomeScreen : MonoBehaviour
             infoButton.onClick.AddListener(Info_Clicked);
         }
 
-        // Lắng nghe sự kiện đồng bộ từ Firebase để tự động cập nhật Tên và Tiền trên HomeScreen
-        FirebaseDataService.OnUserProfileLoaded += OnUserProfileChanged;
-        FirebaseDataService.OnUserProfileUpdated += OnUserProfileChanged;
-        FirebaseAuthService.OnUserSignedIn += OnUserSignedInChanged;
-
         UpdatePlayerProfileVisuals();
         UpdateNetworkButtonsVisuals();
-    }
-
-    private void OnDestroy()
-    {
-        FirebaseDataService.OnUserProfileLoaded -= OnUserProfileChanged;
-        FirebaseDataService.OnUserProfileUpdated -= OnUserProfileChanged;
-        FirebaseAuthService.OnUserSignedIn -= OnUserSignedInChanged;
+        SyncSavedCharacter();
     }
 
     private void OnUserProfileChanged(UserGameProfile profile)
     {
         UpdatePlayerProfileVisuals();
+        SyncSavedCharacter();
     }
 
     private void OnUserSignedInChanged(Firebase.Auth.FirebaseUser user)
     {
         UpdatePlayerProfileVisuals();
+        SyncSavedCharacter();
+    }
+
+    /// <summary>
+    /// Tự động load và đồng bộ Nhân vật đã lưu (GameSession.SelectedPlayer, Lobby Model)
+    /// </summary>
+    public void SyncSavedCharacter()
+    {
+        CharacterSelectionHUD hud = null;
+        if (characterSelectPanel != null)
+        {
+            hud = characterSelectPanel.GetComponent<CharacterSelectionHUD>() ?? characterSelectPanel.GetComponentInChildren<CharacterSelectionHUD>(true);
+        }
+        if (hud == null)
+        {
+            hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        }
+
+        if (hud != null)
+        {
+            hud.LoadSavedSelection();
+            hud.ApplyLobbyModelVisuals();
+        }
     }
 
     /// <summary>

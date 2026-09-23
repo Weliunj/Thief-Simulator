@@ -2262,9 +2262,13 @@ MonoBehaviour:
   priceSlotItem: {fileID: 8977665243675344091}
   weightSlotItem: {fileID: 4782449066944535269}
   raritySlotItem: {fileID: 9053524183055690868}
+  followMode: 0
   itemHoldPoint: {fileID: 0}
-  holdPointOffset: {x: 0, y: -0.17, z: 0.77}
+  playerHoldOffset: {x: 0, y: 1.3, z: 0.7}
+  holdPointOffset: {x: 0, y: 0, z: 0}
   holdPointRotation: {x: 0, y: 0, z: 0}
+  rotationSmoothSpeed: 12
+  positionSmoothSpeed: 15
   dropButton: {fileID: 8349168770023825415}
   dropButtonIcon: {fileID: 551757590854073338}
   throwIcon: {fileID: 1065097661, guid: 0fe9abb6aa439f74f9ae823060651648, type: 3}

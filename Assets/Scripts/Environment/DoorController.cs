@@ -185,35 +185,7 @@ public class DoorController : MonoBehaviour, IInteractable
 
     public void AlertNearbyNPCs()
     {
-        Debug.Log($"Trò chơi thất bại! Đang kêu gọi AdultNPC trong phạm vi {callRange}m.");
 
-        Collider[] colliders = Physics.OverlapSphere(transform.position, callRange);
-        int adultCount = 0;
-
-        foreach (var col in colliders)
-        {
-            if (col.CompareTag("adult"))
-            {
-                AI_Move_NavMesh adultNpc = col.GetComponent<AI_Move_NavMesh>();
-                if (adultNpc != null)
-                {
-                    adultNpc.PlayDetectionSound();
-                    adultNpc.HandleChaseMusic(true);
-                    adultNpc.targetDetected = true;
-                    adultNpc.chaseDuration = Random.Range(
-                        adultNpc.chaseDurationPublic.x,
-                        adultNpc.chaseDurationPublic.y);
-
-                    adultCount++;
-                    Debug.Log($"Kích hoạt chase trên NPC: {col.gameObject.name}");
-                }
-            }
-        }
-
-        if (adultCount == 0)
-        {
-            Debug.Log("Không tìm thấy AdultNPC nào trong phạm vi.");
-        }
     }
 
     // =========================================================================

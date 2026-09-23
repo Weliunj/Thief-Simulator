@@ -68,12 +68,27 @@ public class HotbarSlot : MonoBehaviour
     {
         manager = hotbarManager;
         slotIndex = index;
-        UpdateVisuals();
+        if (itemObject == null)
+        {
+            ClearSlot();
+        }
+        else
+        {
+            UpdateVisuals();
+        }
     }
 
     public bool HasItem()
     {
-        return itemObject != null;
+        if (itemObject == null)
+        {
+            if (itemData != null || (itemIcon != null && itemIcon.gameObject.activeSelf))
+            {
+                ClearSlot();
+            }
+            return false;
+        }
+        return true;
     }
 
     /// <summary>
@@ -138,7 +153,12 @@ public class HotbarSlot : MonoBehaviour
     {
         if (itemObject == null)
         {
-            if (itemIcon != null) itemIcon.gameObject.SetActive(false);
+            itemData = null;
+            if (itemIcon != null)
+            {
+                itemIcon.sprite = null;
+                itemIcon.gameObject.SetActive(false);
+            }
             SetSelected(false);
         }
         else

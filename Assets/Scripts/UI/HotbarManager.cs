@@ -37,15 +37,35 @@ public class HotbarManager : MonoBehaviour
     [Tooltip("Text hiển thị độ hiếm của item đang chọn")]
     public TextMeshProUGUI raritySlotItem;
 
+    public enum HoldFollowMode
+    {
+        PlayerMesh,     // Bám theo thân nhân vật (góc xoay và di chuyển có độ trễ mượt giống hệt góc quay của Mesh người chơi)
+        SmoothCamera    // Bám theo Camera nhưng có độ trễ mượt (Sway / Inertia) không bị khóa cứng vào camera
+    }
+
     [Header("📦 Item Hold Settings (Hiển thị model trước mặt)")]
+    [Tooltip("Chế độ bám của vật phẩm: PlayerMesh (mượt theo thân người chơi) hoặc SmoothCamera")]
+    public HoldFollowMode followMode = HoldFollowMode.PlayerMesh;
+
     [Tooltip("Vị trí hiển thị model vật phẩm trước mặt (Camera hoặc Player)")]
     public Transform itemHoldPoint;
 
-    [Tooltip("Offset vị trí cầm item so với Camera")]
+    [Tooltip("Offset vị trí cầm item so với thân nhân vật Player (chế độ PlayerMesh)")]
+    public Vector3 playerHoldOffset = new Vector3(0.25f, 1.05f, 0.45f);
+
+    [Tooltip("Offset vị trí cầm item so với Camera (chế độ SmoothCamera)")]
     public Vector3 holdPointOffset = new Vector3(0.2f, -0.25f, 0.55f);
 
     [Tooltip("Góc xoay 3D của vật phẩm khi cầm trên tay")]
     public Vector3 holdPointRotation = new Vector3(5f, -15f, 0f);
+
+    [Tooltip("Tốc độ trễ xoay mượt (càng nhỏ càng trễ nhiều, tạo quán tính giống mesh)")]
+    [Range(1f, 30f)]
+    public float rotationSmoothSpeed = 12f;
+
+    [Tooltip("Tốc độ trễ di chuyển mượt")]
+    [Range(1f, 30f)]
+    public float positionSmoothSpeed = 15f;
 
     [Header("🔽 Drop & Placement Settings")]
     [Tooltip("Nút bấm Thả/Đặt (Drop/Place) - chỉ hiện khi đang chọn item")]
@@ -92,12 +112,37 @@ public class HotbarManager : MonoBehaviour
     private Camera mainCamera;
     private GameObject currentHeldModel;
     private List<Collider> disabledColliders = new List<Collider>();
+    private bool isFirstFrameHeld = false;
 
     void Awake()
     {
         InitializeSlots();
         InitializeHoldPoint();
         InitializeHeldItemInfoUI();
+    }
+
+    void OnDestroy()
+    {
+        HideHeldModel();
+
+        if (itemHoldPoint != null)
+        {
+            for (int i = itemHoldPoint.childCount - 1; i >= 0; i--)
+            {
+                Transform child = itemHoldPoint.GetChild(i);
+                if (child != null)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+
+            // Hủy luôn GameObject ItemHoldPoint nếu được tạo động dưới Camera để tránh rác
+            if (itemHoldPoint.gameObject != null)
+            {
+                Destroy(itemHoldPoint.gameObject);
+            }
+            itemHoldPoint = null;
+        }
     }
 
     void Start()
@@ -249,10 +294,9 @@ public class HotbarManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Cập nhật vị trí và góc xoay của item đang cầm theo Camera mỗi frame:
-    /// - Vị trí di chuyển lên/xuống theo góc nhìn của Camera
-    /// - Nếu item có followCameraPitch: Ngửa lên / cúi xuống bám theo hướng nhìn Camera (Đèn pin)
-    /// - Nếu item thường: Khóa trục Y luôn thẳng đứng, không bị nghiêng chúi/ngước khi quay camera
+    /// Cập nhật vị trí và góc xoay của item đang cầm mỗi frame:
+    /// - PlayerMesh: Bám theo thân nhân vật với độ trễ xoay tự nhiên giống hệt góc quay của Mesh người chơi.
+    /// - SmoothCamera: Bám theo Camera nhưng có độ trễ mượt (Interpolation / Sway / Inertia), không bị khóa cứng góc.
     /// </summary>
     public void UpdateHeldModelTransform()
     {
@@ -264,37 +308,90 @@ public class HotbarManager : MonoBehaviour
             if (mainCamera == null) mainCamera = FindFirstObjectByType<Camera>();
         }
 
-        if (mainCamera != null)
+        if (playerController == null)
         {
+            playerController = FindFirstObjectByType<PlayerController>();
+        }
+
+        Item item = currentHeldModel.GetComponent<Item>();
+        Vector3 activeRotation = (item != null && item.useCustomHoldRotation) ? item.customHoldRotation : holdPointRotation;
+        bool followPitch = (item != null && item.followCameraPitch);
+
+        Vector3 targetPos;
+        Quaternion targetRot;
+
+        if (followMode == HoldFollowMode.PlayerMesh && playerController != null)
+        {
+            // BÁM THEO THÂN NHÂN VẬT (PLAYER MESH):
+            // Góc xoay Y lấy từ playerController.transform.rotation (vốn đã xoay mượt với RotationSmoothTime)
+            // Nhờ đó item có độ trễ xoay mượt y hệt góc quay của mesh người chơi, không bị quay giật cứng theo camera!
+            Transform pTrans = playerController.transform;
+            Vector3 pPos = pTrans.position;
+            Vector3 pFwd = pTrans.forward;
+            Vector3 pRight = pTrans.right;
+            Vector3 pUp = pTrans.up;
+
+            Vector3 offset = (item != null && item.useCustomHoldOffset) ? item.customHoldOffset : playerHoldOffset;
+            targetPos = pPos + (pRight * offset.x) + (pUp * offset.y) + (pFwd * offset.z);
+
+            if (followPitch && mainCamera != null)
+            {
+                // Nếu là đèn pin/súng: xoay Y theo người, ngửa X theo camera pitch
+                float pitch = mainCamera.transform.eulerAngles.x;
+                targetRot = Quaternion.Euler(pitch, pTrans.eulerAngles.y, 0f) * Quaternion.Euler(activeRotation);
+            }
+            else
+            {
+                targetRot = pTrans.rotation * Quaternion.Euler(activeRotation);
+            }
+        }
+        else if (mainCamera != null)
+        {
+            // BÁM THEO CAMERA VỚI ĐỘ TRỄ MƯỢT (SMOOTH CAMERA):
             Vector3 camPos = mainCamera.transform.position;
             Vector3 camFwd = mainCamera.transform.forward;
             Vector3 camRight = mainCamera.transform.right;
             Vector3 camUp = mainCamera.transform.up;
 
-            Item item = currentHeldModel.GetComponent<Item>();
-            Vector3 activeOffset = (item != null && item.useCustomHoldOffset) ? item.customHoldOffset : holdPointOffset;
-            Vector3 activeRotation = (item != null && item.useCustomHoldRotation) ? item.customHoldRotation : holdPointRotation;
-            bool followPitch = (item != null && item.followCameraPitch);
-
-            // Đặt vị trí item trước mặt theo góc nhìn Camera
-            itemHoldPoint.position = camPos + (camRight * activeOffset.x) + (camUp * activeOffset.y) + (camFwd * activeOffset.z);
+            Vector3 offset = (item != null && item.useCustomHoldOffset) ? item.customHoldOffset : holdPointOffset;
+            targetPos = camPos + (camRight * offset.x) + (camUp * offset.y) + (camFwd * offset.z);
 
             if (followPitch)
             {
-                // Bám theo toàn bộ hướng quay của Camera (cả ngửa lên và cúi xuống - dành cho Đèn pin, Súng...)
-                itemHoldPoint.rotation = mainCamera.transform.rotation * Quaternion.Euler(activeRotation);
+                targetRot = mainCamera.transform.rotation * Quaternion.Euler(activeRotation);
             }
             else
             {
-                // Khóa góc xoay: Trục Y luôn thẳng đứng (Vector3.up), chỉ xoay quanh trục Y theo hướng nhìn ngang
                 Vector3 horizontalFwd = camFwd;
                 horizontalFwd.y = 0f;
-
                 if (horizontalFwd.sqrMagnitude > 0.0001f)
                 {
-                    itemHoldPoint.rotation = Quaternion.LookRotation(horizontalFwd.normalized, Vector3.up) * Quaternion.Euler(0f, activeRotation.y, 0f);
+                    targetRot = Quaternion.LookRotation(horizontalFwd.normalized, Vector3.up) * Quaternion.Euler(0f, activeRotation.y, 0f);
+                }
+                else
+                {
+                    targetRot = itemHoldPoint.rotation;
                 }
             }
+        }
+        else
+        {
+            return;
+        }
+
+        // Áp dụng nội suy mượt (Smooth Interpolation / Delay / Sway)
+        if (isFirstFrameHeld)
+        {
+            itemHoldPoint.position = targetPos;
+            itemHoldPoint.rotation = targetRot;
+            isFirstFrameHeld = false;
+        }
+        else
+        {
+            float posLerp = Time.deltaTime * positionSmoothSpeed;
+            float rotLerp = Time.deltaTime * rotationSmoothSpeed;
+            itemHoldPoint.position = Vector3.Lerp(itemHoldPoint.position, targetPos, Mathf.Clamp01(posLerp));
+            itemHoldPoint.rotation = Quaternion.Slerp(itemHoldPoint.rotation, targetRot, Mathf.Clamp01(rotLerp));
         }
     }
 
@@ -355,31 +452,26 @@ public class HotbarManager : MonoBehaviour
 
         if (itemHoldPoint == null)
         {
-            // Đặt ItemHoldPoint dưới Camera.main hoặc Root World để KHÔNG BỊ SCALE bởi Canvas UI
-            if (mainCamera != null)
+            GameObject hpObj = new GameObject("ItemHoldPoint");
+            hpObj.transform.SetParent(null); // World space - tách độc lập khỏi Camera để nội suy mượt theo góc mesh
+            itemHoldPoint = hpObj.transform;
+        }
+
+        // Tách an toàn mọi child nếu có (KHÔNG gọi Destroy để tuyệt đối không xóa nhầm item trong inventory)
+        if (currentHeldModel == null && itemHoldPoint != null)
+        {
+            for (int i = itemHoldPoint.childCount - 1; i >= 0; i--)
             {
-                Transform existing = mainCamera.transform.Find("ItemHoldPoint");
-                if (existing != null)
+                Transform child = itemHoldPoint.GetChild(i);
+                if (child != null)
                 {
-                    itemHoldPoint = existing;
+                    child.SetParent(null);
+                    child.gameObject.SetActive(false);
                 }
-                else
-                {
-                    GameObject hpObj = new GameObject("ItemHoldPoint");
-                    hpObj.transform.SetParent(mainCamera.transform, false);
-                    hpObj.transform.localPosition = holdPointOffset;
-                    hpObj.transform.localRotation = Quaternion.Euler(holdPointRotation);
-                    itemHoldPoint = hpObj.transform;
-                }
-            }
-            else
-            {
-                GameObject hpObj = new GameObject("ItemHoldPoint");
-                hpObj.transform.SetParent(null); // World space
-                itemHoldPoint = hpObj.transform;
             }
         }
 
+        currentHeldModel = null;
         UpdateHeldModelTransform();
     }
 
@@ -634,9 +726,10 @@ public class HotbarManager : MonoBehaviour
         HideHeldModel();
 
         if (itemObj == null) return;
-        InitializeHoldPoint();
+        if (itemHoldPoint == null) InitializeHoldPoint();
 
         currentHeldModel = itemObj;
+        isFirstFrameHeld = true;
 
         // 1. Tạm thời tắt colliders trên item để tránh cấn va chạm vào Player
         disabledColliders.Clear();
@@ -669,7 +762,7 @@ public class HotbarManager : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        // 4. Gắn vào HoldPoint trước mặt player (CinemachineCameraTarget)
+        // 4. Gắn vào HoldPoint trước mặt player
         if (itemHoldPoint != null)
         {
             itemObj.transform.SetParent(itemHoldPoint, false);
@@ -704,6 +797,7 @@ public class HotbarManager : MonoBehaviour
             disabledColliders.Clear();
 
             currentHeldModel.SetActive(false);
+            currentHeldModel.transform.SetParent(null); // Tách an toàn khỏi itemHoldPoint để không bị xóa nhầm
             currentHeldModel = null;
         }
     }
@@ -717,10 +811,22 @@ public class HotbarManager : MonoBehaviour
         if (currentSelectedIndex < 0 || currentSelectedIndex >= slots.Count) return;
 
         HotbarSlot slot = slots[currentSelectedIndex];
-        if (slot == null || !slot.HasItem()) return;
+        if (slot == null || !slot.HasItem())
+        {
+            if (slot != null) slot.ClearSlot();
+            DeselectAll();
+            return;
+        }
 
         GameObject itemObj = slot.itemObject;
         Item item = slot.itemData;
+
+        if (itemObj == null)
+        {
+            slot.ClearSlot();
+            DeselectAll();
+            return;
+        }
 
         if (mainCamera == null)
         {
@@ -837,11 +943,14 @@ public class HotbarManager : MonoBehaviour
 
         // Cập nhật khối lượng và danh sách Player
         if (playerController == null) playerController = FindFirstObjectByType<PlayerController>();
-        if (playerController != null && playerController.player != null)
+        if (playerController != null)
         {
-            int itemWeight = (item != null) ? item.kg : 0;
-            playerController.player.currweight -= itemWeight;
-            if (playerController.player.currweight < 0) playerController.player.currweight = 0;
+            if (playerController.player != null)
+            {
+                int itemWeight = (item != null) ? item.kg : 0;
+                playerController.player.currweight -= itemWeight;
+                if (playerController.player.currweight < 0) playerController.player.currweight = 0;
+            }
 
             if (playerController.heldItem != null)
             {
@@ -869,6 +978,19 @@ public class HotbarManager : MonoBehaviour
                 slot.ClearSlot();
             }
         }
+
+        if (itemHoldPoint != null)
+        {
+            for (int i = itemHoldPoint.childCount - 1; i >= 0; i--)
+            {
+                Transform child = itemHoldPoint.GetChild(i);
+                if (child != null)
+                {
+                    Destroy(child.gameObject);
+                }
+            }
+        }
+
         DeselectAll();
     }
 

@@ -304,7 +304,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &799465390039126530
 Transform:
   m_ObjectHideFlags: 0
@@ -314,7 +314,7 @@ Transform:
   m_GameObject: {fileID: 1404802832750369428}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -1.00485916e-14, z: 8.4703295e-22, w: 1}
-  m_LocalPosition: {x: 0, y: 1.6315134, z: 0.19399977}
+  m_LocalPosition: {x: 0, y: 1.6315134, z: 0.03}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1186,7 +1186,7 @@ MonoBehaviour:
     m_Bits: 475
   CinemachineCameraTarget: {fileID: 1404802832750369428}
   crouchCameraYOffset: -0.8
-  TopClamp: 60
+  TopClamp: 75
   BottomClamp: -60
   CameraAngleOverride: 0
   LockCameraPosition: 0

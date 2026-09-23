@@ -29,6 +29,16 @@ public class ScreenshotUtility : MonoBehaviour
 
     void Awake()
     {
+        // QUAN TRỌNG: ScreenshotUtility thường được gắn trực tiếp trên MainCamera của từng Scene.
+        // Tuyệt đối KHÔNG gọi DontDestroyOnLoad(gameObject) nếu đang gắn trên Camera hoặc đối tượng Scene,
+        // vì sẽ làm toàn bộ Camera (và các đối tượng con như ItemHoldPoint, vật phẩm đang cầm) bị lưu giữ xuyên Scene,
+        // gây lỗi vật phẩm kẹt trước màn hình khi về Menu rồi vào lại Map!
+        if (GetComponent<Camera>() != null || transform.parent != null)
+        {
+            _instance = this;
+            return;
+        }
+
         if (_instance == null)
         {
             _instance = this;
@@ -40,11 +50,20 @@ public class ScreenshotUtility : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        if (_instance == this)
+        {
+            _instance = null;
+        }
+    }
+
     void Start()
     {
         if (photoCamera == null)
         {
-            photoCamera = Camera.main;
+            photoCamera = GetComponent<Camera>();
+            if (photoCamera == null) photoCamera = Camera.main;
         }
     }
 

@@ -558,12 +558,13 @@ public class CharacterSelectionHUD : MonoBehaviour
         }
 
         // Đồng bộ vào GameSession & PlayerPrefs cho các Scene Gameplay
-        if (characterList != null && characterList.Count > selectedCharacterIndex)
+        if (characterList != null && characterList.Count > selectedCharacterIndex && selectedCharacterIndex >= 0)
         {
             GameSession.SelectedPlayer = characterList[selectedCharacterIndex];
             GameSession.IsMale = isMaleSelected;
             PlayerPrefs.SetInt(PREF_KEY_CHAR_INDEX, selectedCharacterIndex);
             PlayerPrefs.SetInt(PREF_KEY_GENDER, isMaleSelected ? 0 : 1);
+            PlayerPrefs.Save();
         }
     }
 

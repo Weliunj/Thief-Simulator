@@ -47,10 +47,15 @@ public class PlayerInventory : MonoBehaviour
         if (playerController == null) playerController = GetComponent<PlayerController>();
         if (playerStats == null) playerStats = GetComponent<PlayerStats>();
         if (animator == null) TryGetComponent(out animator);
+
+        if (heldItems == null) heldItems = new List<GameObject>();
+        else heldItems.RemoveAll(x => x == null);
     }
 
     private void Start()
     {
+        if (heldItems != null) heldItems.RemoveAll(x => x == null);
+
         if (hotbarManager == null)
         {
             hotbarManager = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);

@@ -133,7 +133,17 @@ public class ChapterSelectManager : MonoBehaviour
         int nextIndex = currentChapterIndex + 1;
         GameSession.NextChapter = (nextIndex < chapterList.Count) ? chapterList[nextIndex] : null;
 
-        if (defaultPlayerData != null && GameSession.SelectedPlayer == null)
+        // Đồng bộ nhân vật đã lưu vào GameSession
+        if (GameSession.SelectedPlayer == null)
+        {
+            CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+            if (hud != null)
+            {
+                hud.LoadSavedSelection();
+            }
+        }
+
+        if (GameSession.SelectedPlayer == null && defaultPlayerData != null)
         {
             GameSession.SelectedPlayer = defaultPlayerData;
         }

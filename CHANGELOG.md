@@ -1062,6 +1062,36 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Nhân vật chọn và mở khóa được lưu trữ vĩnh viễn trên Cloud Firebase của người chơi.
   - Người chơi có toàn quyền quản lý hồ sơ: đổi tên, đồng bộ dữ liệu hoặc xóa tài khoản trực tiếp từ HomeScreen.
 
+---
+
+### [2026-09-23 22:45] — fix(inventory, camera, auth): fix persistent held item across scenes, item disappearance, add mesh follow delay, and skip menu loading HUD
+
+- **Tác vụ**:
+  - **Khắc phục lỗi vật phẩm kẹt trước màn hình khi về Menu rồi vào lại Map**:
+    - [ScreenshotUtility.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Utilities/ScreenshotUtility.cs): Ngăn chặn `DontDestroyOnLoad(gameObject)` khi script được gắn trực tiếp trên `MainCamera` trong Scene (`HomeMenu`, `Chapter2`, `Anhtho`), ngăn Camera và các đối tượng con runtime (`ItemHoldPoint` + vật phẩm đang cầm) bị lưu giữ xuyên Scene.
+    - [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs): Tự động dọn dẹp Hotbar (`hotbar.ClearAllSlots()`) và ẩn model đang cầm trước khi rời Scene về `HomeMenu`.
+  - **Khắc phục lỗi Loading HUD xuất hiện lại khi thoát từ gameplay về Menu**:
+    - [AuthHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/AuthHUD.cs): Trong `Start()`, kiểm tra nếu người chơi đã đăng nhập (`FirebaseAuthService.Instance.IsLoggedIn == true`), tự động tắt `loadingPanel` và bỏ qua `AutoLoginRoutine()`, chuyển thẳng vào `MainMenuPanel`.
+  - **Khắc phục lỗi vật phẩm bị biến mất vĩnh viễn khi đổi slot Hotbar**:
+    - [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs): Trong `HideHeldModel()`, tách an toàn model vật phẩm ra Root (`transform.SetParent(null)`) khi cất item; loại bỏ lệnh `Destroy` nhầm đối tượng con trong `InitializeHoldPoint()` để bảo vệ an toàn cho item trong túi đồ.
+  - **Nâng cấp độ trễ xoay mượt và cơ chế bám thân nhân vật (HoldFollowMode.PlayerMesh)**:
+    - [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs):
+      - Bổ sung `enum HoldFollowMode` gồm `PlayerMesh` (bám theo thân người chơi) và `SmoothCamera` (bám theo camera có độ trễ mượt).
+      - Chế độ `PlayerMesh`: Đồng bộ góc xoay Y của vật phẩm theo thân nhân vật (`playerController.transform.rotation`), giúp vật phẩm xoay với độ trễ tự nhiên theo góc quay của Mesh thay vì quay giật theo tốc độ camera.
+      - Bổ sung nội suy `Vector3.Lerp` và `Quaternion.Slerp` với các tham số `rotationSmoothSpeed` (12) và `positionSmoothSpeed` (15) tạo quán tính tự nhiên khi di chuyển/đổi hướng.
+      - Thêm cờ `isFirstFrameHeld` để gán tức thì vị trí khi vừa rút item từ hotbar, tránh hiện tượng vật phẩm bay lướt từ xa tới.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Utilities/ScreenshotUtility.cs` (Lines 29-58)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Lines 440-455)
+  - `Assets/Scripts/UI/AuthHUD.cs` (Lines 102-118)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Lines 40-95, 290-375, 450-480, 725-805)
+- **Ảnh hưởng**:
+  - Khi thoát về Menu và vào lại Map, không còn hiện tượng model vật phẩm cũ kẹt lơ lửng trước màn hình.
+  - Không còn màn hình Loading HUD chạy lại khi thoát từ trận đấu về sảnh chính nếu tài khoản đã đăng nhập.
+  - Chuyển đổi giữa các slot trong Hotbar mượt mà, không bị mất/xóa nhầm vật phẩm.
+  - Vật phẩm cầm trên tay di chuyển và xoay có độ trễ quán tính tự nhiên, ăn khớp với chuyển động quay thân của nhân vật thay vì bị khóa cứng theo camera.
+
+
 
 
 

@@ -102,8 +102,17 @@ public class AuthHUD : MonoBehaviour
     private void Start()
     {
         BindButtonEvents();
-        ShowLoginPanel();
 
+        // Nếu người chơi ĐÃ ĐĂNG NHẬP (VD: vừa từ màn chơi Gameplay thoát về Menu) -> Bỏ qua Loading & AutoLogin
+        if (FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.IsLoggedIn)
+        {
+            if (loadingPanel != null) loadingPanel.SetActive(false);
+            if (authRootPanel != null) authRootPanel.SetActive(false);
+            OnAuthSuccess();
+            return;
+        }
+
+        ShowLoginPanel();
         autoLoginCoroutine = StartCoroutine(AutoLoginRoutine());
     }
 
@@ -329,16 +338,16 @@ public class AuthHUD : MonoBehaviour
         // 1. Login Events
         if (loginSubmitBtn != null) loginSubmitBtn.onClick.AddListener(OnLoginClicked);
         if (loginGuestBtn != null) loginGuestBtn.onClick.AddListener(OnGuestClicked);
-        if (switchToRegisterBtn != null) switchToRegisterBtn.onClick.AddListener(ShowRegisterPanel);
-        if (switchToForgotPassBtn != null) switchToForgotPassBtn.onClick.AddListener(ShowForgotPasswordPanel);
+        if (switchToRegisterBtn != null) switchToRegisterBtn.onClick.AddListener(() => ShowRegisterPanel(true));
+        if (switchToForgotPassBtn != null) switchToForgotPassBtn.onClick.AddListener(() => ShowForgotPasswordPanel(true));
 
         // 2. Register Events
         if (registerSubmitBtn != null) registerSubmitBtn.onClick.AddListener(OnRegisterClicked);
-        if (backToLoginFromRegisterBtn != null) backToLoginFromRegisterBtn.onClick.AddListener(ShowLoginPanel);
+        if (backToLoginFromRegisterBtn != null) backToLoginFromRegisterBtn.onClick.AddListener(() => ShowLoginPanel(true, true));
 
         // 3. Forgot Pass Events
         if (forgotSubmitBtn != null) forgotSubmitBtn.onClick.AddListener(OnForgotPassClicked);
-        if (backToLoginFromForgotBtn != null) backToLoginFromForgotBtn.onClick.AddListener(ShowLoginPanel);
+        if (backToLoginFromForgotBtn != null) backToLoginFromForgotBtn.onClick.AddListener(() => ShowLoginPanel(true, true));
     }
 
     // =========================================================================
@@ -347,30 +356,30 @@ public class AuthHUD : MonoBehaviour
 
     public void ShowLoginPanel()
     {
-        ShowLoginPanel(true);
+        ShowLoginPanel(clearStatus: true, playSound: false);
     }
 
-    public void ShowLoginPanel(bool clearStatus)
+    public void ShowLoginPanel(bool clearStatus, bool playSound = false)
     {
-        PlayClickSound();
+        if (playSound) PlayClickSound();
         if (loginPanel != null) loginPanel.SetActive(true);
         if (registerPanel != null) registerPanel.SetActive(false);
         if (forgotPasswordPanel != null) forgotPasswordPanel.SetActive(false);
         if (clearStatus) ClearStatus();
     }
 
-    public void ShowRegisterPanel()
+    public void ShowRegisterPanel(bool playSound = false)
     {
-        PlayClickSound();
+        if (playSound) PlayClickSound();
         if (loginPanel != null) loginPanel.SetActive(false);
         if (registerPanel != null) registerPanel.SetActive(true);
         if (forgotPasswordPanel != null) forgotPasswordPanel.SetActive(false);
         ClearStatus();
     }
 
-    public void ShowForgotPasswordPanel()
+    public void ShowForgotPasswordPanel(bool playSound = false)
     {
-        PlayClickSound();
+        if (playSound) PlayClickSound();
         if (loginPanel != null) loginPanel.SetActive(false);
         if (registerPanel != null) registerPanel.SetActive(false);
         if (forgotPasswordPanel != null) forgotPasswordPanel.SetActive(true);
@@ -574,7 +583,7 @@ public class AuthHUD : MonoBehaviour
         OnAuthSuccess();
     }
 
-    private void ShowStatus(string message, bool isError, bool permanent = false)
+    public void ShowStatus(string message, bool isError, bool permanent = false)
     {
         if (statusText != null)
         {

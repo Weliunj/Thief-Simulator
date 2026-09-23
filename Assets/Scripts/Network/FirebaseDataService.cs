@@ -505,8 +505,30 @@ public class FirebaseDataService : MonoBehaviour
     private string _currentSessionToken = "";
     private DatabaseReference _sessionRef;
     private EventHandler<ValueChangedEventArgs> _sessionListener;
+    private readonly System.Collections.Concurrent.ConcurrentQueue<Action> _mainThreadQueue = new System.Collections.Concurrent.ConcurrentQueue<Action>();
 
     public static event Action OnLoggedOutFromAnotherDevice;
+
+    private void Update()
+    {
+        while (_mainThreadQueue.TryDequeue(out var action))
+        {
+            try
+            {
+                action?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FirebaseDataService] Error executing main thread action: {ex.Message}");
+            }
+        }
+    }
+
+    public void RunOnMainThread(Action action)
+    {
+        if (action == null) return;
+        _mainThreadQueue.Enqueue(action);
+    }
 
     /// <summary>
     /// Đăng ký sessionToken lên Firebase và lắng nghe sự thay đổi để phát hiện đăng nhập trên thiết bị khác
@@ -546,13 +568,17 @@ public class FirebaseDataService : MonoBehaviour
             if (!string.IsNullOrEmpty(incomingToken) && !string.IsNullOrEmpty(_currentSessionToken) && incomingToken != _currentSessionToken)
             {
                 Debug.LogWarning("<color=red>[FirebaseDataService] Account logged in on another device! Logging out...</color>");
-                StopListeningToSession();
-                OnUserLogout();
-                if (FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.Auth != null)
+                
+                RunOnMainThread(() =>
                 {
-                    FirebaseAuthService.Instance.Auth.SignOut();
-                }
-                OnLoggedOutFromAnotherDevice?.Invoke();
+                    StopListeningToSession();
+                    OnUserLogout();
+                    if (FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.Auth != null)
+                    {
+                        FirebaseAuthService.Instance.Auth.SignOut();
+                    }
+                    OnLoggedOutFromAnotherDevice?.Invoke();
+                });
             }
         };
 
