@@ -23,6 +23,104 @@ public class NetworkPlayerSync : NetworkBehaviour
     [Networked, OnChangedRender(nameof(OnPlayerNameChanged))]
     public NetworkString<_32> NetworkPlayerName { get; set; }
 
+    [Networked, OnChangedRender(nameof(OnHeldItemPathChanged))]
+    public NetworkString<_64> NetworkHeldItemPath { get; set; }
+
+    private Transform _remoteRightHandBone;
+    private GameObject _remoteHeldInstance;
+
+    public void SetHeldItem(GameObject itemObj)
+    {
+        if (Runner == null || !Runner.IsRunning || !IsLocalPlayer) return;
+
+        if (itemObj != null)
+        {
+            NetworkHeldItemPath = NetworkItemSync.GetGameObjectPath(itemObj);
+        }
+        else
+        {
+            NetworkHeldItemPath = "";
+        }
+    }
+
+    private void OnHeldItemPathChanged()
+    {
+        if (IsLocalPlayer) return; // Local player hiển thị qua HotbarManager
+
+        string itemPath = NetworkHeldItemPath.ToString();
+
+        if (string.IsNullOrEmpty(itemPath))
+        {
+            if (_remoteHeldInstance != null)
+            {
+                _remoteHeldInstance.SetActive(false);
+                _remoteHeldInstance.transform.SetParent(null);
+                _remoteHeldInstance = null;
+            }
+            return;
+        }
+
+        if (_remoteRightHandBone == null)
+        {
+            foreach (var t in GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Hand.R" || t.name == "RightHand" || t.name.Contains("Hand_R") || t.name.Contains("RightHand"))
+                {
+                    _remoteRightHandBone = t;
+                    break;
+                }
+            }
+            if (_remoteRightHandBone == null) _remoteRightHandBone = transform;
+        }
+
+        GameObject itemObj = NetworkItemSync.FindSceneObjectByPath(itemPath);
+        if (itemObj != null)
+        {
+            _remoteHeldInstance = itemObj;
+            _remoteHeldInstance.transform.SetParent(_remoteRightHandBone);
+            _remoteHeldInstance.transform.localPosition = Vector3.zero;
+            _remoteHeldInstance.transform.localRotation = Quaternion.identity;
+
+            Vector3 lossy = _remoteRightHandBone.lossyScale;
+            if (lossy.x != 0 && lossy.y != 0 && lossy.z != 0)
+            {
+                _remoteHeldInstance.transform.localScale = new Vector3(1f / lossy.x, 1f / lossy.y, 1f / lossy.z);
+            }
+            else
+            {
+                _remoteHeldInstance.transform.localScale = Vector3.one;
+            }
+
+            var colliders = _remoteHeldInstance.GetComponentsInChildren<Collider>(true);
+            foreach (var c in colliders) if (c != null) c.enabled = false;
+
+            var renderers = _remoteHeldInstance.GetComponentsInChildren<Renderer>(true);
+            foreach (var r in renderers) if (r != null) r.enabled = true;
+
+            var rb = _remoteHeldInstance.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true;
+
+            _remoteHeldInstance.SetActive(true);
+        }
+    }
+
+    [Header("🏃 Networked Animation & HeadLook State")]
+    [Networked] public float NetworkSpeed { get; set; }
+    [Networked] public float NetworkMotionSpeed { get; set; }
+    [Networked] public NetworkBool NetworkGrounded { get; set; }
+    [Networked] public NetworkBool NetworkCrouch { get; set; }
+    [Networked] public NetworkBool NetworkIsCrouching { get; set; }
+    [Networked] public NetworkBool NetworkIsClimbing { get; set; }
+    [Networked] public float NetworkClimbSpeed { get; set; }
+    [Networked] public float NetworkHeadPitch { get; set; }
+    [Networked] public float NetworkHeadYaw { get; set; }
+
+    private Transform _headLookBone;
+    private Transform _spineLookBone;
+    private float _smoothRemotePitch;
+    private float _smoothRemoteYaw;
+    private Animator _remoteAnimator;
+
     [Header("🏷️ Overhead Name Tag (Tên hiển thị trên đầu)")]
     [Tooltip("Component Text hiển thị tên (hỗ trợ cả TextMeshPro 3D lẫn TextMeshProUGUI trên Canvas)")]
     public TMP_Text nameTagText;
@@ -426,9 +524,127 @@ public class NetworkPlayerSync : NetworkBehaviour
         }
     }
 
+    public void SetClimbing(bool climbing, float speed = 0f)
+    {
+        if (Runner == null || !Runner.IsRunning || !IsLocalPlayer) return;
+        NetworkIsClimbing = climbing;
+        NetworkClimbSpeed = speed;
+    }
+
+    public override void FixedUpdateNetwork()
+    {
+        if (IsLocalPlayer)
+        {
+            if (playerController != null)
+            {
+                NetworkSpeed = playerController._animationBlend;
+                NetworkMotionSpeed = playerController._input != null ? playerController._input.move.magnitude : 0f;
+                NetworkGrounded = playerController.Grounded;
+                NetworkCrouch = playerController.Crouching;
+                NetworkIsCrouching = playerController.Crouching && (playerController._input != null && playerController._input.move.sqrMagnitude > 0.01f);
+                NetworkIsClimbing = playerController.isClimbingLadder;
+            }
+
+            var localHead = GetComponent<PlayerHeadLook>();
+            if (localHead != null)
+            {
+                NetworkHeadPitch = localHead.CurrentPitch;
+                NetworkHeadYaw = localHead.CurrentYaw;
+            }
+            else
+            {
+                Camera mainCam = Camera.main;
+                if (mainCam != null)
+                {
+                    Vector3 camForward = mainCam.transform.forward;
+                    float rawPitch = Mathf.Asin(Mathf.Clamp(camForward.y, -1f, 1f)) * Mathf.Rad2Deg;
+                    Vector3 horizontalCamForward = Vector3.ProjectOnPlane(camForward, transform.up).normalized;
+                    if (horizontalCamForward.sqrMagnitude > 0.0001f)
+                    {
+                        NetworkHeadYaw = Vector3.SignedAngle(transform.forward, horizontalCamForward, transform.up);
+                    }
+                    NetworkHeadPitch = rawPitch;
+                }
+            }
+        }
+    }
+
+    public override void Render()
+    {
+        if (!IsLocalPlayer)
+        {
+            if (_remoteAnimator == null)
+            {
+                _remoteAnimator = GetComponent<Animator>() ?? GetComponentInChildren<Animator>();
+            }
+
+            if (_remoteAnimator != null)
+            {
+                _remoteAnimator.SetFloat("Speed", NetworkSpeed);
+                _remoteAnimator.SetFloat("MotionSpeed", NetworkMotionSpeed);
+                _remoteAnimator.SetBool("Grounded", NetworkGrounded);
+                _remoteAnimator.SetBool("Crouch", NetworkCrouch);
+                _remoteAnimator.SetBool("IsCrouching", NetworkIsCrouching);
+                _remoteAnimator.SetBool("Climb", NetworkIsClimbing);
+                if (NetworkIsClimbing)
+                {
+                    _remoteAnimator.SetFloat("ClimbSpeed", NetworkClimbSpeed);
+                }
+            }
+        }
+    }
+
     private void LateUpdate()
     {
-        // Hiệu ứng Billboard: Bảng tên (hoặc LocalCanvas) luôn quay mặt đối diện trực tiếp Camera
+        // 1. Procedural Head Look cho Remote Player: Xoay xương Head & Spine SAU KHI Animator đã tính toán animation của frame
+        if (!IsLocalPlayer)
+        {
+            if (_headLookBone == null)
+            {
+                foreach (var t in GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name == "Head" || t.name.Equals("Head", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        _headLookBone = t;
+                        break;
+                    }
+                }
+            }
+
+            if (_spineLookBone == null)
+            {
+                foreach (var t in GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name == "Stomach" || t.name == "Spine" || t.name == "Chest")
+                    {
+                        _spineLookBone = t;
+                        break;
+                    }
+                }
+            }
+
+            float targetPitch = Mathf.Clamp(NetworkHeadPitch, -45f, 60f);
+            float targetYaw = Mathf.Clamp(NetworkHeadYaw, -75f, 75f);
+
+            _smoothRemotePitch = Mathf.Lerp(_smoothRemotePitch, targetPitch, Time.deltaTime * 12f);
+            _smoothRemoteYaw = Mathf.Lerp(_smoothRemoteYaw, targetYaw, Time.deltaTime * 12f);
+
+            if (_spineLookBone != null)
+            {
+                Quaternion spineRot = Quaternion.AngleAxis(_smoothRemoteYaw * 0.25f, transform.up)
+                                    * Quaternion.AngleAxis(-_smoothRemotePitch * 0.25f, transform.right);
+                _spineLookBone.rotation = spineRot * _spineLookBone.rotation;
+            }
+
+            if (_headLookBone != null)
+            {
+                Quaternion headRot = Quaternion.AngleAxis(_smoothRemoteYaw * 0.75f, transform.up)
+                                   * Quaternion.AngleAxis(-_smoothRemotePitch * 0.75f, transform.right);
+                _headLookBone.rotation = headRot * _headLookBone.rotation;
+            }
+        }
+
+        // 2. Hiệu ứng Billboard: Bảng tên (hoặc LocalCanvas) luôn quay mặt đối diện trực tiếp Camera
         Transform targetBillboard = (nameTagCanvas != null) ? nameTagCanvas.transform : ((nameTagText != null) ? nameTagText.transform : null);
         if (targetBillboard != null && targetBillboard.gameObject.activeSelf)
         {

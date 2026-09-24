@@ -94,7 +94,7 @@ namespace StarterAssets
         // player
         public float targetSpeed = 0;
         private float _speed;
-        private float _animationBlend;
+        [HideInInspector] public float _animationBlend;
         private float _targetRotation = 0.0f;
         private float _rotationVelocity;
         private float _verticalVelocity;
@@ -144,7 +144,7 @@ namespace StarterAssets
 #endif
         [HideInInspector] public Animator _animator;
         private CharacterController _controller;
-        private StarterAssetsInputs _input;
+        [HideInInspector] public StarterAssetsInputs _input;
         private GameObject _mainCamera;
 
         private const float _threshold = 0.01f;
@@ -306,7 +306,13 @@ namespace StarterAssets
 
         private void Update()
         {
-            if (player.currentTime <= 0f) { player.isDied = true; }
+            var netSync = GetComponent<NetworkPlayerSync>();
+            if (netSync != null && !netSync.IsLocalPlayer)
+            {
+                return; // Remote players are controlled over network, do not run local Update
+            }
+
+            if (player != null && player.currentTime <= 0f && player.maxTime > 0f) { player.isDied = true; }
 
             if (player.isDied)
             {

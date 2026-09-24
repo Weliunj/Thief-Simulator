@@ -117,7 +117,18 @@ public class SceneItemSpawner : MonoBehaviour
             return;
         }
 
-        // 1. Phân loại danh sách Prefabs trong Chapter theo từng độ hiếm (Rarity)
+        // 1. Đồng bộ Random Seed: Giúp tất cả người chơi trong cùng phòng (Multiplayer) sinh ra 100% vật phẩm giống hệt nhau
+        int seed = 12345;
+        if (FusionConnectionManager.Instance != null &&
+            FusionConnectionManager.Instance.currentRunner != null &&
+            FusionConnectionManager.Instance.currentRunner.SessionInfo != null &&
+            !string.IsNullOrEmpty(FusionConnectionManager.Instance.currentRunner.SessionInfo.Name))
+        {
+            seed = FusionConnectionManager.Instance.currentRunner.SessionInfo.Name.GetHashCode();
+        }
+        Random.InitState(seed);
+
+        // 2. Phân loại danh sách Prefabs trong Chapter theo từng độ hiếm (Rarity)
         CategorizePrefabs();
 
         if (chapterData.spawnableItems == null || chapterData.spawnableItems.Count == 0)
@@ -126,7 +137,7 @@ public class SceneItemSpawner : MonoBehaviour
             return;
         }
 
-        // 2. Chuẩn bị danh sách vị trí Spawn từ SpawnPoints Transform
+        // 3. Chuẩn bị danh sách vị trí Spawn từ SpawnPoints Transform
         List<Vector3> targetPositions = new List<Vector3>();
         foreach (var pt in spawnPoints)
         {
@@ -139,13 +150,13 @@ public class SceneItemSpawner : MonoBehaviour
             return;
         }
 
-        // 3. Xáo trộn ngẫu nhiên thứ tự vị trí nếu được bật
+        // 4. Xáo trộn thứ tự vị trí nếu được bật (đồng bộ theo seed chung)
         if (shuffleSpawnPoints)
         {
             targetPositions = targetPositions.OrderBy(x => Random.value).ToList();
         }
 
-        // 4. Tiến hành chọn Item theo Rarity và Instantiate tại tất cả các vị trí
+        // 5. Tiến hành chọn Item theo Rarity và Instantiate tại tất cả các vị trí
         for (int i = 0; i < targetPositions.Count; i++)
         {
             Vector3 pos = targetPositions[i] + spawnOffset;
@@ -156,6 +167,9 @@ public class SceneItemSpawner : MonoBehaviour
                 Quaternion rot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
                 GameObject instance = Instantiate(prefabToSpawn, pos, rot, transform);
                 
+                // Đặt tên định danh duy nhất và nhất quán giữa các máy để đồng bộ RPC đường dẫn
+                instance.name = $"Item_{i}_{prefabToSpawn.name}";
+
                 // Khởi tạo chỉ số ngẫu nhiên cho Item
                 Item itemComp = instance.GetComponent<Item>();
                 if (itemComp != null)
@@ -167,7 +181,7 @@ public class SceneItemSpawner : MonoBehaviour
             }
         }
 
-        Debug.Log($"[SceneItemSpawner] Đã spawn thành công {spawnedItems.Count} vật phẩm cho '{chapterData.chapterTitle}'!");
+        Debug.Log($"<color=cyan>[SceneItemSpawner] Đã spawn thành công {spawnedItems.Count} vật phẩm đồng bộ (Seed: {seed}) cho '{chapterData.chapterTitle}'!</color>");
     }
 
     /// <summary>

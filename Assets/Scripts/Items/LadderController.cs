@@ -521,6 +521,11 @@ public class LadderController : MonoBehaviour, IInteractable
                 }
             }
 
+            if (playerController.TryGetComponent<NetworkPlayerSync>(out var netSyncUp) && netSyncUp.IsLocalPlayer)
+            {
+                netSyncUp.SetClimbing(true, animClimbUpSpeed * Mathf.Abs(verticalInput));
+            }
+
             // Kiểm tra chạm đỉnh thang B
             if (climbProgress >= 0.98f)
             {
@@ -558,6 +563,11 @@ public class LadderController : MonoBehaviour, IInteractable
                 }
             }
 
+            if (playerController.TryGetComponent<NetworkPlayerSync>(out var netSyncDown) && netSyncDown.IsLocalPlayer)
+            {
+                netSyncDown.SetClimbing(true, -animClimbDownSpeed * Mathf.Abs(verticalInput));
+            }
+
             // Kiểm tra chạm chân thang A
             if (climbProgress <= 0.02f)
             {
@@ -577,6 +587,11 @@ public class LadderController : MonoBehaviour, IInteractable
                 {
                     playerController._animator.SetFloat("ClimbSpeed", 0f);
                 }
+            }
+
+            if (playerController.TryGetComponent<NetworkPlayerSync>(out var netSyncIdle) && netSyncIdle.IsLocalPlayer)
+            {
+                netSyncIdle.SetClimbing(true, 0f);
             }
         }
     }
@@ -719,6 +734,10 @@ public class LadderController : MonoBehaviour, IInteractable
         if (playerController != null)
         {
             playerController.isClimbingLadder = false;
+            if (playerController.TryGetComponent<NetworkPlayerSync>(out var netSync) && netSync.IsLocalPlayer)
+            {
+                netSync.SetClimbing(false, 0f);
+            }
             if (playerController._animator != null)
             {
                 playerController._animator.speed = 1.0f; // Khôi phục tốc độ animation bình thường

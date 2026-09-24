@@ -302,8 +302,20 @@ public class CharacterSelectionHUD : MonoBehaviour
         FindLobbyModelInScene();
         if (lobbyPlayerModel == null) return;
 
-        // Chỉ hiển thị Model nếu đang ở màn hình chính MainMenuPanel (không mở các modal khác)
+        // Chỉ hiển thị Model nếu đã đăng nhập và đang ở màn hình chính MainMenuPanel (không mở các modal khác)
         bool shouldShow = true;
+
+        if (FirebaseAuthService.Instance == null || !FirebaseAuthService.Instance.IsLoggedIn)
+        {
+            shouldShow = false;
+        }
+
+        AuthHUD auth = FindFirstObjectByType<AuthHUD>(FindObjectsInactive.Include);
+        if (auth != null && auth.gameObject.activeInHierarchy && (auth.authRootPanel == null || auth.authRootPanel.activeInHierarchy))
+        {
+            shouldShow = false;
+        }
+
         HomeScreen home = FindFirstObjectByType<HomeScreen>(FindObjectsInactive.Include);
         if (home != null)
         {

@@ -72,6 +72,9 @@ namespace StarterAssets
         private float _currentPitch = 0f;
         private float _currentWeight = 0f;
 
+        public float CurrentYaw => _currentYaw;
+        public float CurrentPitch => _currentPitch;
+
         private void Awake()
         {
             _playerController = GetComponent<PlayerController>();

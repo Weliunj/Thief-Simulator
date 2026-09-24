@@ -168,6 +168,11 @@ public class LockpickMinigame : MonoBehaviour
         StopAllCoroutines();
         if (panelRoot != null) panelRoot.SetActive(false);
 
+        if (currentDoor != null)
+        {
+            currentDoor.CancelLockpicking();
+        }
+
         // Chống hiện tượng click nút Close bị xuyên thấu kích hoạt lại Raycast mở cửa
         PlayerInteraction.SetInteractionCooldown(0.4f);
 
@@ -348,26 +353,22 @@ public class LockpickMinigame : MonoBehaviour
         UpdateStageVisual();
         UpdateProgressIcons(0);
 
-        // 1. Kích hoạt báo động gọi NPC trong Zone truy đuổi người chơi
-        if (onFailedCallback != null)
-        {
-            onFailedCallback.Invoke();
-        }
-
-        // 2. Đóng Minigame và mở lại quyền điều khiển nhân vật
         if (closeOnFail)
         {
             yield return new WaitForSeconds(failCloseDelay);
             CloseMinigame();
 
-            UI_Manager uiManager = FindFirstObjectByType<UI_Manager>();
-            if (uiManager != null)
+            if (onFailedCallback != null)
             {
-                uiManager.CancelLockpicking();
+                onFailedCallback.Invoke();
             }
         }
         else
         {
+            if (onFailedCallback != null)
+            {
+                onFailedCallback.Invoke();
+            }
             SetupStage(currentStage);
             isWaitingNextStage = false;
         }

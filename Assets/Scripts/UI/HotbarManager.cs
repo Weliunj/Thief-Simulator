@@ -809,6 +809,12 @@ public class HotbarManager : MonoBehaviour
 
         itemObj.SetActive(true);
 
+        EnsureLocalPlayerController();
+        if (playerController != null && playerController.TryGetComponent<NetworkPlayerSync>(out var netSync))
+        {
+            netSync.SetHeldItem(itemObj);
+        }
+
         Debug.Log($"<color=cyan>[HotbarManager] ShowHeldModel: '{itemObj.name}' active={itemObj.activeSelf}, " +
                   $"worldPos={itemObj.transform.position}, parent={itemObj.transform.parent?.name ?? "NULL"}</color>");
     }
@@ -820,6 +826,12 @@ public class HotbarManager : MonoBehaviour
     {
         if (currentHeldModel != null)
         {
+            EnsureLocalPlayerController();
+            if (playerController != null && playerController.TryGetComponent<NetworkPlayerSync>(out var netSync))
+            {
+                netSync.SetHeldItem(null);
+            }
+
             // Bật lại collider đã tắt
             foreach (var col in disabledColliders)
             {

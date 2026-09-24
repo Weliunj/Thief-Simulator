@@ -88,6 +88,11 @@ public class HomeScreen : MonoBehaviour
             chapterSelectManager.chapterSelectPanel.SetActive(false);
         }
 
+        // Tắt 3D Lobby Model
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null) charHud.SetLobbyModelVisible(false);
+        else if (lobbyPlayerModel != null) lobbyPlayerModel.SetActive(false);
+
         // 2. Mở lại AuthHUD
         if (authPanel == null)
         {
@@ -151,16 +156,21 @@ public class HomeScreen : MonoBehaviour
 
         bool isAlreadyLoggedIn = FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.IsLoggedIn;
 
-        // Khởi động: Nếu chưa đăng nhập và có AuthPanel -> Bật AuthPanel, tắt Main Menu
+        // Khởi động: Nếu chưa đăng nhập và có AuthPanel -> Bật AuthPanel, tắt Main Menu và tắt 3D model
         if (authPanel != null && !isAlreadyLoggedIn)
         {
             authPanel.SetActive(true);
             if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+            CharacterSelectionHUD cHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+            if (cHud != null) cHud.SetLobbyModelVisible(false);
+            else if (lobbyPlayerModel != null) lobbyPlayerModel.SetActive(false);
         }
         else
         {
             if (authPanel != null) authPanel.SetActive(false);
             if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+            CharacterSelectionHUD cHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+            if (cHud != null) cHud.ApplyLobbyModelVisuals();
         }
 
         if (settingPanel != null) settingPanel.SetActive(false);

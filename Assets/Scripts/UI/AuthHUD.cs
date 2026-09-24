@@ -87,6 +87,10 @@ public class AuthHUD : MonoBehaviour
             if (home.settingPanel != null) home.settingPanel.SetActive(false);
         }
 
+        // Tắt 3D Model ngoài sảnh
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null) charHud.SetLobbyModelVisible(false);
+
         // 2. Mở lại giao diện AuthHUD
         if (authRootPanel != null) authRootPanel.SetActive(true);
         gameObject.SetActive(true);
@@ -102,6 +106,10 @@ public class AuthHUD : MonoBehaviour
     private void Start()
     {
         BindButtonEvents();
+
+        // Tắt 3D Model ngoài sảnh trong lúc ở màn hình Auth
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null) charHud.SetLobbyModelVisible(false);
 
         // Nếu người chơi ĐÃ ĐĂNG NHẬP (VD: vừa từ màn chơi Gameplay thoát về Menu) -> Bỏ qua Loading & AutoLogin
         if (FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.IsLoggedIn)
@@ -362,6 +370,9 @@ public class AuthHUD : MonoBehaviour
     public void ShowLoginPanel(bool clearStatus, bool playSound = false)
     {
         if (playSound) PlayClickSound();
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null) charHud.SetLobbyModelVisible(false);
+
         if (loginPanel != null) loginPanel.SetActive(true);
         if (registerPanel != null) registerPanel.SetActive(false);
         if (forgotPasswordPanel != null) forgotPasswordPanel.SetActive(false);
@@ -371,6 +382,9 @@ public class AuthHUD : MonoBehaviour
     public void ShowRegisterPanel(bool playSound = false)
     {
         if (playSound) PlayClickSound();
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null) charHud.SetLobbyModelVisible(false);
+
         if (loginPanel != null) loginPanel.SetActive(false);
         if (registerPanel != null) registerPanel.SetActive(true);
         if (forgotPasswordPanel != null) forgotPasswordPanel.SetActive(false);
@@ -380,6 +394,9 @@ public class AuthHUD : MonoBehaviour
     public void ShowForgotPasswordPanel(bool playSound = false)
     {
         if (playSound) PlayClickSound();
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null) charHud.SetLobbyModelVisible(false);
+
         if (loginPanel != null) loginPanel.SetActive(false);
         if (registerPanel != null) registerPanel.SetActive(false);
         if (forgotPasswordPanel != null) forgotPasswordPanel.SetActive(true);
@@ -567,6 +584,12 @@ public class AuthHUD : MonoBehaviour
             }
             home.UpdatePlayerProfileVisuals();
             home.SyncSavedCharacter();
+        }
+
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.ApplyLobbyModelVisuals();
         }
     }
 

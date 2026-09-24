@@ -58,8 +58,18 @@ public class DoorController : MonoBehaviour, IInteractable
     [Tooltip("Tự động mở khi Player/NPC đến gần")]
     public bool enableAutoOpen = true;
 
-    [Tooltip("Bán kính phát hiện Player và NPC quanh cửa (mét)")]
-    public float autoOpenRadius = 2.5f;
+    [Tooltip("Bán kính phát hiện Player và NPC quanh cửa để MỞ (mét)")]
+    public float autoOpenRadius = 2.2f;
+
+    [Tooltip("Bán kính phát hiện Player và NPC quanh cửa để ĐÓNG (mét) - Lớn hơn autoOpenRadius để chống giật đóng/mở")]
+    public float autoCloseRadius = 3.0f;
+
+    [Tooltip("Độ trễ chờ (giây) trước khi tự động đóng sau khi người chơi đã rời khỏi vùng quét")]
+    public float closeDelayDuration = 1.2f;
+    private float closeTimer = 0f;
+
+    [Tooltip("Trạng thái đang có người chơi bẻ khóa (khóa độc quyền 1 người bẻ khóa)")]
+    [HideInInspector] public bool isBeingLockpicked = false;
 
     [Tooltip("Offset tâm vùng quét bán kính so với vị trí Cửa (X, Y, Z)")]
     public Vector3 detectionCenterOffset = new Vector3(0f, 1.0f, 0f);
@@ -147,12 +157,13 @@ public class DoorController : MonoBehaviour, IInteractable
     }
 
     /// <summary>
-    /// Quét các đối tượng trong bán kính autoOpenRadius bằng OverlapSphereNonAlloc (Siêu nhẹ, 0 garbage allocation)
+    /// Quét các đối tượng trong bán kính autoOpenRadius/autoCloseRadius với cơ chế Hysteresis + Close Delay
     /// </summary>
     private void CheckNearbyEntities()
     {
         Vector3 centerPos = transform.TransformPoint(detectionCenterOffset);
-        int hitCount = Physics.OverlapSphereNonAlloc(centerPos, autoOpenRadius, overlapBuffer, detectionLayerMask, QueryTriggerInteraction.Ignore);
+        float currentScanRadius = isOpen ? autoCloseRadius : autoOpenRadius;
+        int hitCount = Physics.OverlapSphereNonAlloc(centerPos, currentScanRadius, overlapBuffer, detectionLayerMask, QueryTriggerInteraction.Ignore);
 
         bool npcNearby = false;
         bool playerNearby = false;
@@ -181,13 +192,21 @@ public class DoorController : MonoBehaviour, IInteractable
         // - Player đến gần -> Chỉ tự mở nếu đã bẻ khóa (isUnlocked)
         bool shouldBeOpen = npcNearby || (playerNearby && isUnlocked);
 
-        if (shouldBeOpen && !isOpen)
+        if (shouldBeOpen)
         {
-            SetDoorOpen(true);
+            closeTimer = closeDelayDuration;
+            if (!isOpen)
+            {
+                SetDoorOpen(true);
+            }
         }
-        else if (!shouldBeOpen && isOpen)
+        else if (isOpen)
         {
-            SetDoorOpen(false);
+            closeTimer -= checkInterval;
+            if (closeTimer <= 0f)
+            {
+                SetDoorOpen(false);
+            }
         }
     }
 
@@ -280,12 +299,12 @@ public class DoorController : MonoBehaviour, IInteractable
 
     private void InitializeAudio()
     {
-        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = GetComponentInChildren<AudioSource>(true);
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1.0f; // 3D Spatial Sound
-            audioSource.minDistance = 1.5f;
+            audioSource.spatialBlend = 0.2f; // Tăng âm lượng rõ nét cho người chơi đứng gần
+            audioSource.minDistance = 2.0f;
             audioSource.maxDistance = 30f;
             audioSource.playOnAwake = false;
         }
@@ -305,7 +324,14 @@ public class DoorController : MonoBehaviour, IInteractable
     /// </summary>
     public void StartLockpicking()
     {
-        if (isUnlocked) return;
+        if (isUnlocked || isBeingLockpicked) return;
+
+        isBeingLockpicked = true;
+        var netDoor = GetComponent<NetworkDoorSync>();
+        if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
+        {
+            netDoor.RpcSyncSetLockpicking(true);
+        }
 
         if (uiManager == null) uiManager = FindFirstObjectByType<UI_Manager>();
 
@@ -330,6 +356,7 @@ public class DoorController : MonoBehaviour, IInteractable
     {
         if (isUnlocked) return;
         isUnlocked = true;
+        isBeingLockpicked = false;
 
         Debug.Log($"<color=green>Successfully unlocked door: {doorName}!</color>");
 
@@ -361,6 +388,7 @@ public class DoorController : MonoBehaviour, IInteractable
     /// </summary>
     public void OnUnlockFailed()
     {
+        CancelLockpicking();
         PlayMissSound();
         AlertNearbyNPCs();
     }
@@ -373,6 +401,16 @@ public class DoorController : MonoBehaviour, IInteractable
     // =========================================================================
     //                       AUDIO PLAYBACK API (3D)
     // =========================================================================
+
+    public void CancelLockpicking()
+    {
+        isBeingLockpicked = false;
+        var netDoor = GetComponent<NetworkDoorSync>();
+        if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
+        {
+            netDoor.RpcSyncSetLockpicking(false);
+        }
+    }
 
     public void PlayHitSound()
     {
@@ -392,10 +430,19 @@ public class DoorController : MonoBehaviour, IInteractable
     private void PlaySound(AudioClip clip)
     {
         if (clip == null) return;
-        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+        if (audioSource == null) audioSource = GetComponentInChildren<AudioSource>(true);
+        if (audioSource == null)
+        {
+            InitializeAudio();
+        }
+
         if (audioSource != null)
         {
-            audioSource.PlayOneShot(clip);
+            audioSource.PlayOneShot(clip, 1.0f);
+        }
+        else
+        {
+            AudioSource.PlayClipAtPoint(clip, transform.position, 1.0f);
         }
     }
 
@@ -408,6 +455,8 @@ public class DoorController : MonoBehaviour, IInteractable
         Gizmos.color = Color.cyan;
         Vector3 centerPos = transform.TransformPoint(detectionCenterOffset);
         Gizmos.DrawWireSphere(centerPos, autoOpenRadius);
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(centerPos, autoCloseRadius);
     }
 
     // =========================================================================
@@ -430,6 +479,11 @@ public class DoorController : MonoBehaviour, IInteractable
             failReason = "Already Unlocked";
             return false;
         }
+        if (isBeingLockpicked)
+        {
+            failReason = "Someone is picking this lock...";
+            return false;
+        }
         if (UI_Manager.isSolving)
         {
             failReason = "";
@@ -441,7 +495,7 @@ public class DoorController : MonoBehaviour, IInteractable
 
     public void Interact(PlayerController player)
     {
-        if (!isUnlocked && !UI_Manager.isSolving)
+        if (!isUnlocked && !UI_Manager.isSolving && !isBeingLockpicked)
         {
             StartLockpicking();
         }
