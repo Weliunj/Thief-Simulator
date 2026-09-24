@@ -117,6 +117,13 @@ namespace StarterAssets
                 {
                     move = new Vector2(h, v).normalized;
                 }
+                else if (dynamicJoystick == null || !dynamicJoystick.gameObject.activeInHierarchy || !dynamicJoystick.IsPressed)
+                {
+                    // Khi không nhấn phím nào VÀ joystick không bấm -> dừng di chuyển
+                    #if !ENABLE_INPUT_SYSTEM
+                    move = Vector2.zero;
+                    #endif
+                }
             }
             catch
             {
@@ -163,6 +170,23 @@ namespace StarterAssets
                 if (dynamicJoystick.IsPressed)
                 {
                     MoveInput(dynamicJoystick.Direction);
+                }
+                else
+                {
+                    // Khi buông ngón tay khỏi Joystick, reset move về 0 nếu không có phím WASD nào đang bấm
+                    try
+                    {
+                        float h = Input.GetAxisRaw("Horizontal");
+                        float v = Input.GetAxisRaw("Vertical");
+                        if (Mathf.Abs(h) <= 0.01f && Mathf.Abs(v) <= 0.01f)
+                        {
+                            MoveInput(Vector2.zero);
+                        }
+                    }
+                    catch
+                    {
+                        MoveInput(Vector2.zero);
+                    }
                 }
             }
 

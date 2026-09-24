@@ -16711,7 +16711,7 @@ CanvasGroup:
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
-  m_BlocksRaycasts: 0
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!1 &804220686
 GameObject:
@@ -26619,11 +26619,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1329315060}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: -0.99772567, z: 0, w: 0.067405805}
-  m_LocalPosition: {x: -74.4, y: 54.049, z: -42.6}
+  m_LocalRotation: {x: 0, y: -0.9918167, z: 0, w: 0.12767057}
+  m_LocalPosition: {x: -74.4, y: 54.049, z: -42.8}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 8062475127559519138}
   - {fileID: 1472505073}
   - {fileID: 278503095}
   - {fileID: 1256401418}
@@ -26634,7 +26635,6 @@ Transform:
   - {fileID: 391280352}
   - {fileID: 92013859}
   - {fileID: 1223818924}
-  - {fileID: 8062475127559519138}
   - {fileID: 1211539908}
   - {fileID: 1646179071}
   - {fileID: 342247914}
@@ -26652,7 +26652,7 @@ Transform:
   - {fileID: 1803138907}
   - {fileID: 1989400738}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: -172.27, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -165.33, z: 0}
 --- !u!1 &1346272653
 GameObject:
   m_ObjectHideFlags: 0
@@ -28758,6 +28758,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 72ed34f0086ec6a479248f60b06ee5af, type: 2}
   - {fileID: 11400000, guid: 3c05bc5f01941c14e9af32b1a3e036dd, type: 2}
   previousPanel: {fileID: 1983599578}
+  lobbyPlayerModel: {fileID: 1329315060}
+  lobbySkinnedMesh: {fileID: 5355661646382542773}
   clickAudioSource: {fileID: 864305943}
   nameText: {fileID: 1591214961}
   descText: {fileID: 377690502}
@@ -38814,6 +38816,7 @@ MonoBehaviour:
   playerNameText: {fileID: 1054700218}
   playerCashText: {fileID: 1737529385}
   simulateOffline: 0
+  lobbyPlayerModel: {fileID: 1329315060}
   authPanel: {fileID: 662380752}
   mainMenuPanel: {fileID: 1983599578}
   settingPanel: {fileID: 873718574}
@@ -43280,7 +43283,7 @@ GameObject:
   - component: {fileID: 3384082945445865554}
   - component: {fileID: 3956262410470878113}
   m_Layer: 3
-  m_Name: 'Base '
+  m_Name: PlayerModel
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

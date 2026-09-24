@@ -529,6 +529,7 @@ namespace StarterAssets
         }
 
         [HideInInspector] public bool Crouching = false;
+        private bool _lastCrouchState = false;
         private void Move()
         {
             if (UI_Manager.isSolving || (player != null && player.totalpoint > 0 && player.currpoint >= player.totalpoint))
@@ -563,11 +564,24 @@ namespace StarterAssets
                 targetSpeed = isSprintingAllowed ? player._SprintSpeed : player._MoveSpeed;
             }
 
+            // Chỉ thay đổi CharacterController center và height khi thay đổi trạng thái Crouch (tránh reset PhysX capsule mỗi frame)
+            if (Crouching != _lastCrouchState)
+            {
+                _lastCrouchState = Crouching;
+                if (Crouching)
+                {
+                    characterController.center = new Vector3(StartCenter.x, 0.77f, StartCenter.z);
+                    characterController.height = 1.46f;
+                }
+                else
+                {
+                    characterController.center = new Vector3(StartCenter.x, StartCenter.y, StartCenter.z);
+                    characterController.height = StartHeight;
+                }
+            }
+
             if (Crouching)
             {
-                characterController.center = new Vector3(StartCenter.x, 0.77f, StartCenter.z);
-                characterController.height = 1.46f;
-
                 if (CinemachineCameraTarget != null)
                 {
                     Vector3 crouchTargetPos = _startCameraTargetLocalPos + new Vector3(0f, crouchCameraYOffset, 0f);
@@ -578,22 +592,12 @@ namespace StarterAssets
                     );
                 }
 
-                _animator.SetBool("Crouch", true); // Dùng SetBool thay vì SetTrigger
-                targetSpeed = (_input.move == Vector2.zero) ? 0.0f : player.crouchSpeed; // Tốc độ di chuyển khi cúi (đã tính weight penalty)
-                if (targetSpeed < 0.1f)
-                {
-                    _animator.SetBool("IsCrouching", false);
-                }
-                else
-                {
-                    _animator.SetBool("IsCrouching", true);
-                }
+                _animator.SetBool("Crouch", true);
+                targetSpeed = (_input.move == Vector2.zero) ? 0.0f : player.crouchSpeed;
+                _animator.SetBool("IsCrouching", targetSpeed >= 0.1f);
             }
             else
             {
-                characterController.center = new Vector3(StartCenter.x, StartCenter.y, StartCenter.z);
-                characterController.height = StartHeight;
-
                 if (CinemachineCameraTarget != null)
                 {
                     CinemachineCameraTarget.transform.localPosition = Vector3.Lerp(
@@ -604,48 +608,47 @@ namespace StarterAssets
                 }
 
                 _animator.SetBool("IsCrouching", false);
-                _animator.SetBool("Crouch", false); // Dùng SetBool thay vì ResetTrigger
+                _animator.SetBool("Crouch", false);
 
                 bool isSprintingAllowed = _input.sprint && _canSprint;
                 targetSpeed = isSprintingAllowed ? player._SprintSpeed : player._MoveSpeed;
             }
-            // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
             WeightCacul();
-            // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
-            // if there is no input, set the target speed to 0
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            float rawMoveMagnitude = _input.move.magnitude;
+            if (rawMoveMagnitude < 0.01f)
+            {
+                targetSpeed = 0.0f;
+            }
             if (inventory != null && inventory.isTaking)
             {
-                targetSpeed = 0.3f; // bị ép chậm nhưng animation blend vẫn mượt
+                targetSpeed = Mathf.Min(targetSpeed, 0.3f); // bị ép chậm nhưng animation blend vẫn mượt
             }
-            // a reference to the players current horizontal velocity
-            float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
 
-            float speedOffset = 0.1f;
-            float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
+            float inputMagnitude = _input.analogMovement ? rawMoveMagnitude : (rawMoveMagnitude > 0.01f ? 1f : 0f);
+            float desiredSpeed = targetSpeed * inputMagnitude;
 
-            // accelerate or decelerate to target speed
-            if (currentHorizontalSpeed < targetSpeed - speedOffset ||
-                currentHorizontalSpeed > targetSpeed + speedOffset)
+            // Tăng tốc hoặc giảm tốc mượt mà dựa trên _speed hiện tại (dừng dứt khoát khi nhả nút/joystick)
+            if (desiredSpeed <= 0.001f)
             {
-                // creates curved result rather than a linear one giving a more organic speed change
-                // note T in Lerp is clamped, so we don't need to clamp our speed
-                _speed = Mathf.Lerp(currentHorizontalSpeed, targetSpeed * inputMagnitude,
-                    Time.deltaTime * SpeedChangeRate);
+                _speed = Mathf.Lerp(_speed, 0f, Time.deltaTime * SpeedChangeRate * 2.5f);
+                if (_speed < 0.05f) _speed = 0f;
 
-                // round speed to 3 decimal places
-                _speed = Mathf.Round(_speed * 1000f) / 1000f;
+                _animationBlend = Mathf.Lerp(_animationBlend, 0f, Time.deltaTime * SpeedChangeRate * 2.5f);
+                if (_animationBlend < 0.05f) _animationBlend = 0f;
             }
             else
             {
-                _speed = targetSpeed;
+                _speed = Mathf.Lerp(_speed, desiredSpeed, Time.deltaTime * SpeedChangeRate);
+                _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
             }
 
-            _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
-            if (_animationBlend < 0.01f) _animationBlend = 0f;
-
             // Player luôn xoay mặt theo góc Y của Camera (kể cả khi đứng yên hay di chuyển)
+            if (_mainCamera == null)
+            {
+                _mainCamera = GameObject.FindGameObjectWithTag("MainCamera") ?? (Camera.main != null ? Camera.main.gameObject : null);
+            }
+
             _targetRotation = _mainCamera != null ? _mainCamera.transform.eulerAngles.y : transform.eulerAngles.y;
             float rotation = Mathf.SmoothDampAngle(transform.eulerAngles.y, _targetRotation, ref _rotationVelocity, RotationSmoothTime);
             transform.rotation = Quaternion.Euler(0.0f, rotation, 0.0f);
@@ -654,7 +657,7 @@ namespace StarterAssets
             Vector3 inputDirection = new Vector3(_input.move.x, 0.0f, _input.move.y).normalized;
             Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * inputDirection;
 
-            // move the player
+            // Di chuyển CharacterController
             _controller.Move(targetDirection * (_speed * Time.deltaTime) +
                              new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 

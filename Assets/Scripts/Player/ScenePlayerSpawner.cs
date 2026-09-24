@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Fusion;
 using StarterAssets;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -125,9 +126,8 @@ public class ScenePlayerSpawner : MonoBehaviour
     [ContextMenu("Spawn Player Now")]
     public GameObject SpawnPlayer()
     {
-        bool isMultiplayer = (FusionConnectionManager.Instance != null && 
-                              FusionConnectionManager.Instance.currentRunner != null && 
-                              FusionConnectionManager.Instance.currentRunner.IsRunning);
+        bool isMultiplayer = FusionConnectionManager.Instance != null &&
+                             FusionConnectionManager.Instance.IsInGameplaySession;
 
         // 1. Kiểm tra tránh sinh trùng lặp nếu đã có Player trong Scene (CHỈ ÁP DỤNG OFFLINE)
         if (!isMultiplayer && preventDuplicateIfPlayerExists)
@@ -227,11 +227,13 @@ public class ScenePlayerSpawner : MonoBehaviour
             {
                 Debug.LogError($"[ScenePlayerSpawner] runner.Spawn error: {ex.Message}. Falling back to local Instantiate.");
                 spawnedPlayerInstance = Instantiate(prefabToInstantiate, spawnPos, spawnRot);
+                DisableUnusedNetworkComponents(spawnedPlayerInstance);
             }
         }
         else
         {
             spawnedPlayerInstance = Instantiate(prefabToInstantiate, spawnPos, spawnRot);
+            DisableUnusedNetworkComponents(spawnedPlayerInstance);
         }
 
         if (spawnedPlayerInstance == null) return null;
@@ -251,11 +253,42 @@ public class ScenePlayerSpawner : MonoBehaviour
             pc.playerData = activeData;
         }
 
+        if (stats != null)
+        {
+            stats.ApplyCharacterMeshAndSkin(activeData);
+        }
+
+        var netSync = spawnedPlayerInstance.GetComponent<NetworkPlayerSync>();
+        if (netSync != null)
+        {
+            netSync.SetLocalMeshVisibility(false);
+        }
+
         // 7. Tự động kết nối Camera & UI
         SetupCameraAndUI(spawnedPlayerInstance);
 
         Debug.Log($"<color=cyan>[ScenePlayerSpawner] Đã sinh thành công '{spawnedPlayerInstance.name}' tại {spawnPos}!</color>");
         return spawnedPlayerInstance;
+    }
+
+    /// <summary>
+    /// Offline Instantiate: tắt NetworkTransform / NetworkMecanimAnimator để không khóa vị trí nhân vật.
+    /// </summary>
+    public static void DisableUnusedNetworkComponents(GameObject playerObj)
+    {
+        if (playerObj == null) return;
+
+        var networkTransform = playerObj.GetComponent<NetworkTransform>();
+        if (networkTransform != null)
+        {
+            networkTransform.enabled = false;
+        }
+
+        var networkAnimator = playerObj.GetComponent<NetworkMecanimAnimator>();
+        if (networkAnimator != null)
+        {
+            networkAnimator.enabled = false;
+        }
     }
 
     /// <summary>
@@ -311,6 +344,13 @@ public class ScenePlayerSpawner : MonoBehaviour
             {
                 camData.renderPostProcessing = true;
             }
+        }
+
+        // 6. Kết nối HotbarManager với Local Player
+        HotbarManager hotbar = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
+        if (hotbar != null && pc != null)
+        {
+            hotbar.RebindPlayer(pc);
         }
     }
 

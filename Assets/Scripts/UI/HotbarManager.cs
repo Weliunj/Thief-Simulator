@@ -145,6 +145,46 @@ public class HotbarManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Đảm bảo luôn trỏ đúng vào Local Player (tránh trỏ nhầm sang người chơi khác trong phòng Multiplayer)
+    /// </summary>
+    public void EnsureLocalPlayerController()
+    {
+        if (playerController != null)
+        {
+            var net = playerController.GetComponent<NetworkPlayerSync>();
+            if (net == null || net.IsLocalPlayer)
+            {
+                return;
+            }
+        }
+
+        var allControllers = FindObjectsByType<PlayerController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        foreach (var pc in allControllers)
+        {
+            var net = pc.GetComponent<NetworkPlayerSync>();
+            if (net == null || net.IsLocalPlayer)
+            {
+                playerController = pc;
+                return;
+            }
+        }
+
+        if (allControllers.Length > 0 && playerController == null)
+        {
+            playerController = allControllers[0];
+        }
+    }
+
+    public void RebindPlayer(PlayerController pc)
+    {
+        if (pc != null)
+        {
+            playerController = pc;
+            InitializeHoldPoint();
+        }
+    }
+
     void Start()
     {
         if (mainCamera == null)
@@ -153,10 +193,7 @@ public class HotbarManager : MonoBehaviour
             if (mainCamera == null) mainCamera = FindFirstObjectByType<Camera>();
         }
 
-        if (playerController == null)
-        {
-            playerController = FindFirstObjectByType<PlayerController>();
-        }
+        EnsureLocalPlayerController();
 
         if (mobileActions == null)
         {
@@ -308,10 +345,7 @@ public class HotbarManager : MonoBehaviour
             if (mainCamera == null) mainCamera = FindFirstObjectByType<Camera>();
         }
 
-        if (playerController == null)
-        {
-            playerController = FindFirstObjectByType<PlayerController>();
-        }
+        EnsureLocalPlayerController();
 
         Item item = currentHeldModel.GetComponent<Item>();
         Vector3 activeRotation = (item != null && item.useCustomHoldRotation) ? item.customHoldRotation : holdPointRotation;
@@ -439,10 +473,7 @@ public class HotbarManager : MonoBehaviour
             if (mainCamera == null) mainCamera = FindFirstObjectByType<Camera>();
         }
 
-        if (playerController == null)
-        {
-            playerController = FindFirstObjectByType<PlayerController>();
-        }
+        EnsureLocalPlayerController();
 
         if (mainCamera == null)
         {
@@ -949,8 +980,14 @@ public class HotbarManager : MonoBehaviour
             }
         }
 
+        // Đồng bộ vật phẩm rơi qua mạng Photon Fusion cho tất cả người chơi khác
+        Vector3 linVel = (rb != null) ? rb.linearVelocity : Vector3.zero;
+        Vector3 angVel = (rb != null) ? rb.angularVelocity : Vector3.zero;
+        bool isLadderPlaced = (isLadder && ladder != null) ? ladder.isPlaced : false;
+        NetworkItemSync.SyncDropItem(itemObj, dropPosition, dropRot, linVel, angVel, isLadder, isLadderPlaced);
+
         // Cập nhật khối lượng và danh sách Player
-        if (playerController == null) playerController = FindFirstObjectByType<PlayerController>();
+        EnsureLocalPlayerController();
         if (playerController != null)
         {
             if (playerController.player != null)

@@ -118,7 +118,7 @@ public class NetworkPlayerSlot : MonoBehaviour
             if (!isHost)
             {
                 readyStatusText.text = isReady
-                    ? "<color=#00FF88>READY ✓</color>"
+                    ? "<color=#00FF88>READY</color>"
                     : "NOT READY";
             }
         }

@@ -55,12 +55,37 @@ public class PlayerSO : ScriptableObject
     [Tooltip("Mesh 3D cho Nữ (được truyền từ Slot khi Save)")]
     public Mesh femaleMesh;
 
+    [Tooltip("Danh sách Mesh 3D biến thể cho Nam")]
+    public List<Mesh> maleMeshes = new List<Mesh>();
+
+    [Tooltip("Danh sách Mesh 3D biến thể cho Nữ")]
+    public List<Mesh> femaleMeshes = new List<Mesh>();
+
     /// <summary>
     /// Lấy Mesh 3D theo Giới tính (Nam / Nữ)
     /// </summary>
     public Mesh GetMesh(bool isMale, int variantIndex = 0)
     {
-        return isMale ? maleMesh : femaleMesh;
+        if (isMale)
+        {
+            if (maleMesh != null) return maleMesh;
+            if (maleMeshes != null && maleMeshes.Count > 0)
+            {
+                int idx = Mathf.Clamp(variantIndex, 0, maleMeshes.Count - 1);
+                return maleMeshes[idx];
+            }
+            return null;
+        }
+        else
+        {
+            if (femaleMesh != null) return femaleMesh;
+            if (femaleMeshes != null && femaleMeshes.Count > 0)
+            {
+                int idx = Mathf.Clamp(variantIndex, 0, femaleMeshes.Count - 1);
+                return femaleMeshes[idx];
+            }
+            return null;
+        }
     }
 
     [Header("🎨 Character Appearance / Skin")]

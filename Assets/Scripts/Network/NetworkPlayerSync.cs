@@ -52,6 +52,24 @@ public class NetworkPlayerSync : NetworkBehaviour
     [Tooltip("Danh sách các Model con tương ứng với từng nhân vật (nếu dùng cơ chế bật/tắt Model)")]
     public List<GameObject> characterModelObjects = new List<GameObject>();
 
+    [Header("👁️ Local FPS Mesh Visibility")]
+    [Tooltip("Tự động tắt Mesh của bản thân (Local Player) để không che tầm nhìn Camera góc nhìn thứ nhất (FPS)")]
+    public bool hideLocalPlayerMesh = true;
+    [Tooltip("true = vẫn đổ bóng xuống sàn (ShadowsOnly); false = tắt hẳn SkinnedMeshRenderer")]
+    public bool useShadowsOnly = false;
+
+    /// <summary>
+    /// Kiểm tra người chơi cục bộ: hỗ trợ cả Offline lẫn Fusion Shared Mode (HasStateAuthority) và Host/Server Mode (HasInputAuthority)
+    /// </summary>
+    public bool IsLocalPlayer
+    {
+        get
+        {
+            if (Runner == null || !Runner.IsRunning) return true;
+            return Object.HasStateAuthority || Object.HasInputAuthority;
+        }
+    }
+
     private void Awake()
     {
         EnsureNameTagComponent();
@@ -78,7 +96,14 @@ public class NetworkPlayerSync : NetworkBehaviour
             var localHead = GetComponent<PlayerHeadLook>();
             if (localHead != null) localHead.enabled = true;
 
+            ScenePlayerSpawner.DisableUnusedNetworkComponents(gameObject);
+            ApplySkinFromGameSession();
+            SetLocalMeshVisibility(false);
             SetNameTagVisible(showForLocalPlayer);
+        }
+        else if (IsLocalPlayer)
+        {
+            ConfigureLocalNetworkTransform();
         }
     }
 
@@ -92,12 +117,12 @@ public class NetworkPlayerSync : NetworkBehaviour
         EnsureNameTagComponent();
         EnsureMeshComponents();
 
-        if (HasInputAuthority)
+        if (IsLocalPlayer)
         {
             // =========================================================================
             //                         LOCAL PLAYER SETUP
             // =========================================================================
-            Debug.Log("<color=green>[NetworkPlayerSync] Thiết lập Local Player (HasInputAuthority = true).</color>");
+            Debug.Log("<color=green>[NetworkPlayerSync] Thiết lập Local Player (IsLocalPlayer = true).</color>");
 
             // 1. Gửi tên, giới tính và nhân vật đã chọn lên mạng
             string myName = "Player";
@@ -108,10 +133,14 @@ public class NetworkPlayerSync : NetworkBehaviour
             NetworkPlayerName = myName;
 
             int savedCharIndex = PlayerPrefs.GetInt("SelectedCharIndex", 0);
-            int savedGender = PlayerPrefs.GetInt("SelectedGender", 0); // 0 = Male, 1 = Female
+            if (GameSession.SelectedPlayer != null && characterDatabase != null)
+            {
+                int idx = characterDatabase.IndexOf(GameSession.SelectedPlayer);
+                if (idx >= 0) savedCharIndex = idx;
+            }
 
             CharacterSkinIndex = savedCharIndex;
-            NetworkIsMale = (savedGender == 0);
+            NetworkIsMale = GameSession.IsMale;
 
             // Bảng tên của chính mình
             if (nameTagText != null)
@@ -120,8 +149,13 @@ public class NetworkPlayerSync : NetworkBehaviour
             }
             SetNameTagVisible(showForLocalPlayer);
 
+            ConfigureLocalNetworkTransform();
+
             // Cập nhật skin cho chính mình
-            ApplySkin(savedCharIndex, savedGender == 0);
+            ApplySkin(CharacterSkinIndex, NetworkIsMale);
+
+            // Tắt mesh bản thân để không che camera FPS
+            SetLocalMeshVisibility(false);
 
             // 2. Kích hoạt Input, Controller, Physics & Camera cho Local Player
             if (characterController != null) characterController.enabled = true;
@@ -167,8 +201,9 @@ public class NetworkPlayerSync : NetworkBehaviour
             }
             SetNameTagVisible(true);
 
-            // 3. Cập nhật Skin & Mesh ngoại hình người chơi khác
+            // 3. Cập nhật Skin & Mesh ngoại hình người chơi khác (hiển thị đầy đủ cho người khác nhìn thấy)
             ApplySkin(CharacterSkinIndex, NetworkIsMale);
+            SetLocalMeshVisibility(true);
         }
     }
 
@@ -256,13 +291,37 @@ public class NetworkPlayerSync : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// CharacterController tự di chuyển local: tắt interpolation Shared Mode để NetworkTransform không kéo nhân vật về chỗ cũ.
+    /// </summary>
+    private void ConfigureLocalNetworkTransform()
+    {
+        var networkTransform = GetComponent<NetworkTransform>();
+        if (networkTransform != null)
+        {
+            networkTransform.DisableSharedModeInterpolation = true;
+            networkTransform.enabled = true;
+        }
+    }
+
+    private void ApplySkinFromGameSession()
+    {
+        int skinIndex = PlayerPrefs.GetInt("SelectedCharIndex", 0);
+        if (GameSession.SelectedPlayer != null && characterDatabase != null)
+        {
+            int idx = characterDatabase.IndexOf(GameSession.SelectedPlayer);
+            if (idx >= 0) skinIndex = idx;
+        }
+        ApplySkin(skinIndex, GameSession.IsMale);
+    }
+
     private void OnPlayerNameChanged()
     {
         if (nameTagText != null)
         {
             nameTagText.text = NetworkPlayerName.ToString();
         }
-        SetNameTagVisible(!HasInputAuthority || showForLocalPlayer);
+        SetNameTagVisible(!IsLocalPlayer || showForLocalPlayer);
     }
 
     private void OnCharacterSkinChanged()
@@ -288,25 +347,81 @@ public class NetworkPlayerSync : NetworkBehaviour
         }
 
         // Cách 2: Tự động đổi Mesh 3D & Material trên SkinnedMeshRenderer từ PlayerSO
-        if (characterSkinnedMesh != null && characterDatabase != null && skinIndex >= 0 && skinIndex < characterDatabase.Count)
+        PlayerSO so = null;
+        if (characterDatabase != null && skinIndex >= 0 && skinIndex < characterDatabase.Count)
         {
-            PlayerSO so = characterDatabase[skinIndex];
-            if (so != null)
-            {
-                Mesh targetMesh = so.GetMesh(isMale);
-                if (targetMesh != null)
-                {
-                    characterSkinnedMesh.sharedMesh = targetMesh;
-                }
+            so = characterDatabase[skinIndex];
+        }
+        if (so == null)
+        {
+            so = GameSession.SelectedPlayer;
+        }
 
-                if (so.characterMaterial != null)
-                {
-                    characterSkinnedMesh.material = so.characterMaterial;
-                }
-                else if (so.characterTexture != null)
-                {
-                    characterSkinnedMesh.material.mainTexture = so.characterTexture;
-                }
+        if (so != null)
+        {
+            Mesh targetMesh = so.GetMesh(isMale);
+            if (characterSkinnedMesh != null && targetMesh != null)
+            {
+                characterSkinnedMesh.sharedMesh = targetMesh;
+            }
+            else
+            {
+                PlayerStats.ApplyMeshToModel(gameObject, targetMesh);
+            }
+
+            PlayerStats.ApplySkinToModel(gameObject, so.characterMaterial, so.characterTexture);
+        }
+
+        // Đảm bảo trạng thái ẩn/hiện mesh của bản thân (FPS) vẫn được giữ đúng sau khi đổi skin
+        SetLocalMeshVisibility(!IsLocalPlayer);
+    }
+
+    /// <summary>
+    /// Bật/Tắt hiển thị Mesh nhân vật (Trong góc nhìn FPV: tắt mesh của chính mình để tránh che Camera)
+    /// </summary>
+    public void SetLocalMeshVisibility(bool visible)
+    {
+        if (!visible && hideLocalPlayerMesh)
+        {
+            ApplyMeshVisibility(false, useShadowsOnly);
+        }
+        else
+        {
+            ApplyMeshVisibility(true, false);
+        }
+    }
+
+    private void ApplyMeshVisibility(bool visible, bool shadowsOnly)
+    {
+        if (characterSkinnedMesh != null)
+        {
+            if (shadowsOnly)
+            {
+                characterSkinnedMesh.enabled = true;
+                characterSkinnedMesh.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+            }
+            else
+            {
+                characterSkinnedMesh.enabled = visible;
+                characterSkinnedMesh.shadowCastingMode = visible ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+        }
+
+        SkinnedMeshRenderer[] smrs = GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        foreach (var smr in smrs)
+        {
+            if (smr == null) continue;
+            if (smr.GetComponentInParent<Item>() != null) continue;
+
+            if (shadowsOnly)
+            {
+                smr.enabled = true;
+                smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+            }
+            else
+            {
+                smr.enabled = visible;
+                smr.shadowCastingMode = visible ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off;
             }
         }
     }

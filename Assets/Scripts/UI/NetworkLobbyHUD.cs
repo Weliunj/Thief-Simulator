@@ -245,6 +245,16 @@ public class NetworkLobbyHUD : MonoBehaviour
         FusionConnectionManager.OnPlayerJoinedEvent -= OnPlayerJoinedWaitingRoom;
         FusionConnectionManager.OnPlayerLeftEvent -= OnPlayerLeftWaitingRoom;
         FusionConnectionManager.OnPlayerReadyStatusReceived -= OnRemotePlayerReadyReceived;
+
+        // Khôi phục hiển thị 3D Player Model nếu quay về HomeScreen
+        if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "HomeMenu")
+        {
+            CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+            if (charHud != null)
+            {
+                charHud.ApplyLobbyModelVisuals();
+            }
+        }
     }
 
     private void OnRemotePlayerReadyReceived(int playerId, bool isReady)
@@ -342,6 +352,13 @@ public class NetworkLobbyHUD : MonoBehaviour
         _ = FusionConnectionManager.Instance?.LeaveSession();
         gameObject.SetActive(false);
         if (previousHomePanel != null) previousHomePanel.SetActive(true);
+
+        // Khôi phục hiển thị 3D Player Model ngoài sảnh HomeScreen
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.ApplyLobbyModelVisuals();
+        }
     }
 
     // =========================================================================

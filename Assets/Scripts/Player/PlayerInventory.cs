@@ -68,6 +68,12 @@ public class PlayerInventory : MonoBehaviour
 
     private void Update()
     {
+        var net = GetComponent<NetworkPlayerSync>();
+        if (net != null && !net.IsLocalPlayer)
+        {
+            return;
+        }
+
         UpdateHoldingState();
     }
 
@@ -223,6 +229,8 @@ public class PlayerInventory : MonoBehaviour
             itemToDrop.SetActive(true);
 
             Rigidbody rbDrop = itemToDrop.GetComponent<Rigidbody>();
+            Vector3 linVel = Vector3.zero;
+            Vector3 angVel = Vector3.zero;
             if (rbDrop != null)
             {
                 rbDrop.isKinematic = false;
@@ -242,7 +250,12 @@ public class PlayerInventory : MonoBehaviour
                     Vector3 dropForce = (transform.forward + Vector3.up * 0.5f) * Random.Range(1.5f, 3f);
                     rbDrop.AddForce(dropForce, ForceMode.Impulse);
                 }
+
+                linVel = rbDrop.linearVelocity;
+                angVel = rbDrop.angularVelocity;
             }
+
+            NetworkItemSync.SyncDropItem(itemToDrop, itemToDrop.transform.position, itemToDrop.transform.rotation, linVel, angVel, isLadder, false);
 
             heldItems.RemoveAt(lastIndex);
         }
@@ -289,6 +302,8 @@ public class PlayerInventory : MonoBehaviour
             spawnedPositions.Add(randomPosition);
 
             Rigidbody rb = item.GetComponent<Rigidbody>();
+            Vector3 linVel = Vector3.zero;
+            Vector3 angVel = Vector3.zero;
             if (rb != null)
             {
                 rb.isKinematic = false;
@@ -309,7 +324,12 @@ public class PlayerInventory : MonoBehaviour
                     rb.AddForce(force, ForceMode.Impulse);
                     rb.AddTorque(Random.insideUnitSphere * Random.Range(0.5f, 2.0f), ForceMode.Impulse);
                 }
+
+                linVel = rb.linearVelocity;
+                angVel = rb.angularVelocity;
             }
+
+            NetworkItemSync.SyncDropItem(item, item.transform.position, item.transform.rotation, linVel, angVel, isLadder, false);
 
             Debug.Log($"[PlayerInventory] Rớt vật phẩm khi chết: {item.name} tại {randomPosition}");
             droppedCount++;

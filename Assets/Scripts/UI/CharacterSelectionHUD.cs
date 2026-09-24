@@ -36,7 +36,11 @@ public class CharacterSelectionHUD : MonoBehaviour
     [Tooltip("Panel trước đó cần bật lại khi bấm nút Close (Ví dụ: MainMenuPanel)")]
     public GameObject previousPanel;
 
-
+    [Header("🧍 3D Lobby Player Model")]
+    [Tooltip("GameObject chứa 3D Model nhân vật ngoài sảnh Home Menu")]
+    public GameObject lobbyPlayerModel;
+    [Tooltip("SkinnedMeshRenderer của model ngoài sảnh để đổi Mesh/Skin (nếu có)")]
+    public SkinnedMeshRenderer lobbySkinnedMesh;
 
     [Header("🔊 Audio / SFX Settings")]
     [Tooltip("AudioSource phát tiếng click chung cho toàn bộ nút và slot (tự động kết nối SFX Group)")]
@@ -204,19 +208,154 @@ public class CharacterSelectionHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// (Tạm thời vô hiệu hóa theo yêu cầu)
-    /// </summary>
-    public void ApplyLobbyModelVisuals()
-    {
-        // Tạm thời vô hiệu hóa xử lý 3D Lobby Model
-    }
-
-    /// <summary>
-    /// (Tạm thời vô hiệu hóa theo yêu cầu)
+    /// Bật hoặc ẩn 3D Player Model ngoài sảnh HomeScreen
     /// </summary>
     public void SetLobbyModelVisible(bool visible)
     {
-        // Tạm thời vô hiệu hóa xử lý 3D Lobby Model
+        // Chỉ cho phép hiển thị nếu đang ở Scene HomeMenu
+        bool isHomeMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "HomeMenu";
+        if (!isHomeMenuScene)
+        {
+            if (lobbyPlayerModel != null)
+            {
+                lobbyPlayerModel.SetActive(false);
+            }
+            return;
+        }
+
+        if (lobbyPlayerModel == null)
+        {
+            FindLobbyModelInScene();
+        }
+
+        if (lobbyPlayerModel != null)
+        {
+            lobbyPlayerModel.SetActive(visible);
+        }
+    }
+
+    /// <summary>
+    /// Tự động tìm kiếm 3D Model nhân vật trong Scene HomeMenu nếu chưa gán
+    /// </summary>
+    public void FindLobbyModelInScene()
+    {
+        if (lobbyPlayerModel != null) return;
+
+        var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+        if (activeScene.name != "HomeMenu" || !activeScene.isLoaded) return;
+
+        HomeScreen home = FindFirstObjectByType<HomeScreen>(FindObjectsInactive.Include);
+        if (home != null && home.lobbyPlayerModel != null)
+        {
+            lobbyPlayerModel = home.lobbyPlayerModel;
+            if (lobbySkinnedMesh == null && lobbyPlayerModel != null)
+            {
+                lobbySkinnedMesh = lobbyPlayerModel.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            }
+            return;
+        }
+
+        string[] possibleNames = new string[] { "LobbyPlayerModel", "PlayerModel", "LobbyModel", "LobbyCharacter", "CharacterModel", "Player_Dummy", "PlayerPreview" };
+        GameObject[] roots = activeScene.GetRootGameObjects();
+        foreach (GameObject root in roots)
+        {
+            foreach (string name in possibleNames)
+            {
+                if (root.name.Equals(name, System.StringComparison.OrdinalIgnoreCase))
+                {
+                    lobbyPlayerModel = root;
+                    break;
+                }
+            }
+            if (lobbyPlayerModel != null) break;
+
+            foreach (string name in possibleNames)
+            {
+                Transform found = root.transform.Find(name);
+                if (found != null)
+                {
+                    lobbyPlayerModel = found.gameObject;
+                    break;
+                }
+            }
+            if (lobbyPlayerModel != null) break;
+        }
+
+        if (lobbyPlayerModel != null && lobbySkinnedMesh == null)
+        {
+            lobbySkinnedMesh = lobbyPlayerModel.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        }
+    }
+
+    /// <summary>
+    /// Áp dụng ngoại hình nhân vật đã chọn (Mesh, Skin/Material) lên 3D Model ngoài sảnh HomeMenu
+    /// </summary>
+    public void ApplyLobbyModelVisuals()
+    {
+        bool isHomeMenuScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "HomeMenu";
+        if (!isHomeMenuScene)
+        {
+            SetLobbyModelVisible(false);
+            return;
+        }
+
+        FindLobbyModelInScene();
+        if (lobbyPlayerModel == null) return;
+
+        // Chỉ hiển thị Model nếu đang ở màn hình chính MainMenuPanel (không mở các modal khác)
+        bool shouldShow = true;
+        HomeScreen home = FindFirstObjectByType<HomeScreen>(FindObjectsInactive.Include);
+        if (home != null)
+        {
+            if ((home.characterSelectPanel != null && home.characterSelectPanel.activeSelf) ||
+                (home.multiplayerLobbyPanel != null && home.multiplayerLobbyPanel.activeSelf) ||
+                (home.settingPanel != null && home.settingPanel.activeSelf) ||
+                (home.infoPanel != null && home.infoPanel.activeSelf) ||
+                (home.authPanel != null && home.authPanel.activeSelf) ||
+                (home.chapterSelectManager != null && home.chapterSelectManager.chapterSelectPanel != null && home.chapterSelectManager.chapterSelectPanel.activeSelf))
+            {
+                shouldShow = false;
+            }
+        }
+        else if (gameObject.activeInHierarchy)
+        {
+            shouldShow = false;
+        }
+
+        lobbyPlayerModel.SetActive(shouldShow);
+
+        // Áp dụng Mesh & Skin lên Model ngoài sảnh theo PlayerSO đã chọn
+        if (characterList != null && characterList.Count > selectedCharacterIndex && selectedCharacterIndex >= 0)
+        {
+            PlayerSO so = characterList[selectedCharacterIndex];
+            if (so != null)
+            {
+                if (lobbySkinnedMesh == null)
+                {
+                    lobbySkinnedMesh = lobbyPlayerModel.GetComponentInChildren<SkinnedMeshRenderer>(true);
+                }
+
+                if (lobbySkinnedMesh != null)
+                {
+                    Mesh mesh = so.GetMesh(isMaleSelected);
+                    if (mesh != null) lobbySkinnedMesh.sharedMesh = mesh;
+
+                    if (so.characterMaterial != null)
+                    {
+                        lobbySkinnedMesh.material = so.characterMaterial;
+                    }
+                    else if (so.characterTexture != null && lobbySkinnedMesh.material != null)
+                    {
+                        lobbySkinnedMesh.material.mainTexture = so.characterTexture;
+                    }
+                }
+                else
+                {
+                    PlayerStats.ApplyMeshToModel(lobbyPlayerModel, so.GetMesh(isMaleSelected));
+                    PlayerStats.ApplySkinToModel(lobbyPlayerModel, so.characterMaterial, so.characterTexture);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -555,6 +694,18 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             selectedCharacterIndex = 0;
             CurrentSaveData.selectedCharacterIndex = 0;
+        }
+
+        // Tự động đồng bộ Mesh & Avatar từ các Slot sang PlayerSO tương ứng
+        if (slotItems != null)
+        {
+            foreach (var slot in slotItems)
+            {
+                if (slot != null)
+                {
+                    slot.ApplyDataToPlayerSO();
+                }
+            }
         }
 
         // Đồng bộ vào GameSession & PlayerPrefs cho các Scene Gameplay

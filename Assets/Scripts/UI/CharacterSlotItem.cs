@@ -35,6 +35,11 @@ public class CharacterSlotItem : MonoBehaviour
     public Button lockButton;
     public TextMeshProUGUI priceText;
 
+    private void Awake()
+    {
+        ApplyDataToPlayerSO();
+    }
+
     /// <summary>
     /// Lấy ảnh đại diện theo giới tính
     /// </summary>
@@ -62,8 +67,18 @@ public class CharacterSlotItem : MonoBehaviour
 
         if (maleAvatar != null) characterSO.maleAvatar = maleAvatar;
         if (femaleAvatar != null) characterSO.femaleAvatar = femaleAvatar;
-        if (maleMesh != null) characterSO.maleMesh = maleMesh;
-        if (femaleMesh != null) characterSO.femaleMesh = femaleMesh;
+        if (maleMesh != null)
+        {
+            characterSO.maleMesh = maleMesh;
+            if (characterSO.maleMeshes == null) characterSO.maleMeshes = new System.Collections.Generic.List<Mesh>();
+            if (!characterSO.maleMeshes.Contains(maleMesh)) characterSO.maleMeshes.Insert(0, maleMesh);
+        }
+        if (femaleMesh != null)
+        {
+            characterSO.femaleMesh = femaleMesh;
+            if (characterSO.femaleMeshes == null) characterSO.femaleMeshes = new System.Collections.Generic.List<Mesh>();
+            if (!characterSO.femaleMeshes.Contains(femaleMesh)) characterSO.femaleMeshes.Insert(0, femaleMesh);
+        }
     }
 
     /// <summary>

@@ -1314,9 +1314,24 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
   - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified)
   - `Assets/Scripts/UI/NetworkPlayerSlot.cs` (Modified)
-  - `Assets/Scripts/Player/StarterAssetsInputs.cs` (Modified — Fixed input reset conflict)
+  - **Hỗ trợ 3D Player Model & Mesh ngoài HomeScreen Lobby**:
+    - Trong [HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs):
+      - Bổ sung trường `[Header("🧍 3D Lobby Player Model")] public GameObject lobbyPlayerModel;`.
+      - Tự động ẩn Model khi mở các Panel con (Character Select, Multiplayer Lobby, Profile Info, Setting, Chapter Select, hoặc khi load sang gameplay) và chỉ hiện lại khi đang ở sảnh chính `HomeMenu`.
+    - Trong [CharacterSelectionHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/CharacterSelectionHUD.cs):
+      - Bổ sung `public GameObject lobbyPlayerModel;` và `public SkinnedMeshRenderer lobbySkinnedMesh;`.
+      - Hoàn thiện phương thức `ApplyLobbyModelVisuals()` và `SetLobbyModelVisible(bool visible)`: tự động cập nhật Mesh (Nam/Nữ) và Material/Texture của nhân vật đã lưu lên 3D Model ngoài sảnh HomeMenu.
+  - `Assets/Scripts/UI/HomeScreen.cs` (Modified)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified — Restore lobby model on back)
+  - `Assets/Scripts/UI/CharacterSelectionHUD.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+  - `Assets/Scripts/Player/StarterAssetsInputs.cs` (Modified)
 - **Ảnh hưởng**:
-  - Khắc phục hoàn toàn lỗi không di chuyển được trong multiplayer & singleplayer do xung đột Input System, phòng chờ đồng bộ Ready chuẩn xác 100%, bảo vệ chủ phòng không thể bấm Start khi khách chưa sẵn sàng, và UI Status Message cùng thẻ người chơi hiển thị sạch sẽ, không bị đè chữ hay đè nền.
+  - Model 3D nhân vật hiển thị trực quan ngoài sảnh HomeScreen, tự động đổi ngoại hình theo nhân vật đã chọn và luôn hiển thị lại chính xác khi thoát từ Multiplayer Lobby hoặc bất kỳ menu con nào về HomeMenu.
+
+
 
 
 

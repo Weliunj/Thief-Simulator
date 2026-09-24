@@ -25,6 +25,10 @@ public class HomeScreen : MonoBehaviour
     [Tooltip("Tích vào đây để giả lập Mất Mạng (Offline) ngay trong Unity Editor để kiểm tra nút Multiplayer mờ đi")]
     public bool simulateOffline = false;
 
+    [Header("🧍 3D Lobby Player Model")]
+    [Tooltip("GameObject chứa 3D Model nhân vật ngoài sảnh Home Menu (chỉ hiện khi ở HomeMenu)")]
+    public GameObject lobbyPlayerModel;
+
     [Header("🚪 Panels Reference")]
     public GameObject authPanel; // Panel Đăng nhập / Đăng ký
     public GameObject mainMenuPanel;
@@ -289,6 +293,10 @@ public class HomeScreen : MonoBehaviour
 
         if (hud != null)
         {
+            if (hud.lobbyPlayerModel == null && lobbyPlayerModel != null)
+            {
+                hud.lobbyPlayerModel = lobbyPlayerModel;
+            }
             hud.LoadSavedSelection();
             hud.ApplyLobbyModelVisuals();
         }

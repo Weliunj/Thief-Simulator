@@ -31,6 +31,27 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
     public string currentSessionName = "";
     public bool isConnecting = false;
 
+    /// <summary>
+    /// True chỉ khi đã vào phòng chơi (StartGame), không tính trạng thái chỉ đứng trong Session Lobby.
+    /// Dùng để phân biệt spawn Fusion thật sự với chơi Offline sau khi từng mở sảnh mạng.
+    /// </summary>
+    public bool IsInGameplaySession
+    {
+        get
+        {
+            if (currentRunner == null || !currentRunner.IsRunning) return false;
+            if (string.IsNullOrEmpty(currentSessionName)) return false;
+            try
+            {
+                return currentRunner.SessionInfo.IsValid;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+    }
+
     // Events cho UI đăng ký lắng nghe
     public static event Action<List<SessionInfo>> OnSessionListUpdatedEvent;
     public static event Action<NetworkRunner> OnConnectedToServerEvent;
@@ -371,6 +392,10 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
     public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
     {
         Debug.Log($"[FusionConnectionManager] NetworkRunner Shutdown: {shutdownReason}");
+        if (currentRunner == runner)
+        {
+            currentSessionName = "";
+        }
         OnShutdownEvent?.Invoke(runner, shutdownReason);
     }
 
