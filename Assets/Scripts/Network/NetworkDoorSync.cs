@@ -1,20 +1,21 @@
 using Fusion;
 using UnityEngine;
 
-/// <summary>
-/// Đồng bộ trạng thái Cửa (Mở khóa / Đóng / Mở / Đang bẻ khóa) qua Photon Fusion
-/// </summary>
 public class NetworkDoorSync : NetworkBehaviour
 {
     [Header("🚪 Networked Door State")]
-    [Networked, OnChangedRender(nameof(OnDoorStateChanged))]
+    [Networked, OnChangedRender(nameof(OnDoorUnlockedChanged))]
     public NetworkBool NetworkIsUnlocked { get; set; } = false;
 
-    [Networked, OnChangedRender(nameof(OnDoorStateChanged))]
+    [Networked, OnChangedRender(nameof(OnDoorOpenChanged))]
     public NetworkBool NetworkIsOpen { get; set; } = false;
 
     [Networked, OnChangedRender(nameof(OnLockpickingStateChanged))]
     public NetworkBool NetworkIsBeingLockpicked { get; set; } = false;
+
+    // Biến lưu số lượng người chơi đang đứng gần cửa
+    [Networked]
+    public int PlayersNearbyCount { get; set; } = 0;
 
     public DoorController doorController;
 
@@ -32,85 +33,77 @@ public class NetworkDoorSync : NetworkBehaviour
                 NetworkIsUnlocked = doorController.isUnlocked;
                 NetworkIsOpen = doorController.isOpen;
                 NetworkIsBeingLockpicked = doorController.isBeingLockpicked;
+                PlayersNearbyCount = 0;
             }
             else
             {
                 doorController.isUnlocked = NetworkIsUnlocked;
                 doorController.isBeingLockpicked = NetworkIsBeingLockpicked;
-                doorController.SetDoorOpen(NetworkIsOpen, false);
+                doorController.ApplyDoorVisual(NetworkIsOpen, false);
             }
         }
     }
 
-    /// <summary>
-    /// Gửi yêu cầu mở khóa cửa tới toàn bộ phòng
-    /// </summary>
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RpcSyncUnlockDoor()
+    // RPC để bất kỳ máy nào cũng có thể báo danh "Tôi đang ở gần cửa" hoặc "Tôi đã đi ra xa"
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcUpdatePlayerPresence(PlayerRef player, bool isInside)
     {
-        if (doorController != null)
+        if (isInside)
         {
-            doorController.isUnlocked = true;
-            doorController.isBeingLockpicked = false;
-            doorController.SetDoorOpen(true, false);
+            PlayersNearbyCount = Mathf.Max(1, PlayersNearbyCount + 1);
         }
-
-        if (Object.HasStateAuthority)
+        else
         {
-            NetworkIsUnlocked = true;
-            NetworkIsOpen = true;
-            NetworkIsBeingLockpicked = false;
+            PlayersNearbyCount = Mathf.Max(0, PlayersNearbyCount - 1);
         }
     }
 
-    /// <summary>
-    /// Gửi yêu cầu đóng/mở cửa tới toàn bộ phòng
-    /// </summary>
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RpcSyncSetDoorOpen(bool open)
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcRequestUnlockDoor()
     {
-        if (doorController != null)
-        {
-            doorController.SetDoorOpen(open, false);
-        }
+        NetworkIsUnlocked = true;
+        NetworkIsOpen = true;
+        NetworkIsBeingLockpicked = false;
+    }
 
-        if (Object.HasStateAuthority)
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcRequestSetDoorOpen(bool open)
+    {
+        NetworkIsOpen = open;
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
+    public void RpcRequestSetLockpicking(bool isPicking)
+    {
+        NetworkIsBeingLockpicked = isPicking;
+    }
+
+    public enum DoorAudioType { Hit = 0, Miss = 1, Victory = 2 }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcPlayDoorAudio(DoorAudioType audioType)
+    {
+        if (doorController == null) return;
+        switch (audioType)
         {
-            NetworkIsOpen = open;
+            case DoorAudioType.Hit: doorController.PlayLocalSound(doorController.hitSound); break;
+            case DoorAudioType.Miss: doorController.PlayLocalSound(doorController.missSound); break;
+            case DoorAudioType.Victory: doorController.PlayLocalSound(doorController.victorySound); break;
         }
     }
 
-    /// <summary>
-    /// Đồng bộ trạng thái đang bẻ khóa (khóa độc quyền 1 người bẻ khóa)
-    /// </summary>
-    [Rpc(RpcSources.All, RpcTargets.All)]
-    public void RpcSyncSetLockpicking(bool isPicking)
+    private void OnDoorUnlockedChanged()
     {
-        if (doorController != null)
-        {
-            doorController.isBeingLockpicked = isPicking;
-        }
-
-        if (Object.HasStateAuthority)
-        {
-            NetworkIsBeingLockpicked = isPicking;
-        }
+        if (doorController != null) doorController.isUnlocked = NetworkIsUnlocked;
     }
 
-    private void OnDoorStateChanged()
+    private void OnDoorOpenChanged()
     {
-        if (doorController != null)
-        {
-            doorController.isUnlocked = NetworkIsUnlocked;
-            doorController.SetDoorOpen(NetworkIsOpen, false);
-        }
+        if (doorController != null) doorController.ApplyDoorVisual(NetworkIsOpen, true);
     }
 
     private void OnLockpickingStateChanged()
     {
-        if (doorController != null)
-        {
-            doorController.isBeingLockpicked = NetworkIsBeingLockpicked;
-        }
+        if (doorController != null) doorController.isBeingLockpicked = NetworkIsBeingLockpicked;
     }
 }

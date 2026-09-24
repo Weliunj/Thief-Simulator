@@ -1435,6 +1435,7 @@ MonoBehaviour:
   CameraAngleOverride: 0
   LockCameraPosition: 0
   targetSpeed: 0
+  _animationBlend: 0
   rangeInteract: 1.4
   hotbarManager: {fileID: 0}
   inventory: {fileID: 0}
@@ -1444,6 +1445,7 @@ MonoBehaviour:
   audioSource:
   - {fileID: 0}
   _animator: {fileID: 0}
+  _input: {fileID: 0}
   deathHandler: {fileID: 0}
   canClimb: 1
   isClimbingLadder: 0
@@ -1579,7 +1581,7 @@ MonoBehaviour:
   spineBone: {fileID: 4589007155500182209}
   lookWeight: 1
   headWeight: 0.75
-  spineWeight: 0.09
+  spineWeight: 0
   smoothSpeed: 12
   weightTransitionSpeed: 6
   maxYawAngle: 75
@@ -1606,6 +1608,23 @@ MonoBehaviour:
     _length: 0
     _data:
       Data: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  _NetworkHeldItemPath:
+    _length: 0
+    _data:
+      Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  _NetworkSpeed: 0
+  _NetworkMotionSpeed: 0
+  _NetworkGrounded:
+    _value: 0
+  _NetworkCrouch:
+    _value: 0
+  _NetworkIsCrouching:
+    _value: 0
+  _NetworkIsClimbing:
+    _value: 0
+  _NetworkClimbSpeed: 0
+  _NetworkHeadPitch: 0
+  _NetworkHeadYaw: 0
   nameTagText: {fileID: 6311610125527551920}
   nameTagCanvas: {fileID: 2965205542345072305}
   nameTagHeight: 2.15
@@ -1623,6 +1642,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 72ed34f0086ec6a479248f60b06ee5af, type: 2}
   - {fileID: 11400000, guid: 3c05bc5f01941c14e9af32b1a3e036dd, type: 2}
   characterModelObjects: []
+  hideLocalPlayerMesh: 1
+  useShadowsOnly: 0
 --- !u!114 &7691476095185942701
 MonoBehaviour:
   m_ObjectHideFlags: 0

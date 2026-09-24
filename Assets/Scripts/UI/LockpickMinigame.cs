@@ -74,7 +74,7 @@ public class LockpickMinigame : MonoBehaviour
     {
         // Không làm mờ Target Image: Giữ alpha luôn là 1.0 (rõ nét 100%)
         if (targetZoneCanvasGroup != null) targetZoneCanvasGroup.alpha = 1.0f;
-        
+
         AutoFindCloseButton();
 
         if (closeButton != null)
@@ -303,7 +303,7 @@ public class LockpickMinigame : MonoBehaviour
                 UpdateProgressIcons(totalStages);
 
                 if (statusText != null) statusText.text = "<color=green>LOCK PICKED SUCCESSFULLY!</color>";
-                
+
                 StartCoroutine(CompleteMinigameCoroutine(true));
             }
             else
@@ -343,7 +343,7 @@ public class LockpickMinigame : MonoBehaviour
     {
         isWaitingNextStage = true;
 
-        // Phát âm thanh gãy công cụ tại cửa
+        // Chỉ gọi âm thanh thất bại duy nhất tại đây (qua DoorController đã bọc RPC)
         if (currentDoor != null) currentDoor.PlayMissSound();
 
         StartCoroutine(FlashTarget(0.4f));
@@ -360,7 +360,7 @@ public class LockpickMinigame : MonoBehaviour
 
             if (onFailedCallback != null)
             {
-                onFailedCallback.Invoke();
+                onFailedCallback.Invoke(); // DoorController.OnUnlockFailed sẽ KHÔNG gọi lại PlayMissSound nữa
             }
         }
         else

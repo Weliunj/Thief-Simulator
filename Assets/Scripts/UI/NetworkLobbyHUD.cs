@@ -201,6 +201,54 @@ public class NetworkLobbyHUD : MonoBehaviour
 
     public void UpdateWaitingRoomMapPreview(int index = -1)
     {
+        if (index < 0)
+        {
+            if (FusionConnectionManager.Instance != null && FusionConnectionManager.Instance.currentRunner != null && FusionConnectionManager.Instance.currentRunner.IsRunning)
+            {
+                var session = FusionConnectionManager.Instance.currentRunner.SessionInfo;
+                if (session != null && session.IsValid && session.Properties != null && session.Properties.TryGetValue("map", out var mapProp))
+                {
+                    string mapName = mapProp.PropertyValue as string;
+                    if (!string.IsNullOrEmpty(mapName))
+                    {
+                        int foundIndex = -1;
+                        if (chapterList != null)
+                        {
+                            for (int i = 0; i < chapterList.Count; i++)
+                            {
+                                var ch = chapterList[i];
+                                if (ch != null)
+                                {
+                                    if ((!string.IsNullOrEmpty(ch.gameplaySceneName) && ch.gameplaySceneName.Equals(mapName, System.StringComparison.OrdinalIgnoreCase)) ||
+                                        (!string.IsNullOrEmpty(ch.sceneName) && ch.sceneName.Equals(mapName, System.StringComparison.OrdinalIgnoreCase)))
+                                    {
+                                        foundIndex = i;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (foundIndex < 0 && mapSceneNames != null)
+                        {
+                            for (int i = 0; i < mapSceneNames.Length; i++)
+                            {
+                                if (mapSceneNames[i].Equals(mapName, System.StringComparison.OrdinalIgnoreCase))
+                                {
+                                    foundIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (foundIndex >= 0)
+                        {
+                            index = foundIndex;
+                        }
+                    }
+                }
+            }
+        }
+
         if (index < 0 && mapSelectDropdown != null)
         {
             index = mapSelectDropdown.value;
@@ -530,7 +578,7 @@ public class NetworkLobbyHUD : MonoBehaviour
     {
         if (readyButtonText != null)
         {
-            readyButtonText.text = isLocalPlayerReady ? "<color=green>READY ✓</color>" : "READY UP";
+            readyButtonText.text = isLocalPlayerReady ? "<color=green>Ready</color>" : "Ready Up";
         }
     }
 

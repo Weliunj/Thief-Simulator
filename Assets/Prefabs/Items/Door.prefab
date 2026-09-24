@@ -302,7 +302,10 @@ MonoBehaviour:
   smoothOpen: 1
   disableColliderWhenOpen: 1
   enableAutoOpen: 1
-  autoOpenRadius: 1.4
+  autoOpenRadius: 1.2
+  autoCloseRadius: 2.2
+  closeDelayDuration: 1
+  isBeingLockpicked: 0
   detectionCenterOffset: {x: 0, y: 1, z: 0}
   checkInterval: 0.15
   detectionLayerMask:
@@ -331,6 +334,8 @@ MonoBehaviour:
     _value: 0
   _NetworkIsOpen:
     _value: 0
+  _NetworkIsBeingLockpicked:
+    _value: 0
   doorController: {fileID: 4201365758413010162}
 --- !u!114 &3219860202244366861
 MonoBehaviour:
@@ -346,7 +351,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
   SortKey: 731628192
   ObjectInterest: 1
-  Flags: 131073
+  Flags: 524289
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 5647530236124511503}

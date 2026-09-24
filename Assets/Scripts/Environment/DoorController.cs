@@ -1,100 +1,50 @@
 using System.Collections;
 using StarterAssets;
 using UnityEngine;
+using Fusion;
 
-/// <summary>
-/// Quản lý Cửa thông minh (DoorController) - Cơ chế 1 Collider duy nhất:
-/// - Tương tác bẻ khóa (Lockpicking) thông qua IInteractable và Raycast tâm ngắm (khi cửa chưa bẻ khóa).
-/// - Sử dụng kiểm tra khoảng cách định kỳ (OverlapSphere) để tự động mở/đóng:
-///   + NPC (kid, adult, Npc) đến gần bán kính autoOpenRadius -> Tự động mở cửa.
-///   + Player đã bẻ khóa (isUnlocked) đến gần -> Tự động mở cửa.
-///   + Khi không còn ai trong bán kính -> Tự động xoay đóng lại.
-/// - Cánh cửa chỉ có DUY NHẤT 1 Solid Collider trên model cánh cửa để cản đường và chắn tầm nhìn (Line of Sight) khi đóng.
-///   Khi cửa mở, model và collider xoay 90 độ né sang bên để người và tầm nhìn đi qua.
-/// </summary>
 public class DoorController : MonoBehaviour, IInteractable
 {
-    [Header("🚪 Display & Prompts (Hiển thị thông tin lên UI HUD)")]
-    [Tooltip("Tên cánh cửa hiển thị trên màn hình")]
+    [Header("🚪 Display & Prompts")]
     public string doorName = "Wooden Locked Door";
-
-    [Tooltip("Hành động trên nút tương tác (VD: Pick Lock, Open, Unlock)")]
     public string actionPrompt = "Pick Lock";
-
-    [Tooltip("Mô tả chi tiết hiển thị trên HUD")]
     [TextArea(2, 4)]
     public string description = "A locked door. Requires lockpicking to open.";
-
-    [Tooltip("Icon đại diện của cánh cửa (nếu có)")]
     public Sprite doorIcon;
 
     [Header("🚪 Lock & Reward Settings")]
-    [Tooltip("Điểm thưởng khi mở khóa thành công")]
     public int rewardPoints = 10;
-
-    [Tooltip("Trạng thái đã bẻ khóa (true = đã mở khóa, false = còn khóa cần bẻ)")]
     public bool isUnlocked = false;
-
-    [Tooltip("Trạng thái cửa đang mở hay đóng")]
     public bool isOpen = false;
 
     [Header("🚪 Door Model & Open Animation")]
-    [Tooltip("Transform cánh cửa con sẽ xoay khi mở (nếu để trống, tự động tìm child đầu tiên hoặc dùng chính object)")]
     public Transform doorChildModel;
-
-    [Tooltip("Góc xoay mở cửa (Local Euler Angles Offset)")]
     public Vector3 openRotationOffset = new Vector3(0f, 90f, 0f);
-
-    [Tooltip("Tốc độ mở / đóng cửa")]
     public float openSpeed = 3.5f;
-
-    [Tooltip("Có tự động mở mượt mà (smooth animation) không")]
     public bool smoothOpen = true;
-
-    [Tooltip("Tự động tắt collider khi cửa mở để Player/NPC đi qua mượt mà, và tự động bật lại khi cửa đóng")]
     public bool disableColliderWhenOpen = true;
 
-    [Header("⭕ Proximity Detection (Quét khoảng cách bằng Code - Không cần Collider Trigger)")]
-    [Tooltip("Tự động mở khi Player/NPC đến gần")]
+    [Header("⭕ Proximity Detection")]
     public bool enableAutoOpen = true;
-
-    [Tooltip("Bán kính phát hiện Player và NPC quanh cửa để MỞ (mét)")]
-    public float autoOpenRadius = 2.2f;
-
-    [Tooltip("Bán kính phát hiện Player và NPC quanh cửa để ĐÓNG (mét) - Lớn hơn autoOpenRadius để chống giật đóng/mở")]
-    public float autoCloseRadius = 3.0f;
-
-    [Tooltip("Độ trễ chờ (giây) trước khi tự động đóng sau khi người chơi đã rời khỏi vùng quét")]
-    public float closeDelayDuration = 1.2f;
+    public float autoOpenRadius = 1.2f;
+    public float autoCloseRadius = 2.2f;
+    public float closeDelayDuration = 1f;
     private float closeTimer = 0f;
 
-    [Tooltip("Trạng thái đang có người chơi bẻ khóa (khóa độc quyền 1 người bẻ khóa)")]
     [HideInInspector] public bool isBeingLockpicked = false;
-
-    [Tooltip("Offset tâm vùng quét bán kính so với vị trí Cửa (X, Y, Z)")]
     public Vector3 detectionCenterOffset = new Vector3(0f, 1.0f, 0f);
-
-    [Tooltip("Tần suất quét khoảng cách (giây, càng nhỏ càng nhạy, 0.15s là tối ưu CPU)")]
     public float checkInterval = 0.15f;
-
-    [Tooltip("LayerMask quét các đối tượng Player và NPC quanh cửa")]
     public LayerMask detectionLayerMask = ~0;
 
-    [Header("🔊 3D Spatial Audio (Âm thanh phát tại cửa)")]
+    [Header("🔊 3D Spatial Audio")]
     public AudioSource audioSource;
-    [Tooltip("Âm thanh bấm trúng nấc bẻ khóa (Hit sound)")]
     public AudioClip hitSound;
-    [Tooltip("Âm thanh bấm trượt / gãy công cụ (Miss sound)")]
     public AudioClip missSound;
-    [Tooltip("Âm thanh mở khóa thành công & cót két mở cửa (Victory sound)")]
     public AudioClip victorySound;
-    [Tooltip("Âm thanh khi mở cửa")]
     public AudioClip openDoorSound;
-    [Tooltip("Âm thanh khi đóng cửa")]
     public AudioClip closeDoorSound;
 
     [Header("⚠️ Alarm & NPC Alert Settings")]
-    [Tooltip("Bán kính phát hiện và gọi AdultNPC khi bẻ khóa thất bại")]
     public float callRange = 20f;
 
     private UI_Manager uiManager;
@@ -108,22 +58,13 @@ public class DoorController : MonoBehaviour, IInteractable
     {
         InitializeAudio();
 
-        // Tự động tìm child model nếu chưa gán
         if (doorChildModel == null && transform.childCount > 0)
         {
             doorChildModel = transform.GetChild(0);
         }
 
-        if (doorChildModel != null)
-        {
-            closedLocalRotation = doorChildModel.localRotation;
-        }
-        else
-        {
-            closedLocalRotation = transform.localRotation;
-        }
+        closedLocalRotation = (doorChildModel != null) ? doorChildModel.localRotation : transform.localRotation;
 
-        // Mặc định layer quét Player và Npc nếu chưa thiết lập
         if (detectionLayerMask == ~0)
         {
             int playerLayer = LayerMask.NameToLayer("Player");
@@ -157,86 +98,110 @@ public class DoorController : MonoBehaviour, IInteractable
     }
 
     /// <summary>
-    /// Quét các đối tượng trong bán kính autoOpenRadius/autoCloseRadius với cơ chế Hysteresis + Close Delay
+    /// Quét các đối tượng quanh cửa. 
+    /// Tự động chiếm StateAuthority khi đứng gần để Client không bị Host ép đóng cửa từ xa.
     /// </summary>
+    private bool isLocalPlayerInsideZone = false;
+
     private void CheckNearbyEntities()
     {
-        Vector3 centerPos = transform.TransformPoint(detectionCenterOffset);
-        float currentScanRadius = isOpen ? autoCloseRadius : autoOpenRadius;
-        int hitCount = Physics.OverlapSphereNonAlloc(centerPos, currentScanRadius, overlapBuffer, detectionLayerMask, QueryTriggerInteraction.Ignore);
+        var netObj = GetComponent<NetworkObject>();
+        var netSync = GetComponent<NetworkDoorSync>();
 
-        bool npcNearby = false;
-        bool playerNearby = false;
-        int npcLayer = LayerMask.NameToLayer("Npc");
+        // 1. Quét cục bộ: Xem nhân vật trên MÁY NÀY có đang ở gần cửa không
+        Vector3 centerPos = transform.position + detectionCenterOffset;
+        float currentRadius = isOpen ? autoCloseRadius : autoOpenRadius;
+
+        // Quét tìm Player
+        int hitCount = Physics.OverlapSphereNonAlloc(centerPos, currentRadius, overlapBuffer, detectionLayerMask, QueryTriggerInteraction.Ignore);
+        bool amINearby = false;
 
         for (int i = 0; i < hitCount; i++)
         {
             Collider col = overlapBuffer[i];
-            if (col == null) continue;
+            if (col == null || col.transform.IsChildOf(transform) || col.transform == transform) continue;
 
-            // Bỏ qua chính collider của cánh cửa
-            if (col.transform.IsChildOf(transform) || col.transform == transform) continue;
-
-            if (col.CompareTag("Player"))
+            // Tìm thấy tag Player hoặc NPC
+            if (col.CompareTag("Player") || col.CompareTag("kid") || col.CompareTag("adult") || col.CompareTag("Npc"))
             {
-                playerNearby = true;
-            }
-            else if (col.CompareTag("kid") || col.CompareTag("adult") || col.CompareTag("Npc") || (npcLayer != -1 && col.gameObject.layer == npcLayer))
-            {
-                npcNearby = true;
+                amINearby = true;
+                break;
             }
         }
 
-        // Quyết định Mở hay Đóng:
-        // - NPC đến gần -> Tự động mở
-        // - Player đến gần -> Chỉ tự mở nếu đã bẻ khóa (isUnlocked)
-        bool shouldBeOpen = npcNearby || (playerNearby && isUnlocked);
-
-        if (shouldBeOpen)
+        // 2. Nếu trạng thái vào/ra của máy này thay đổi -> Gửi báo hiệu lên Host
+        if (amINearby != isLocalPlayerInsideZone)
         {
-            closeTimer = closeDelayDuration;
-            if (!isOpen)
+            isLocalPlayerInsideZone = amINearby;
+            if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
             {
-                SetDoorOpen(true);
+                netSync.RpcUpdatePlayerPresence(netSync.Runner.LocalPlayer, isLocalPlayerInsideZone);
             }
         }
-        else if (isOpen)
+
+        // 3. Logic Đóng/Mở CHỈ chạy trên máy nắm StateAuthority (Host)
+        if (netObj != null && netObj.HasStateAuthority)
         {
-            closeTimer -= checkInterval;
-            if (closeTimer <= 0f)
+            bool effectiveUnlocked = (netSync != null) ? (bool)netSync.NetworkIsUnlocked : isUnlocked;
+            bool someoneIsInside = (netSync != null && netSync.PlayersNearbyCount > 0) || amINearby;
+
+            if (someoneIsInside && effectiveUnlocked)
             {
-                SetDoorOpen(false);
+                closeTimer = closeDelayDuration;
+                if (!isOpen)
+                {
+                    RequestSetDoorOpen(true);
+                }
+            }
+            else if (isOpen)
+            {
+                closeTimer -= checkInterval;
+                if (closeTimer <= 0f)
+                {
+                    RequestSetDoorOpen(false);
+                }
             }
         }
     }
 
-    /// <summary>
-    /// Đóng/Mở cửa
-    /// </summary>
-    public void SetDoorOpen(bool open, bool syncNetwork = true)
+    public void RequestSetDoorOpen(bool open)
     {
-        if (isOpen == open && doorCoroutine == null) return;
-
-        isOpen = open;
-
-        if (syncNetwork)
+        var netSync = GetComponent<NetworkDoorSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
         {
-            var netDoor = GetComponent<NetworkDoorSync>();
-            if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
-            {
-                netDoor.RpcSyncSetDoorOpen(open);
-            }
-        }
-
-        if (open)
-        {
-            if (openDoorSound != null) PlaySound(openDoorSound);
-            SetDoorCollidersActive(false); // Tắt collider khi mở để Player/NPC đi qua
+            // Bắn RPC tới máy đang nắm StateAuthority để thay đổi biến [Networked]
+            netSync.RpcRequestSetDoorOpen(open);
         }
         else
         {
-            if (closeDoorSound != null) PlaySound(closeDoorSound);
+            ApplyDoorVisual(open, true);
         }
+    }
+
+    private bool IsAnyNpcInHits(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (overlapBuffer[i] == null) continue;
+            if (overlapBuffer[i].CompareTag("Npc")) return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Thực hiện thay đổi hình ảnh và âm thanh của cửa (được gọi từ OnChangedRender của NetworkDoorSync)
+    /// </summary>
+    public void ApplyDoorVisual(bool open, bool playSound)
+    {
+        isOpen = open;
+
+        if (playSound)
+        {
+            if (open && openDoorSound != null) PlayLocalSound(openDoorSound);
+            else if (!open && closeDoorSound != null) PlayLocalSound(closeDoorSound);
+        }
+
+        SetDoorCollidersActive(!open);
 
         Transform targetTrans = (doorChildModel != null) ? doorChildModel : transform;
 
@@ -249,11 +214,6 @@ public class DoorController : MonoBehaviour, IInteractable
         {
             Quaternion targetRot = open ? closedLocalRotation * Quaternion.Euler(openRotationOffset) : closedLocalRotation;
             targetTrans.localRotation = targetRot;
-
-            if (!open)
-            {
-                SetDoorCollidersActive(true); // Bật lại collider khi cửa đã đóng
-            }
         }
     }
 
@@ -272,11 +232,6 @@ public class DoorController : MonoBehaviour, IInteractable
 
         doorTrans.localRotation = targetRot;
         doorCoroutine = null;
-
-        if (!open)
-        {
-            SetDoorCollidersActive(true); // Bật lại collider sau khi cửa đã đóng xong
-        }
     }
 
     private void SetDoorCollidersActive(bool active)
@@ -290,10 +245,7 @@ public class DoorController : MonoBehaviour, IInteractable
 
         foreach (var col in doorColliders)
         {
-            if (col != null)
-            {
-                col.enabled = active;
-            }
+            if (col != null) col.enabled = active;
         }
     }
 
@@ -303,9 +255,9 @@ public class DoorController : MonoBehaviour, IInteractable
         if (audioSource == null)
         {
             audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 0.2f; // Tăng âm lượng rõ nét cho người chơi đứng gần
+            audioSource.spatialBlend = 0.8f;
             audioSource.minDistance = 2.0f;
-            audioSource.maxDistance = 30f;
+            audioSource.maxDistance = 25f;
             audioSource.playOnAwake = false;
         }
 
@@ -319,139 +271,115 @@ public class DoorController : MonoBehaviour, IInteractable
     //                        LOCKPICKING & REWARDS
     // =========================================================================
 
-    /// <summary>
-    /// Bắt đầu minigame bẻ khóa qua UI_Manager
-    /// </summary>
     public void StartLockpicking()
     {
         if (isUnlocked || isBeingLockpicked) return;
 
-        isBeingLockpicked = true;
-        var netDoor = GetComponent<NetworkDoorSync>();
-        if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
+        var netSync = GetComponent<NetworkDoorSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
         {
-            netDoor.RpcSyncSetLockpicking(true);
+            netSync.RpcRequestSetLockpicking(true);
         }
 
         if (uiManager == null) uiManager = FindFirstObjectByType<UI_Manager>();
-
-        if (uiManager != null)
-        {
-            uiManager.StartLockpicking(this);
-        }
-        else
-        {
-            Debug.LogError("UI_Manager not found in Scene!");
-        }
+        if (uiManager != null) uiManager.StartLockpicking(this);
     }
 
-    /// <summary>
-    /// Xử lý khi bẻ khóa thành công:
-    /// - Đánh dấu isUnlocked = true
-    /// - Cộng điểm thưởng
-    /// - Phát âm thanh Victory tại cửa
-    /// - Tự động mở cửa ngay lập tức
-    /// </summary>
     public void OnUnlockSuccess()
     {
         if (isUnlocked) return;
         isUnlocked = true;
         isBeingLockpicked = false;
 
-        Debug.Log($"<color=green>Successfully unlocked door: {doorName}!</color>");
-
-        // 1. Cộng điểm
         if (uiManager != null && uiManager.playerManager != null)
         {
             uiManager.playerManager.currpoint += rewardPoints;
-            Debug.Log($"Added {rewardPoints} points. Current total: {uiManager.playerManager.currpoint}");
         }
 
-        // 2. Phát âm thanh mở khóa
-        PlayVictorySound();
-
-        // 3. Tự động mở cửa
-        SetDoorOpen(true);
-
-        // 4. Đồng bộ trạng thái mở khóa qua mạng nếu đang trong phòng Fusion
-        var netDoor = GetComponent<NetworkDoorSync>();
-        if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
+        var netSync = GetComponent<NetworkDoorSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
         {
-            netDoor.RpcSyncUnlockDoor();
+            netSync.RpcPlayDoorAudio(NetworkDoorSync.DoorAudioType.Victory);
+            netSync.RpcRequestUnlockDoor();
+        }
+        else
+        {
+            PlayLocalSound(victorySound);
+            ApplyDoorVisual(true, true);
         }
     }
 
-    /// <summary>
-    /// Xử lý khi bẻ khóa thất bại:
-    /// - Phát âm thanh gãy công cụ
-    /// - Kêu gọi NPC trong khu vực truy đuổi
-    /// </summary>
     public void OnUnlockFailed()
     {
         CancelLockpicking();
-        PlayMissSound();
         AlertNearbyNPCs();
     }
 
-    public void AlertNearbyNPCs()
-    {
-
-    }
-
-    // =========================================================================
-    //                       AUDIO PLAYBACK API (3D)
-    // =========================================================================
+    public void AlertNearbyNPCs() { }
 
     public void CancelLockpicking()
     {
         isBeingLockpicked = false;
-        var netDoor = GetComponent<NetworkDoorSync>();
-        if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
+        var netSync = GetComponent<NetworkDoorSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
         {
-            netDoor.RpcSyncSetLockpicking(false);
+            netSync.RpcRequestSetLockpicking(false);
         }
     }
 
+    // Đồng bộ phát âm thanh qua NetworkDoorSync
     public void PlayHitSound()
     {
-        PlaySound(hitSound);
+        var netSync = GetComponent<NetworkDoorSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
+        {
+            netSync.RpcPlayDoorAudio(NetworkDoorSync.DoorAudioType.Hit);
+        }
+        else
+        {
+            PlayLocalSound(hitSound);
+        }
     }
 
     public void PlayMissSound()
     {
-        PlaySound(missSound);
+        var netSync = GetComponent<NetworkDoorSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
+        {
+            netSync.RpcPlayDoorAudio(NetworkDoorSync.DoorAudioType.Miss);
+        }
+        else
+        {
+            PlayLocalSound(missSound);
+        }
     }
 
     public void PlayVictorySound()
     {
-        PlaySound(victorySound);
-    }
-
-    private void PlaySound(AudioClip clip)
-    {
-        if (clip == null) return;
-        if (audioSource == null) audioSource = GetComponentInChildren<AudioSource>(true);
-        if (audioSource == null)
+        var netSync = GetComponent<NetworkDoorSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
         {
-            InitializeAudio();
-        }
-
-        if (audioSource != null)
-        {
-            audioSource.PlayOneShot(clip, 1.0f);
+            netSync.RpcPlayDoorAudio(NetworkDoorSync.DoorAudioType.Victory);
         }
         else
         {
-            AudioSource.PlayClipAtPoint(clip, transform.position, 1.0f);
+            PlayLocalSound(victorySound);
         }
+    }
+
+    public void PlayLocalSound(AudioClip clip)
+    {
+        if (clip == null) return;
+        if (audioSource == null) InitializeAudio();
+
+        if (audioSource != null) audioSource.PlayOneShot(clip, 1.0f);
+        else AudioSource.PlayClipAtPoint(clip, transform.position, 1.0f);
     }
 
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, callRange);
-
-        // Bán kính tự động mở/đóng cửa hiển thị theo detectionCenterOffset
         Gizmos.color = Color.cyan;
         Vector3 centerPos = transform.TransformPoint(detectionCenterOffset);
         Gizmos.DrawWireSphere(centerPos, autoOpenRadius);
@@ -459,27 +387,27 @@ public class DoorController : MonoBehaviour, IInteractable
         Gizmos.DrawWireSphere(centerPos, autoCloseRadius);
     }
 
-    // =========================================================================
-    //                       IINTERACTABLE IMPLEMENTATION
-    // =========================================================================
-
     public string GetInteractableName() => string.IsNullOrEmpty(doorName) ? gameObject.name : doorName;
     public string GetActionPrompt() => string.IsNullOrEmpty(actionPrompt) ? "Pick Lock" : actionPrompt;
     public int GetPrice() => 0;
     public int GetWeight() => 0;
     public bool IsLootItem() => false;
-    public string GetDescription() => string.IsNullOrEmpty(description) ? "A locked door. Requires lockpicking to open." : description;
+    public string GetDescription() => description;
     public Sprite GetIcon() => doorIcon;
     public ItemRarity GetRarity() => ItemRarity.Common;
 
     public bool CanInteract(PlayerController player, out string failReason)
     {
-        if (isUnlocked)
+        var netSync = GetComponent<NetworkDoorSync>();
+        bool networkLocking = netSync != null && netSync.NetworkIsBeingLockpicked;
+        bool networkUnlocked = netSync != null && netSync.NetworkIsUnlocked;
+
+        if (isUnlocked || networkUnlocked)
         {
             failReason = "Already Unlocked";
             return false;
         }
-        if (isBeingLockpicked)
+        if (isBeingLockpicked || networkLocking)
         {
             failReason = "Someone is picking this lock...";
             return false;
@@ -495,8 +423,18 @@ public class DoorController : MonoBehaviour, IInteractable
 
     public void Interact(PlayerController player)
     {
-        if (!isUnlocked && !UI_Manager.isSolving && !isBeingLockpicked)
+        var netSync = GetComponent<NetworkDoorSync>();
+        bool networkLocking = netSync != null && netSync.NetworkIsBeingLockpicked;
+        bool networkUnlocked = netSync != null && netSync.NetworkIsUnlocked;
+
+        if (!isUnlocked && !networkUnlocked && !UI_Manager.isSolving && !isBeingLockpicked && !networkLocking)
         {
+            var netObj = GetComponent<NetworkObject>();
+            if (netObj != null && !netObj.HasStateAuthority)
+            {
+                netObj.RequestStateAuthority();
+            }
+
             StartLockpicking();
         }
     }
