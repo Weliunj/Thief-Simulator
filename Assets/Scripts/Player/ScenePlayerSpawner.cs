@@ -125,8 +125,12 @@ public class ScenePlayerSpawner : MonoBehaviour
     [ContextMenu("Spawn Player Now")]
     public GameObject SpawnPlayer()
     {
-        // 1. Kiểm tra tránh sinh trùng lặp nếu đã có Player trong Scene
-        if (preventDuplicateIfPlayerExists)
+        bool isMultiplayer = (FusionConnectionManager.Instance != null && 
+                              FusionConnectionManager.Instance.currentRunner != null && 
+                              FusionConnectionManager.Instance.currentRunner.IsRunning);
+
+        // 1. Kiểm tra tránh sinh trùng lặp nếu đã có Player trong Scene (CHỈ ÁP DỤNG OFFLINE)
+        if (!isMultiplayer && preventDuplicateIfPlayerExists)
         {
             GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
             if (existingPlayer != null && existingPlayer != spawnedPlayerInstance)
@@ -138,16 +142,30 @@ public class ScenePlayerSpawner : MonoBehaviour
             }
         }
 
-        // 2. Xác định điểm xuất phát
+        // 2. Xác định điểm xuất phát (Phân bổ vị trí khác nhau cho từng người chơi khi Multiplayer)
         Transform targetSpawnPoint = transform;
         if (spawnPoints != null && spawnPoints.Count > 0)
         {
-            foreach (var pt in spawnPoints)
+            int targetIdx = 0;
+            if (isMultiplayer)
             {
-                if (pt != null)
+                var runner = FusionConnectionManager.Instance.currentRunner;
+                targetIdx = Mathf.Abs(runner.LocalPlayer.PlayerId) % spawnPoints.Count;
+            }
+
+            if (targetIdx < spawnPoints.Count && spawnPoints[targetIdx] != null)
+            {
+                targetSpawnPoint = spawnPoints[targetIdx];
+            }
+            else
+            {
+                foreach (var pt in spawnPoints)
                 {
-                    targetSpawnPoint = pt;
-                    break;
+                    if (pt != null)
+                    {
+                        targetSpawnPoint = pt;
+                        break;
+                    }
                 }
             }
         }
@@ -193,11 +211,30 @@ public class ScenePlayerSpawner : MonoBehaviour
             return null;
         }
 
-        // 5. Instantiate Player
+        // 5. Spawn Player (Fusion Multiplayer nếu đang kết nối phòng, hoặc Instantiate nếu chơi Offline)
         Vector3 spawnPos = targetSpawnPoint.position;
         Quaternion spawnRot = targetSpawnPoint.rotation;
 
-        spawnedPlayerInstance = Instantiate(prefabToInstantiate, spawnPos, spawnRot);
+        if (isMultiplayer)
+        {
+            var runner = FusionConnectionManager.Instance.currentRunner;
+            try
+            {
+                var networkObj = runner.Spawn(prefabToInstantiate, spawnPos, spawnRot, runner.LocalPlayer);
+                spawnedPlayerInstance = networkObj != null ? networkObj.gameObject : null;
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[ScenePlayerSpawner] runner.Spawn error: {ex.Message}. Falling back to local Instantiate.");
+                spawnedPlayerInstance = Instantiate(prefabToInstantiate, spawnPos, spawnRot);
+            }
+        }
+        else
+        {
+            spawnedPlayerInstance = Instantiate(prefabToInstantiate, spawnPos, spawnRot);
+        }
+
+        if (spawnedPlayerInstance == null) return null;
         spawnedPlayerInstance.name = prefabToInstantiate.name;
 
         // 6. Nạp dữ liệu PlayerSO vào PlayerStats & PlayerController
@@ -224,7 +261,7 @@ public class ScenePlayerSpawner : MonoBehaviour
     /// <summary>
     /// Tự động kết nối Cinemachine Virtual Camera và UI_Manager vào Player vừa sinh
     /// </summary>
-    private void SetupCameraAndUI(GameObject playerObj)
+    public void SetupCameraAndUI(GameObject playerObj)
     {
         if (playerObj == null) return;
 
@@ -253,7 +290,7 @@ public class ScenePlayerSpawner : MonoBehaviour
         UI_Manager ui = FindFirstObjectByType<UI_Manager>();
         if (ui != null && stats != null)
         {
-            ui.playerStats = stats;
+            ui.BindPlayer(stats);
         }
 
         // 4. Kết nối PostProcess và kích hoạt Global Volume

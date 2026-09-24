@@ -15,6 +15,10 @@ public class PauseHUD : MonoBehaviour
     public Button settingsButton;
     public Button menuButton;
 
+    [Header("🔑 Online Room Info")]
+    [Tooltip("Text hiển thị ID phòng khi đang chơi Online (Tự ẩn khi chơi Offline)")]
+    public TMPro.TextMeshProUGUI roomCodeText;
+
     [Header("⚙️ Settings HUD Reference")]
     [Tooltip("Component quản lý HUD Settings (nếu có)")]
     public SettingsHUD settingsHUD;
@@ -68,20 +72,32 @@ public class PauseHUD : MonoBehaviour
         if (clickAudioSource == null)
         {
             clickAudioSource = GetComponentInChildren<AudioSource>(true);
-        }
+            if (roomCodeText == null)
+            {
+                var allTexts = GetComponentsInChildren<TMPro.TextMeshProUGUI>(true);
+                foreach (var t in allTexts)
+                {
+                    string tName = t.gameObject.name.ToLower();
+                    if (tName.Contains("room") || tName.Contains("id") || tName.Contains("code"))
+                    {
+                        roomCodeText = t;
+                        break;
+                    }
+                }
+            }
 
-        // Tìm SettingsHUD nếu chưa gán
-        if (settingsHUD == null)
-        {
-            settingsHUD = FindFirstObjectByType<SettingsHUD>(FindObjectsInactive.Include);
-        }
+            // Tìm SettingsHUD nếu chưa gán
+            if (settingsHUD == null)
+            {
+                settingsHUD = FindFirstObjectByType<SettingsHUD>(FindObjectsInactive.Include);
+            }
 
-        if (settingsHUD != null && settingPanel == null)
-        {
-            settingPanel = settingsHUD.settingRootObject != null ? settingsHUD.settingRootObject : settingsHUD.gameObject;
+            if (settingsHUD != null && settingPanel == null)
+            {
+                settingPanel = settingsHUD.settingRootObject != null ? settingsHUD.settingRootObject : settingsHUD.gameObject;
+            }
         }
     }
-
     private void RegisterEvents()
     {
         if (resumeButton != null)
@@ -112,6 +128,40 @@ public class PauseHUD : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
+
+        // Hiển thị Room ID nếu đang chơi Online qua Photon Fusion
+        bool isOnline = FusionConnectionManager.Instance != null &&
+                        FusionConnectionManager.Instance.currentRunner != null &&
+                        FusionConnectionManager.Instance.currentRunner.IsRunning;
+
+        if (roomCodeText != null)
+        {
+            if (isOnline && !string.IsNullOrEmpty(FusionConnectionManager.Instance.currentSessionName))
+            {
+                roomCodeText.gameObject.SetActive(true);
+                roomCodeText.text = $"Room ID: {FusionConnectionManager.Instance.currentSessionName}";
+            }
+            else
+            {
+                roomCodeText.gameObject.SetActive(false);
+            }
+        }
+
+        // Nếu đang chơi Online: Làm mờ nút Restart (Chơi lại) và không cho bấm vì không thể restart trận đấu nhiều người
+        if (restartButton != null)
+        {
+            restartButton.gameObject.SetActive(true);
+            restartButton.interactable = !isOnline;
+
+            CanvasGroup cg = restartButton.GetComponent<CanvasGroup>();
+            if (cg == null)
+            {
+                cg = restartButton.gameObject.AddComponent<CanvasGroup>();
+            }
+            cg.alpha = isOnline ? 0.4f : 1f;
+            cg.interactable = !isOnline;
+            cg.blocksRaycasts = !isOnline;
+        }
 
         // Đảm bảo khi mới mở Pause lên thì bảng setting con đang tắt
         if (settingsHUD != null)

@@ -77,6 +77,22 @@ public class FirebaseDataService : MonoBehaviour
     public static event Action<UserGameProfile> OnUserProfileLoaded;
     public static event Action<UserGameProfile> OnUserProfileUpdated;
 
+    private void NotifyProfileLoaded(UserGameProfile profile)
+    {
+        RunOnMainThread(() =>
+        {
+            OnUserProfileLoaded?.Invoke(profile);
+        });
+    }
+
+    private void NotifyProfileUpdated(UserGameProfile profile)
+    {
+        RunOnMainThread(() =>
+        {
+            OnUserProfileUpdated?.Invoke(profile);
+        });
+    }
+
     // =========================================================================
     //                        PER-UID SAVE MANAGEMENT
     // =========================================================================
@@ -209,7 +225,7 @@ public class FirebaseDataService : MonoBehaviour
 
             SyncProfileToLocalJson(CurrentUserProfile);
             SyncProfileToGameSession(CurrentUserProfile);
-            OnUserProfileLoaded?.Invoke(CurrentUserProfile);
+            NotifyProfileLoaded(CurrentUserProfile);
             _ = RegisterAndListenSessionAsync(uid);
 
             Debug.Log($"<color=green>[FirebaseDataService] Đã tạo hồ sơ người chơi mới: {newProfile.username} (UID: {uid})</color>");
@@ -243,7 +259,7 @@ public class FirebaseDataService : MonoBehaviour
                 IsDataLoaded = true;
                 _isCloudReady = false;
                 SyncProfileToGameSession(CurrentUserProfile);
-                OnUserProfileLoaded?.Invoke(CurrentUserProfile);
+                NotifyProfileLoaded(CurrentUserProfile);
                 Debug.Log($"<color=cyan>[FirebaseDataService] Guest mode: tải dữ liệu cục bộ.</color>");
                 return true;
             }
@@ -257,7 +273,7 @@ public class FirebaseDataService : MonoBehaviour
                 IsDataLoaded = true;
                 _isCloudReady = false;
                 SyncProfileToGameSession(CurrentUserProfile);
-                OnUserProfileLoaded?.Invoke(CurrentUserProfile);
+                NotifyProfileLoaded(CurrentUserProfile);
                 return false;
             }
 
@@ -321,7 +337,7 @@ public class FirebaseDataService : MonoBehaviour
             _isCloudReady = true;
 
             SyncProfileToGameSession(CurrentUserProfile);
-            OnUserProfileLoaded?.Invoke(CurrentUserProfile);
+            NotifyProfileLoaded(CurrentUserProfile);
             _ = RegisterAndListenSessionAsync(uid);
             Debug.Log($"<color=green>[FirebaseDataService] Đã tải hồ sơ: {CurrentUserProfile.username} (Tiền: ${CurrentUserProfile.cash})</color>");
             return true;
@@ -352,7 +368,7 @@ public class FirebaseDataService : MonoBehaviour
                     IsDataLoaded = true;
                     _isCloudReady = false;
                     SyncProfileToGameSession(CurrentUserProfile);
-                    OnUserProfileLoaded?.Invoke(CurrentUserProfile);
+                    NotifyProfileLoaded(CurrentUserProfile);
                     return true;
                 }
                 return await CreateNewUserProfileAsync(uid, username, email);
@@ -407,7 +423,7 @@ public class FirebaseDataService : MonoBehaviour
                 await PushCloudSaveAsync(CurrentUserProfile, _syncVersion);
             }
 
-            OnUserProfileUpdated?.Invoke(CurrentUserProfile);
+            NotifyProfileUpdated(CurrentUserProfile);
             Debug.Log("<color=cyan>[FirebaseDataService] Đã lưu hồ sơ thành công.</color>");
             return true;
         }
@@ -569,14 +585,40 @@ public class FirebaseDataService : MonoBehaviour
             {
                 Debug.LogWarning("<color=red>[FirebaseDataService] Account logged in on another device! Logging out...</color>");
                 
-                RunOnMainThread(() =>
+                RunOnMainThread(async () =>
                 {
                     StopListeningToSession();
                     OnUserLogout();
+
+                    // 1. Rời khỏi phòng Multiplayer nếu đang trong trận
+                    if (FusionConnectionManager.Instance != null &&
+                        FusionConnectionManager.Instance.currentRunner != null &&
+                        FusionConnectionManager.Instance.currentRunner.IsRunning)
+                    {
+                        try
+                        {
+                            await FusionConnectionManager.Instance.LeaveSession();
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogWarning($"[FirebaseDataService] Lỗi khi rời session Fusion: {ex.Message}");
+                        }
+                    }
+
+                    // 2. Đăng xuất Firebase
                     if (FirebaseAuthService.Instance != null && FirebaseAuthService.Instance.Auth != null)
                     {
                         FirebaseAuthService.Instance.Auth.SignOut();
                     }
+
+                    // 3. Nếu đang ở màn chơi gameplay (Chapter1, Chapter2, v.v.), tự động đưa về HomeMenu
+                    string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+                    if (activeScene != "HomeMenu")
+                    {
+                        UnityEngine.SceneManagement.SceneManager.LoadScene("HomeMenu");
+                    }
+
+                    // 4. Phát event để AuthHUD hiển thị thông báo
                     OnLoggedOutFromAnotherDevice?.Invoke();
                 });
             }
@@ -628,6 +670,7 @@ public class FirebaseDataService : MonoBehaviour
         CurrentUserProfile = new UserGameProfile();
         IsDataLoaded = false;
         _activeUserId = "";
+        NotifyProfileLoaded(CurrentUserProfile);
     }
 
     // =========================================================================

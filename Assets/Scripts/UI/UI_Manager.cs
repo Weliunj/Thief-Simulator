@@ -118,32 +118,44 @@ public class UI_Manager : MonoBehaviour
             playerStats = FindFirstObjectByType<PlayerStats>();
         }
 
-        if (playerStats == null)
+        if (playerStats != null)
         {
-            Debug.LogWarning("Không tìm thấy PlayerStats trong Scene.");
+            BindPlayer(playerStats);
         }
         else
         {
-            // Khởi tạo thông số từ ChapterSO nếu có, hoặc reset mặc định
-            if (currentChapter != null)
-            {
-                playerStats.InitializeChapter(currentChapter);
-            }
-            else
-            {
-                playerStats.isDied = false;
-                playerStats.currweight = 0;
-                playerStats.currpoint = 0;
-                playerStats.currentStamina = playerStats.MaxStamina;
-                playerStats.currentTime = playerStats.MaxTime;
-            }
-
-            // Khởi tạo thông số hiển thị ban đầu trên HUD
-            if (mainHUD != null)
-            {
-                mainHUD.InitializeMaxValues(playerStats);
-            }
+            Debug.Log("[UI_Manager] Chưa có PlayerStats trong Scene lúc khởi động (Sẽ tự động bind khi Player được spawn).");
         }
+    }
+
+    /// <summary>
+    /// Gán và khởi tạo PlayerStats khi nhân vật được sinh động (Fusion Network spawn hoặc ScenePlayerSpawner)
+    /// </summary>
+    public void BindPlayer(PlayerStats stats)
+    {
+        if (stats == null) return;
+        playerStats = stats;
+
+        // Khởi tạo thông số từ ChapterSO nếu có, hoặc reset mặc định
+        if (currentChapter != null)
+        {
+            playerStats.InitializeChapter(currentChapter);
+        }
+        else
+        {
+            playerStats.isDied = false;
+            playerStats.currweight = 0;
+            playerStats.currpoint = 0;
+            playerStats.currentStamina = playerStats.MaxStamina;
+            playerStats.currentTime = playerStats.MaxTime;
+        }
+
+        // Khởi tạo thông số hiển thị ban đầu trên HUD
+        if (mainHUD != null)
+        {
+            mainHUD.InitializeMaxValues(playerStats);
+        }
+        Debug.Log($"<color=green>[UI_Manager] Đã liên kết và khởi tạo PlayerStats cho '{stats.name}' thành công!</color>");
     }
 
     void Update()
@@ -249,7 +261,21 @@ public class UI_Manager : MonoBehaviour
     public void PauseGame()
     {
         isPaused = true;
-        Time.timeScale = 0f;
+
+        // Kiểm tra nếu đang chơi Online qua Photon Fusion thì giữ nguyên timeScale = 1 để tránh mất đồng bộ
+        bool isOnline = FusionConnectionManager.Instance != null &&
+                        FusionConnectionManager.Instance.currentRunner != null &&
+                        FusionConnectionManager.Instance.currentRunner.IsRunning;
+
+        if (!isOnline)
+        {
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+        }
+
         SetMainHUDActive(false);
 
         if (pauseHUD != null)

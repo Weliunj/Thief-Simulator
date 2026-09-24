@@ -343,7 +343,7 @@ namespace StarterAssets
 
                 return;
             }
-            else if (player.currpoint == player.totalpoint)
+            else if (player != null && player.totalpoint > 0 && player.currpoint >= player.totalpoint)
             {
                 return;
             }
@@ -488,7 +488,7 @@ namespace StarterAssets
         public void HandleCameraInput()
         {
             // Kiểm tra trạng thái giải đố bẻ khóa, chết hoặc thắng game -> tạm dừng xoay camera
-            if (UI_Manager.isSolving || (player != null && (player.isDied || player.currpoint >= player.totalpoint)))
+            if (UI_Manager.isSolving || (player != null && (player.isDied || (player.totalpoint > 0 && player.currpoint >= player.totalpoint))))
             {
                 return;
             }
@@ -531,7 +531,7 @@ namespace StarterAssets
         [HideInInspector] public bool Crouching = false;
         private void Move()
         {
-            if (UI_Manager.isSolving || (player != null && player.currpoint == player.totalpoint))
+            if (UI_Manager.isSolving || (player != null && player.totalpoint > 0 && player.currpoint >= player.totalpoint))
             {
                 _speed = 0f;
                 if (_hasAnimator)

@@ -171,6 +171,9 @@ public class PlayerInventory : MonoBehaviour
             }
 
             Debug.Log($"[PlayerInventory] Đã nhặt: {itemObj.name} ({itemKg}kg) -> Tổng tải trọng: {playerStats.currentWeight}/{playerStats.maxWeight}kg");
+
+            // Đồng bộ nhặt đồ qua mạng Photon Fusion nếu đang trong phòng multiplayer
+            NetworkItemSync.SyncPickupItem(itemObj);
         }
 
         // 4. Kích hoạt Animation & trạng thái Taking

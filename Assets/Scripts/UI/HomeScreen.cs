@@ -31,6 +31,7 @@ public class HomeScreen : MonoBehaviour
     public GameObject settingPanel;
     public GameObject characterSelectPanel;
     public GameObject infoPanel; // Panel Hồ sơ / Thông tin người chơi (InfoPanel)
+    public GameObject multiplayerLobbyPanel; // Panel Sảnh chờ Multiplayer Online (NetworkLobbyHUD)
     public ChapterSelectManager chapterSelectManager;
 
     private float networkCheckTimer = 0f;
@@ -379,6 +380,32 @@ public class HomeScreen : MonoBehaviour
         }
 
         Debug.Log("<color=cyan>[HomeScreen] Mở sảnh Multiplayer Online (Task 2.1)!</color>");
+
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+
+        // Ẩn 3D model ngoài sảnh khi mở Lobby
+        CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+        if (charHud != null)
+        {
+            charHud.SetLobbyModelVisible(false);
+        }
+
+        if (multiplayerLobbyPanel == null)
+        {
+            NetworkLobbyHUD existingLobby = FindFirstObjectByType<NetworkLobbyHUD>(FindObjectsInactive.Include);
+            if (existingLobby != null) multiplayerLobbyPanel = existingLobby.gameObject;
+        }
+
+        if (multiplayerLobbyPanel != null)
+        {
+            multiplayerLobbyPanel.SetActive(true);
+            NetworkLobbyHUD lobbyHUD = multiplayerLobbyPanel.GetComponent<NetworkLobbyHUD>() ?? multiplayerLobbyPanel.GetComponentInChildren<NetworkLobbyHUD>(true);
+            if (lobbyHUD != null)
+            {
+                lobbyHUD.previousHomePanel = mainMenuPanel;
+                lobbyHUD.ShowLobbyMain();
+            }
+        }
     }
 
     public void Character_Clicked()

@@ -194,11 +194,20 @@ public class DoorController : MonoBehaviour, IInteractable
     /// <summary>
     /// Đóng/Mở cửa
     /// </summary>
-    public void SetDoorOpen(bool open)
+    public void SetDoorOpen(bool open, bool syncNetwork = true)
     {
         if (isOpen == open && doorCoroutine == null) return;
 
         isOpen = open;
+
+        if (syncNetwork)
+        {
+            var netDoor = GetComponent<NetworkDoorSync>();
+            if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
+            {
+                netDoor.RpcSyncSetDoorOpen(open);
+            }
+        }
 
         if (open)
         {
@@ -336,6 +345,13 @@ public class DoorController : MonoBehaviour, IInteractable
 
         // 3. Tự động mở cửa
         SetDoorOpen(true);
+
+        // 4. Đồng bộ trạng thái mở khóa qua mạng nếu đang trong phòng Fusion
+        var netDoor = GetComponent<NetworkDoorSync>();
+        if (netDoor != null && netDoor.Runner != null && netDoor.Runner.IsRunning)
+        {
+            netDoor.RpcSyncUnlockDoor();
+        }
     }
 
     /// <summary>

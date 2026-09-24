@@ -108,42 +108,50 @@ namespace StarterAssets
 
         private void HandlePCKeyboardInput()
         {
-            // Di chuyển bằng phím WASD / Mũi tên
-            float h = Input.GetAxisRaw("Horizontal");
-            float v = Input.GetAxisRaw("Vertical");
-            if (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f)
+            // Di chuyển bằng phím WASD / Mũi tên (Legacy Input fallback)
+            try
             {
-                move = new Vector2(h, v).normalized;
+                float h = Input.GetAxisRaw("Horizontal");
+                float v = Input.GetAxisRaw("Vertical");
+                if (Mathf.Abs(h) > 0.01f || Mathf.Abs(v) > 0.01f)
+                {
+                    move = new Vector2(h, v).normalized;
+                }
             }
-            else if (dynamicJoystick == null || !dynamicJoystick.IsPressed)
+            catch
             {
-                // Nếu cả bàn phím lẫn Joystick đều không bấm -> dừng di chuyển
-                move = Vector2.zero;
+                // Fallback nếu Project Settings chỉ bật New Input System
             }
 
             // Nhảy bằng phím Space
-            if (Input.GetKeyDown(KeyCode.Space))
+            try
             {
-                jump = true;
-            }
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    jump = true;
+                }
 
-            // Phím tắt bàn phím phụ trợ (vẫn hỗ trợ song song click chuột vào nút trên màn hình)
-            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
-            {
-                sprint = true;
-            }
-            else if (mobileActions == null || !mobileActions.sprintHeld)
-            {
-                sprint = false;
-            }
+                if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                {
+                    sprint = true;
+                }
+                else if (mobileActions == null || !mobileActions.sprintHeld)
+                {
+                    sprint = false;
+                }
 
-            if (Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.LeftControl))
-            {
-                crouch = true;
+                if (Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.LeftControl))
+                {
+                    crouch = true;
+                }
+                else if (mobileActions == null || !mobileActions.crouchHeld)
+                {
+                    crouch = false;
+                }
             }
-            else if (mobileActions == null || !mobileActions.crouchHeld)
+            catch
             {
-                crouch = false;
+                // Ignore legacy input exceptions
             }
         }
 

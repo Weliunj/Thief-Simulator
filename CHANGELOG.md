@@ -1115,7 +1115,216 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Chuyển đổi giữa các slot trong Hotbar mượt mà, không bị mất/xóa nhầm vật phẩm.
   - Vật phẩm cầm trên tay di chuyển và xoay có độ trễ quán tính tự nhiên, ăn khớp với chuyển động quay thân của nhân vật thay vì bị khóa cứng theo camera.
   - Thang chỉ có thể tương tác leo trèo khi được người chơi chủ động đặt (Place) vào bề mặt tường/sàn vật cản. Nếu ném/vứt tự do (Drop) ra đất, thang sẽ áp dụng vật lý tự do ngã đổ và chỉ có thể tương tác để nhặt lại vào túi (Pick Up) chứ không thể leo.
-  - Cửa tự động mở khi NPC hoặc Player (đã bẻ khóa) đến gần và tự động đóng khi rời đi. NPC di chuyển và truy đuổi qua cửa hoàn toàn mượt mà không bị kẹt NavMesh; cánh cửa đóng cản tầm nhìn giúp Player trốn thoát an toàn.
+---
+
+### [2026-09-24 01:25] — feat(multiplayer): integrate Photon Fusion multiplayer, matchmaking lobby, and networked interactions
+- **Tác vụ**:
+  - **Task 2.1 — Photon Fusion Lobby & Matchmaking**:
+    - Thiết lập App ID Fusion mới vào [PhotonAppSettings.asset](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Photon/Fusion/Resources/PhotonAppSettings.asset).
+    - Tạo mới [FusionConnectionManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FusionConnectionManager.cs) kế thừa Singleton và `INetworkRunnerCallbacks` quản lý toàn bộ vòng đời kết nối Photon Fusion (Lobby, Create Session, Join Session, Join by Code, Quick Match, Load Gameplay Scene).
+    - Tạo mới [NetworkRoomItem.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkRoomItem.cs) hiển thị danh sách phòng trực tiếp (Tên phòng, Số lượng người chơi, Bản đồ, Nút Tham gia).
+    - Tạo mới [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs) giao diện đa màn hình: Sảnh chính (Lobby Main), Tạo phòng (Create Room Modal), Nhập mã phòng (Join Code Modal), và Phòng chờ (Waiting Room với nút Sẵn sàng / Bắt đầu game).
+    - Tích hợp nút `Multiplayer` tại [HomeScreen.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HomeScreen.cs) để mở trực tiếp `NetworkLobbyHUD`.
+  - **Task 2.2 — Network Player Synchronization**:
+    - Nâng cấp [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs): Khi Photon Fusion đang chạy, spawn Player thông qua `runner.Spawn(playerPrefab, pos, rot, runner.LocalPlayer)`. Nếu không chạy mạng (Offline test), fallback về `Instantiate` mượt mà.
+    - Tạo mới [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs): Phân quyền điều khiển camera/input (`HasInputAuthority`), đồng bộ Name Tag trên đầu nhân vật, và đồng bộ Skin/Giới tính nhân vật qua biến `[Networked] CharacterSkinIndex`.
+  - **Task 2.3 — Network Interaction & Items**:
+    - Tạo mới [NetworkItemSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkItemSync.cs) và tích hợp vào [PlayerInventory.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInventory.cs): Khi một người chơi nhặt vật phẩm, phát RPC thông báo tất cả các máy khác trong phòng ẩn/xóa vật phẩm khỏi Scene để tránh bị nhặt trùng.
+    - Tạo mới [NetworkDoorSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkDoorSync.cs) và tích hợp vào [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/DoorController.cs): Đồng bộ trạng thái mở khóa (`RpcSyncUnlockDoor`) và trạng thái mở/đóng cánh cửa (`RpcSyncSetDoorOpen`) tức thì cho toàn bộ người chơi trong phòng.
+- **Danh sách file thay đổi**:
+  - `Assets/Photon/Fusion/Resources/PhotonAppSettings.asset` (Modified)
+  - `Assets/Scripts/Network/FusionConnectionManager.cs` (New)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (New)
+  - `Assets/Scripts/Network/NetworkDoorSync.cs` (New)
+  - `Assets/Scripts/Network/NetworkItemSync.cs` (New)
+  - `Assets/Scripts/UI/NetworkRoomItem.cs` (New)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (New)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Modified)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInventory.cs` (Modified)
+  - `Assets/Scripts/Environment/DoorController.cs` (Modified)
+- **Ảnh hưởng**:
+  - Toàn bộ hệ thống sảnh (Lobby), tạo phòng, tìm trận, phòng chờ, spawn nhân vật qua mạng, đồng bộ di chuyển, nhặt đồ và tương tác cửa đã sẵn sàng và hoạt động mượt mà cả ở chế độ Online lẫn Offline test.
+
+---
+
+### [2026-09-24 09:10] — feat(ui, network): chapter background preview for lobby room items & waiting room, and online pause timeScale fix
+- **Tác vụ**:
+  - **Ảnh Chapter Background cho Room Item Prefab & Sảnh Chờ (Waiting Room)**:
+    - [NetworkRoomItem.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkRoomItem.cs):
+      - Bổ sung `mapBgImage` và `chapterNameText` để hiển thị ảnh bìa và tên Chapter của phòng.
+      - Nâng cấp `Setup()` nhận tham số `Sprite mapSprite` và `string mapTitle` để cập nhật visual tương ứng cho từng dòng phòng.
+    - [FusionConnectionManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FusionConnectionManager.cs):
+      - Cập nhật `CreateSession()` đính kèm `SessionProperties["map"]` để đồng bộ thông tin bản đồ được chọn lên Photon Session.
+    - [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs):
+      - Bổ sung `waitingRoomMapImage` và `waitingRoomMapTitleText` hiển thị ảnh và tên Chapter trong màn hình phòng chờ (`WaitingRoomPanel`).
+      - Hỗ trợ danh sách `chapterList` (`ChapterSO`) và `mapPreviewSprites`.
+      - Đăng ký sự kiện `onValueChanged` trên `mapSelectDropdown`: Khi Host đổi Chapter trong Sảnh chờ, ảnh preview `waitingRoomMapImage` tự động thay đổi theo thời gian thực.
+      - Trong `UpdateRoomListUI()`: Đọc thuộc tính `"map"` từ `SessionInfo.Properties` để gán đúng ảnh bìa Chapter tương ứng cho từng `roomItemPrefab`.
+  - **Khắc phục lỗi Đóng băng thời gian (`timeScale = 0`) khi người chơi Online bấm Pause**:
+    - [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs):
+      - Trong `PauseGame()`: Kiểm tra nếu `FusionConnectionManager.Instance.currentRunner.IsRunning == true` (đang chơi Online) $\rightarrow$ giữ nguyên `Time.timeScale = 1f` để game và các gói tin Photon Fusion vẫn hoạt động liên tục trong nền, ngăn ngừa hoàn toàn lỗi giật lag, đơ nhân vật và mất đồng bộ mạng.
+      - Nếu chơi Offline (Singleplayer) $\rightarrow$ giữ nguyên cơ chế dừng game `Time.timeScale = 0f`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/NetworkRoomItem.cs` (Lines 10-35)
+  - `Assets/Scripts/Network/FusionConnectionManager.cs` (Lines 126-165)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Lines 48-150, 200-245, 335-375)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Lines 248-275)
+- **Ảnh hưởng**:
+  - Room Item hiển thị ảnh bìa trực quan, bắt mắt của Chapter.
+  - Sảnh chờ Waiting Room cập nhật ảnh Map động khi Host thay đổi lựa chọn.
+  - Bấm Pause khi chơi Online không làm gián đoạn hay kẹt mạng của phòng chơi.
+
+---
+
+### [2026-09-24 11:10] — feat(ui, multiplayer): implement NetworkPlayerSlot and dynamic waiting room player list
+- **Tác vụ**:
+  - Tạo mới [NetworkPlayerSlot.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkPlayerSlot.cs):
+    - Tự động dò tìm phân cấp Hierarchy (`AutoBind`): `Avatar/PlayerImg`, `PlayerNameText`, `HostImg`, `GuestImg`, `HostBadgeText`, `ReadyStatusText`.
+    - Quản lý hiển thị Tên người chơi, Avatar, huy hiệu Host/Guest, và trạng thái Sẵn sàng (`READY ✓` / `WAITING...`).
+  - Nâng cấp [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs):
+    - Đăng ký sự kiện `OnPlayerJoinedEvent` và `OnPlayerLeftEvent` để cập nhật danh sách người chơi ngay khi có người vào/ra phòng.
+    - Cài đặt hàm `UpdateWaitingRoomPlayerList()`: Duyệt qua `runner.ActivePlayers`, tự động spawn `playerSlotPrefab` và gọi `slot.Setup()` đồng bộ tên người chơi và vai trò Host/Client.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/NetworkPlayerSlot.cs` (New)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Lines 165-185, 440-510)
+- **Ảnh hưởng**:
+  - Danh sách thành viên trong phòng chờ cập nhật tự động thời gian thực khi có người chơi tham gia hoặc rời phòng.
+
+---
+
+### [2026-09-24 11:20] — feat(ui, network): dynamic room ID display and restart button safety in Pause HUD
+- **Tác vụ**:
+  - [PauseHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/PauseHUD.cs):
+    - Bổ sung `public TextMeshProUGUI roomCodeText` và cơ chế tự động dò tìm (`AutoFindUIElements`).
+    - Khi bấm Pause trong trận đấu: Nếu đang chơi Online qua Photon Fusion, tự động hiển thị chuỗi `Room ID: <Tên/Mã phòng>` để người chơi dễ dàng đọc mã mời bạn bè. Nếu chơi Offline, text này tự động ẩn đi.
+    - Tự động ẩn nút `Restart` khi đang chơi Online để ngăn chặn việc khởi động lại trận đấu của phòng nhiều người chơi.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/PauseHUD.cs` (Lines 15-30, 70-85, 115-145)
+- **Ảnh hưởng**:
+  - Người chơi trong trận đấu có thể mở menu Pause để xem nhanh Room ID bất kỳ lúc nào.
+
+---
+
+### [2026-09-24 11:26] — feat(network, auth): universal single-session kick across online gameplay, offline levels, and menus
+- **Tác vụ**:
+  - [FirebaseDataService.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FirebaseDataService.cs):
+    - Nâng cấp hàm callback phát hiện xung đột phiên (`RegisterAndListenSessionAsync`):
+      - Khi phát hiện tài khoản đăng nhập trên thiết bị mới:
+        1. Rời khỏi phòng multiplayer nếu đang trong trận đấu (`FusionConnectionManager.Instance.LeaveSession()`).
+        2. Đăng xuất Firebase an toàn (`FirebaseAuthService.Instance.Auth.SignOut()`).
+        3. Tự động tải lại Scene `HomeMenu` nếu người chơi đang ở trong bất kỳ màn chơi gameplay nào (`Chapter1`, `Chapter2`, v.v.).
+        4. Kích hoạt sự kiện `OnLoggedOutFromAnotherDevice` để hiển thị cảnh báo đỏ và đưa người chơi về màn hình đăng nhập `AuthHUD`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Network/FirebaseDataService.cs` (Lines 565-595)
+- **Ảnh hưởng**:
+  - Bảo vệ toàn diện 100% tài khoản: Bất kể người chơi đang ở ngoài Menu, đang trong Sảnh chờ, đang chơi đơn Offline hay đang trong trận đấu Co-op Online, nếu có máy khác đăng nhập thì máy cũ sẽ bị đá ra ngay lập tức và đưa về màn hình đăng nhập.
+
+---
+
+### [2026-09-24 12:07] — feat(ui, audio): add click sound support and enhanced room title display to NetworkLobbyHUD
+- **Tác vụ**:
+  - [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs):
+    - Tích hợp `clickAudioSource` và `clickSoundClip` phát âm thanh click UI qua kênh SFX của `SettingsManager`.
+    - Gắn `PlayClickSound()` vào tất cả các nút: Refresh, Tạo phòng, Nhập Code, Quick Play, Ready, Start Game, Rời phòng, Đóng Lobby.
+    - Cải tiến `ShowWaitingRoom()` phân tách rõ ràng:
+      - `waitingRoomTitleText`: Hiển thị tên phòng thân thiện (VD: `"Hi's Room"` hoặc `"Quick Match Room"`).
+      - `waitingRoomCodeText`: Hiển thị mã số phòng (`ID: Room_1234`).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Lines 70-115, 260-475)
+- **Ảnh hưởng**:
+  - Giao diện Lobby phản hồi âm thanh sống động khi bấm nút và hiển thị tiêu đề phòng chuẩn xác, đẹp mắt.
+
+---
+
+### [2026-09-24 13:20] — fix(network, ui, player): fix Fusion synchronous spawn exception, real-time profile name sync, and dim Pause restart button
+- **Tác vụ**:
+  - **Khắc phục lỗi `NetworkObjectSpawnException: Failed to load prefab synchronously` & lỗi không di chuyển được**:
+    - Trong [NetworkProjectConfig.fusion](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Photon/Fusion/Resources/NetworkProjectConfig.fusion): Bật `"EnqueueIncompleteSynchronousSpawns": true` để Fusion tự động xếp hàng và xử lý spawn đồng bộ an toàn, không bị crash ngoại lệ.
+    - Trong [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs): Thêm khối `try-catch` và hỗ trợ gọi `SpawnAsync` dự phòng khi spawn đồng bộ gặp sự cố.
+  - **Khắc phục lỗi Tên Profile không cập nhật ngay sau khi đăng xuất/đăng nhập tài khoản mới**:
+    - Trong [FirebaseDataService.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FirebaseDataService.cs): Đảm bảo các sự kiện `OnUserProfileLoaded` và `OnUserProfileUpdated` luôn được kích hoạt trên Main Thread Unity (`RunOnMainThread`) để UI (`TextMeshProUGUI`) cập nhật tức thì mà không bị chặn luồng. Đồng thời kích hoạt thông báo reset profile khi gọi `OnUserLogout()`.
+    - Trong [AuthHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/AuthHUD.cs): Tự động gọi `home.UpdatePlayerProfileVisuals()` và `home.SyncSavedCharacter()` ngay trong `OnAuthSuccess()`.
+  - **Làm mờ và vô hiệu hóa nút Restart trong Pause HUD khi chơi Online**:
+    - Trong [PauseHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/PauseHUD.cs): Thay vì ẩn nút (`SetActive(false)`), giữ nút Restart luôn hiển thị nhưng làm mờ (`alpha = 0.4f`) và tắt tương tác (`interactable = false`) khi đang ở trong phòng chơi mạng Fusion.
+- **Danh sách file thay đổi**:
+  - `Assets/Photon/Fusion/Resources/NetworkProjectConfig.fusion` (Modified)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Modified)
+  - `Assets/Scripts/Network/FirebaseDataService.cs` (Modified)
+  - `Assets/Scripts/UI/AuthHUD.cs` (Modified)
+  - `Assets/Scripts/UI/PauseHUD.cs` (Modified)
+- **Ảnh hưởng**:
+  - Người chơi vào phòng Online sinh nhân vật mượt mà, di chuyển bình thường, tên hiển thị chuẩn xác ngay sau đăng nhập và giao diện Pause menu chuyên nghiệp.
+
+---
+
+### [2026-09-24 13:35] — feat(ui, lobby): customize player slot role visibility and ready status display
+- **Tác vụ**:
+  - [NetworkPlayerSlot.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkPlayerSlot.cs):
+    - Cập nhật logic phân quyền hiển thị theo vai trò (Host vs Guest):
+      - **Chủ phòng (`isHost == true`)**:
+        - `hostImg.SetActive(true)`, `guestImg.SetActive(false)`.
+        - `hostBadgeText`: Bật hiển thị (`SetActive(true)`), hiển thị chữ `"HOST"`.
+        - `readyStatusText`: Tự động ẩn (`SetActive(false)`), không hiển thị chữ trạng thái Ready của chủ phòng.
+      - **Khách vào (`isHost == false`)**:
+        - `guestImg.SetActive(true)`, `hostImg.SetActive(false)`.
+        - `hostBadgeText`: Tự động ẩn (`SetActive(false)`).
+        - `readyStatusText`: Bật hiển thị (`SetActive(true)`), cập nhật đổi màu & nội dung linh hoạt:
+          - Khi đã sẵn sàng: `<color=#00FF88>READY ✓</color>`
+          - Khi chưa sẵn sàng: `<color=#FF4D4D>NOT READY</color>`
+    - Mở rộng hàm `AutoBind()` tự động dò tìm thông minh nhiều biến thể tên của các phần tử con trong Hierarchy.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/NetworkPlayerSlot.cs` (Lines 40-115)
+- **Ảnh hưởng**:
+  - Danh sách người chơi trong Sảnh chờ (Waiting Room) hiển thị trực quan, đúng vai trò chủ phòng và khách, trạng thái Sẵn sàng / Chưa sẵn sàng rõ ràng.
+
+---
+
+### [2026-09-24 14:15] — fix(multiplayer, player, ui): fix multiplayer freeze/movement, sync ready states, lock Start Game, and support slot panel hiding
+- **Tác vụ**:
+  - **Khắc phục triệt để lỗi không di chuyển được khi vào trận Co-op Multiplayer**:
+    - Trong [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs):
+      - Sửa điều kiện `preventDuplicateIfPlayerExists`: Chỉ áp dụng khi chơi Offline đơn lẻ; ở chế độ Multiplayer, mọi người chơi (Host lẫn Guest) luôn tự động spawn nhân vật mạng của chính mình qua Fusion với quyền `runner.LocalPlayer`.
+      - Phân bổ vị trí xuất phát (`spawnPoints`) so le theo `PlayerId` để tránh người chơi spawn đè vào nhau.
+      - Gọi `ui.BindPlayer(stats)` để gán và khởi tạo trọn vẹn thông số Chapter (thời gian, điểm số mục tiêu, thanh stamina, máu).
+    - Trong [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs):
+      - Trên Remote Player (người chơi khác): Vô hiệu hóa `playerController`, `characterController`, `playerInput`, `starterInputs`, `PlayerInteraction`, `PlayerHeadLook` và xóa `AudioListener` thừa để tránh xung đột vật lý và camera với Local Player.
+      - Trên Local Player: Kích hoạt đầy đủ toàn bộ bộ điều khiển và gắn kết Camera Cinemachine.
+    - Trong [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs):
+      - Khắc phục điều kiện thắng game `player.currpoint == player.totalpoint`: Bổ sung thêm điều kiện bảo vệ `player.totalpoint > 0` để tránh trường hợp khởi tạo ban đầu (0/0) làm nhân vật bị khóa cứng đơ không di chuyển được.
+    - Trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs):
+      - Bổ sung hàm công khai `BindPlayer(PlayerStats stats)` tự động nạp `InitializeChapter` và khởi tạo HUD ngay khi Player spawn trễ qua mạng.
+  - **Đồng bộ trạng thái Ready qua mạng và khóa nút Start Game của Chủ phòng**:
+    - Trong [FusionConnectionManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FusionConnectionManager.cs):
+      - Bổ sung sự kiện `OnPlayerReadyStatusReceived` và hàm `SendReadyStatus(bool isReady)` truyền tải dữ liệu tin cậy (Reliable Data) thời gian thực giữa các máy.
+    - Trong [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs):
+      - Quản lý từ điển trạng thái `playerReadyStates` cho từng người chơi.
+      - Chủ phòng (`Host`): Khóa nút `Start Game` (`interactable = false`, mờ `alpha = 0.45f`) khi còn khách chưa bấm Ready. Chỉ mở khóa cho phép vào trận khi 100% người chơi trong phòng đã Ready.
+  - **Cải tiến ẩn/hiện Panel Status Message trong NetworkLobbyHUD**:
+    - Trong [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs):
+      - Bổ sung `public GameObject statusMessagePanel;` dưới mục `[Header("📢 Status Message")]`.
+      - Tự động ẩn cả Panel nền và Text khi khởi chạy, chỉ hiện lên khi có thông báo (`ShowStatus`), tự động ẩn sạch sẽ sau delay (`ClearStatusAfterDelay`), chống hoàn toàn việc panel trống đè lên các UI khác trong sảnh chờ.
+    - Trong [NetworkPlayerSlot.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkPlayerSlot.cs):
+      - Giữ cấu trúc gọn gàng, bật/tắt trực tiếp `hostBadgeText`, `readyStatusText`, `hostImg`, `guestImg` mà không cần bọc thêm panel phụ thừa.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Modified — Fixed CS0128 duplicate variable)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerController.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified)
+  - `Assets/Scripts/UI/NetworkPlayerSlot.cs` (Modified)
+  - `Assets/Scripts/Player/StarterAssetsInputs.cs` (Modified — Fixed input reset conflict)
+- **Ảnh hưởng**:
+  - Khắc phục hoàn toàn lỗi không di chuyển được trong multiplayer & singleplayer do xung đột Input System, phòng chờ đồng bộ Ready chuẩn xác 100%, bảo vệ chủ phòng không thể bấm Start khi khách chưa sẵn sàng, và UI Status Message cùng thẻ người chơi hiển thị sạch sẽ, không bị đè chữ hay đè nền.
+
+
+
+
+
+
+
+
 
 
 

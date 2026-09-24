@@ -559,9 +559,14 @@ public class AuthHUD : MonoBehaviour
         if (nextPanelOnSuccess != null) nextPanelOnSuccess.SetActive(true);
 
         HomeScreen home = FindFirstObjectByType<HomeScreen>(FindObjectsInactive.Include);
-        if (home != null && home.mainMenuPanel != null)
+        if (home != null)
         {
-            home.mainMenuPanel.SetActive(true);
+            if (home.mainMenuPanel != null)
+            {
+                home.mainMenuPanel.SetActive(true);
+            }
+            home.UpdatePlayerProfileVisuals();
+            home.SyncSavedCharacter();
         }
     }
 
