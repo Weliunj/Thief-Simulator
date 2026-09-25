@@ -1474,6 +1474,214 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Ảnh hưởng**:
   - Khi người chơi nhặt hoặc soi thông tin vật phẩm trên HUD/Túi đồ, toàn bộ 23 item đều hiển thị phần mô tả ngoại hình và giá trị hoàn chỉnh, sống động và hấp dẫn.
 
+---
+
+### [2026-09-25 18:33] — refactor(ui, network): remove restart mechanic and enforce replay via Home Menu exit
+- **Tác vụ**:
+  - **Xóa bỏ hoàn toàn cơ chế Restart trận đấu trong lúc đang chơi**:
+    - Xóa bỏ file `NetworkVoteRestartManager.cs` và các RPC vote liên quan trong `NetworkPlayerSync.cs`.
+    - Cập nhật [PauseHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/PauseHUD.cs): Tự động ẩn hoàn toàn nút Restart (`restartButton.gameObject.SetActive(false)`). Bảng Pause giờ đây chỉ hiển thị 3 nút tinh gọn: **Tiếp tục (Resume)**, **Cài đặt (Settings)**, **Về Menu (Menu)** cùng thông tin phòng Online (`roomCodeText`).
+    - Quy chuẩn luồng chơi: Muốn chơi lại màn chơi, người chơi cần nhấn nút **Menu** để thoát ra sảnh chính (tự động rời phòng/Session an toàn) và bắt đầu một màn chơi mới.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Network/NetworkVoteRestartManager.cs` (Deleted)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified — Cleaned up vote RPCs)
+  - `Assets/Scripts/UI/PauseHUD.cs` (Modified — Cleaned up to only Resume, Settings, Menu)
+- **Ảnh hưởng**:
+  - Giao diện Pause HUD trở nên gọn gàng, tránh việc người chơi vô tình bấm nhầm restart làm gián đoạn trận đấu mạng hoặc gây lệch trạng thái.
+
+---
+
+### [2026-09-25 18:48] — feat(player, death): implement 10s respawn cooldown, dieLight toggle, and police siren fade-in/out
+- **Tác vụ**:
+  - **Nâng cấp toàn diện hệ thống Tử vong & Hồi sinh trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs)**:
+    - **Khi người chơi bị bắt (`ExecuteDeath`)**:
+      - Chạy animation gục ngã (`Die`), thả rơi toàn bộ đồ trong túi ra sàn (`DropAllItemsOnDeath`).
+      - Bật đèn cảnh báo tử vong `dieLight` / `warningLight` (`SetActive(true)`).
+      - Bắt đầu chuỗi đếm ngược hồi sinh **10 giây** (`respawnCooldown = 10f`).
+    - **Âm thanh còi cảnh sát (Police Siren Audio) bắt đầu từ giây thứ 5**:
+      - Từ **0s -> 5s**: Người chơi nằm gục, camera pull-back bao quát góc nhìn.
+      - Từ **giây thứ 5 (5s cuối)**: Còi cảnh sát bắt đầu hú.
+      - **Fade In (To dần ở đầu)**: Âm lượng tăng dần từ 0 lên tối đa trong vòng 1.0 giây đầu (từ 5s -> 6s).
+      - **Fade Out (Nhỏ dần ở cuối)**: Âm lượng giảm dần từ tối đa về 0 trong vòng 1.5 giây cuối (từ 8.5s -> 10s).
+    - **Hết 10 giây hồi sinh (`RespawnPlayer`)**:
+      - Tắt còi cảnh sát và tắt hoàn toàn đèn `dieLight` (`SetActive(false)`).
+      - Teleport người chơi an toàn về vị trí xuất phát ban đầu (**Spawn Point**) từ `ScenePlayerSpawner`.
+      - Khôi phục Animation về tư thế `Idle`, hồi phục Stamina, reset trạng thái `isDied = false`, và bật lại va chạm giữa Player và NPC để người chơi tiếp tục màn chơi.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified — Added 10s respawn sequence, police audio fade-in/out, dieLight & spawn teleport)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Modified — Added static Instance accessor)
+- **Ảnh hưởng**:
+  - Trải nghiệm khi bị bảo vệ bắt kịch tính, chân thực và rõ ràng với còi cảnh sát to/nhỏ mượt mà; người chơi tự động được hồi sinh về vị trí xuất phát để tiếp tục thực hiện vụ trộm.
+
+---
+
+### [2026-09-25 19:04] — feat(ui, transition): implement persistent ScreenFader and 3D spatial sync for police sirens
+- **Tác vụ**:
+  - **Tạo mới bộ điều khiển chuyển cảnh màn hình đen ([ScreenFader.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ScreenFader.cs))**:
+    - Tự động sinh `Canvas` Overlay với `sortingOrder = 9999` (nằm trên cùng) và nền đen toàn màn hình.
+    - `DontDestroyOnLoad` duy trì mượt mà giữa các Scene.
+    - **Chuyển Scene khi bấm Bắt đầu (`HomeScreen.cs` & `ChapterSelectManager.cs`)**:
+      - Khi bấm Play: Màn hình chuyển sang đen rõ dần (`FadeToBlack 0.5s`).
+      - Khi Scene Gameplay tải xong: Màn hình đen mờ dần ra thế giới game (`FadeFromBlack 0.6s`).
+    - **Chuyển cảnh Tử vong & Hồi sinh (`PlayerDeathHandler.cs`)**:
+      - Khi còn 1.5 giây cuối của chuỗi đếm ngược hồi sinh: Màn hình đen rõ dần (`FadeToBlack 1.3s`).
+      - Ngay khi hồi sinh về điểm Spawn: Màn hình đen mờ dần sáng trở lại (`FadeFromBlack 0.8s`).
+  - **Đồng bộ Âm thanh Còi Cảnh Sát 3D qua Mạng**:
+    - Cấu hình `policeSirenAudioSource` với `spatialBlend = 1.0f` (3D Spatial Audio, `minDistance = 2m`, `maxDistance = 45m`, Logarithmic Rolloff).
+    - Khi 1 người chơi bị bắt, RPC `RpcTriggerPlayerDeath` kích hoạt đồng bộ trên toàn phòng: người chơi khác ở gần sẽ nghe thấy âm thanh còi cảnh sát phát ra chính xác từ tọa độ không gian 3D của người bị bắt.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/ScreenFader.cs` (New)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Modified — Integrated ScreenFader on Play)
+  - `Assets/Scripts/UI/ChapterSelectManager.cs` (Modified — Integrated ScreenFader on Chapter Play)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified — Integrated ScreenFader on Start Game from Waiting Room)
+  - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified — Integrated ScreenFader on Fusion OnSceneLoadStart & OnSceneLoadDone)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified — Configured 3D siren spatial audio & ScreenFader on respawn)
+- **Ảnh hưởng**:
+  - Chuyển cảnh vào game (cả phòng chờ Waiting Room Online lẫn Singleplayer) và quá trình hồi sinh diễn ra điện ảnh, mượt mà; màn hình luôn đạt 100% full alpha đen trước khi nạp scene; âm thanh còi cảnh sát được định hướng 3D chuẩn xác trong không gian multiplayer.
+
+---
+
+### [2026-09-25 19:20] — refactor(ui): remove legacy winpanel and diepanel logic and variables
+- **Tác vụ**:
+  - Xóa toàn bộ biến `diedPanel`, `WinPanel`, `isDiedHandled`, `isWinHandled` trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
+  - Tinh giản luồng xử lý mở khóa Chapter khi đạt điểm mục tiêu trong `UpdateGameState()` mà không cần bật panel UI tĩnh.
+  - Tối ưu hóa việc bật lại `MainHUD` trong `ResumeGame()` và `LockpickMinigame` khi hoàn thành/hủy bẻ khóa mà không bị ràng buộc bởi các cờ Win/Die cũ.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Code gọn gàng, loại bỏ các biến tham chiếu UI thừa trong Inspector của `UI_Manager`.
+  - Toàn bộ cơ chế chết và hồi sinh hiện được vận hành độc lập và mượt mà qua `PlayerDeathHandler` và `ScreenFader`.
+
+---
+
+### [2026-09-25 19:28] — fix(compile): resolve currstamina property and OpenPanel overload errors
+- **Tác vụ**:
+  - Sửa lỗi tham chiếu `currstamina` trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs) thành `currentStamina` và bổ sung compatibility property `currstamina` vào [PlayerStats.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerStats.cs).
+  - Cập nhật phương thức `OpenSettings()` trong [MenuHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MenuHUD.cs) và bổ sung các hàm nạp chồng `OpenPanel(GameObject)` / `OpenPanel(Component)` trong [SettingsHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/SettingsHUD.cs).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerStats.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/UI/MenuHUD.cs` (Modified)
+  - `Assets/Scripts/UI/SettingsHUD.cs` (Modified)
+- **Ảnh hưởng**:
+  - Đảm bảo dự án biên dịch thành công 100% không còn bất kỳ lỗi CS1061 hay CS1501 nào.
+
+---
+
+### [2026-09-25 19:46] — fix(gameplay): resolve movement lock on full points, screen fade glitches, and online chapter point sync
+- **Tác vụ**:
+  - Xóa bỏ logic chặn di chuyển và khóa xoay camera khi đạt điểm mục tiêu trong [PlayerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerController.cs), cho phép người chơi tiếp tục di chuyển tự do.
+  - Tích hợp `ScreenFader.LoadSceneWithFade` vào nút Menu trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs) để chuyển cảnh về `HomeMenu` mượt mà với màn hình đen.
+  - Sửa lỗi chớp sáng trong phòng chờ của [ScreenFader.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ScreenFader.cs) bằng cách lấy `currentAlpha` thực tế làm điểm bắt đầu thay vì ép về 0f.
+  - Đồng bộ `GameSession.SelectedChapter` từ `chapterList` theo map được chọn khi Host tạo phòng/bắt đầu trận trong [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs) và bổ sung fallback `SceneItemSpawner.chapterData` trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerController.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/UI/ScreenFader.cs` (Modified)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified)
+- **Ảnh hưởng**:
+  - Người chơi đạt điểm mục tiêu vẫn di chuyển bình thường; bấm nút Menu về sảnh chính có fade đen mượt mà; vào game từ Waiting Room không còn bị chớp sáng; điểm mục tiêu trong phòng Online đồng bộ chuẩn xác theo từng ScriptableObject của Chapter.
+
+---
+
+### [2026-09-25 19:54] — fix(player): resolve offline InvalidOperationException and hide MainHUD on death
+- **Tác vụ**:
+  - Bổ sung kiểm tra an toàn `netSync.Object != null && netSync.Object.IsValid` trước khi truy cập thuộc tính `[Networked]` `NetworkPlayerName` trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs) và [NPCCatchPlayerTrigger.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/NPCCatchPlayerTrigger.cs), bổ sung fallback lấy tên từ Firebase Profile / PlayerPrefs khi chơi Offline.
+  - Tự động ẩn `MainHUD` (`ui.SetMainHUDActive(false)`) ngay khi Player bị bắt/chết và bật lại `MainHUD` (`ui.SetMainHUDActive(true)`) khi kết thúc chuỗi đếm ngược hồi sinh trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/AI/NPCCatchPlayerTrigger.cs` (Modified)
+- **Ảnh hưởng**:
+  - Khắc phục hoàn toàn lỗi `InvalidOperationException` khi bị NPC bắt lúc chơi Offline (Singleplayer); giao diện MainHUD ẩn sạch sẽ lúc chết và tự động hiển thị lại sau khi hồi sinh.
+
+---
+
+### [2026-09-25 20:04] — fix(inventory): prevent held item from being disabled when dropped on death
+- **Tác vụ**:
+  - Cập nhật hàm `ClearAllSlots(bool disableHeldModel = false)` trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) để tách model đang cầm khỏi Socket và bật lại đầy đủ Collider/Renderer mà không ép `SetActive(false)` khi đang thả đồ lúc chết.
+  - Cập nhật thứ tự xử lý trong `DropAllItemsOnDeath()` của [PlayerInventory.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInventory.cs) để đảm bảo toàn bộ vật phẩm (bao gồm cả vật phẩm đang cầm trên tay và trong túi) đều được rơi rải rác xung quanh thi thể với `SetActive(true)`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInventory.cs` (Modified)
+- **Ảnh hưởng**:
+  - Khi bị NPC bắt, vật phẩm đang cầm trên tay (held item) sẽ được văng ra mặt đất kèm hiệu ứng vật lý chính xác và luôn hiển thị rõ ràng, không còn bị ẩn mất.
+
+---
+
+### [2026-09-25 20:18] — fix(respawn): resolve double-death loop at spawnpoint and item drop position desync
+- **Tác vụ**:
+  - Thêm cơ chế miễn nhiễm sát thương/bị bắt (`IsInvulnerable` trong 4.0s) sau khi hồi sinh trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs) và [NPCCatchPlayerTrigger.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/NPCCatchPlayerTrigger.cs), đồng thời giới hạn chỉ Host mới xử lý bắt người chơi trong phòng Online để tránh desync kép.
+  - Sửa chỉ số `spawnPoints[idx]` trong `RespawnPlayer` sử dụng `Object.InputAuthority.PlayerId` thay vì `Runner.LocalPlayer.PlayerId` để đưa từng người chơi về đúng điểm xuất phát của riêng họ.
+  - Cải tiến hàm `DropAllItemsOnDeath()` trong [PlayerInventory.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInventory.cs) bằng cách bắn Raycast ghim cố định vật phẩm xuống mặt đất và gửi vận tốc `Vector3.zero` qua `NetworkItemSync.SyncDropItem` để vị trí đồ rơi đạt độ chính xác và đồng bộ 100% giữa các máy.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/AI/NPCCatchPlayerTrigger.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInventory.cs` (Modified)
+- **Ảnh hưởng**:
+  - Người chơi sau khi chết và được teleport về điểm xuất phát sẽ không bao giờ bị chết thêm lần 2; toàn bộ đồ rơi ra sàn được đồng bộ chuẩn xác tại cùng một tọa độ trên màn hình của tất cả người chơi.
+
+---
+
+### [2026-09-25 20:21] — feat(inventory): optimize drop raycast for multi-story buildings and prevent wall clipping
+- **Tác vụ**:
+  - Nâng cấp cơ chế Raycast rơi đồ trong [PlayerInventory.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerInventory.cs):
+    1. Tia Raycast bắn từ độ cao ngang bụng (`0.5m` so với chân người chơi) thẳng xuống dưới $\rightarrow$ Luôn bắt dính chính xác mặt sàn của tầng hiện tại (Tầng 1, Tầng 2, Tầng hầm, Gác mái...).
+    2. Kiểm tra va chạm tia ngang từ vị trí Player đến điểm rơi để tránh trường hợp vật phẩm văng lọt xuyên qua tường phòng.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerInventory.cs` (Modified)
+- **Ảnh hưởng**:
+  - Đảm bảo vật phẩm luôn nằm an toàn trên mặt sàn của đúng tầng mà Player tử vong, không bị rơi nhầm lên mái nhà hay xuyên qua sàn xuống tầng dưới.
+
+---
+
+### [2026-09-25 20:33] — fix(ai): enable NPC catch trigger for Guest clients via IsLocalPlayer authority check
+- **Tác vụ**:
+  - Cập nhật điều kiện trong `TryCatchPlayer()` của [NPCCatchPlayerTrigger.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/NPCCatchPlayerTrigger.cs) thành `netSync.IsLocalPlayer`: mỗi máy sẽ chịu trách nhiệm phát hiện va chạm và kích hoạt chết cho chính nhân vật của mình khi chạm vào NPC.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/AI/NPCCatchPlayerTrigger.cs` (Modified)
+- **Ảnh hưởng**:
+  - Cả Host và Guest khi chạm vào NPC đều tử vong chính xác 100%, không bị tình trạng Guest không chết hoặc gửi RPC trùng lặp giữa các máy.
+
+---
+
+### [2026-09-25 20:35] — fix(compile): resolve CS0136 duplicate netSync variable in NPCCatchPlayerTrigger.cs
+- **Tác vụ**:
+  - Tái sử dụng biến `netSync` đã khai báo ở đầu hàm `TryCatchPlayer()` trong [NPCCatchPlayerTrigger.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/NPCCatchPlayerTrigger.cs), loại bỏ khai báo trùng lặp trong khối `else`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/AI/NPCCatchPlayerTrigger.cs` (Modified)
+- **Ảnh hưởng**:
+  - Đảm bảo dự án biên dịch sạch sẽ không còn lỗi CS0136.
+
+---
+
+### [2026-09-25 20:47] — fix(lobby): accurate max players parsing from dropdown options
+- **Tác vụ**:
+  - Cải tiến logic đọc số lượng người chơi tối đa từ `maxPlayersDropdown` trong [NetworkLobbyHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/NetworkLobbyHUD.cs):
+    - Trích xuất trực tiếp số nguyên từ nội dung text của Option (VD: "1", "2 Players", "3", "4") hoặc mapping chuẩn xác theo `value + 1`.
+    - Chọn 1 $\rightarrow$ MaxPlayers = 1 (Phòng 1 người).
+    - Chọn 2 $\rightarrow$ MaxPlayers = 2 (Host + 1 khách).
+    - Chọn 3 $\rightarrow$ MaxPlayers = 3 (Host + 2 khách).
+    - Chọn 4 $\rightarrow$ MaxPlayers = 4 (Host + 3 khách).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified)
+- **Ảnh hưởng**:
+  - Khắc phục tình trạng lệch số lượng phòng; số slot chứa tối đa của phòng hiển thị và hoạt động khớp 100% với tùy chọn của Host khi tạo phòng.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

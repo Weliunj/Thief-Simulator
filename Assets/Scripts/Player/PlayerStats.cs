@@ -43,6 +43,7 @@ public class PlayerStats : MonoBehaviour
     //               COMPATIBILITY PROPERTIES (Tương thích ngược)
     // =========================================================================
     public float _stamina { get => currentStamina; set => currentStamina = value; }
+    public float currstamina { get => currentStamina; set => currentStamina = value; }
     public float MaxStamina { get => maxStamina; set => maxStamina = value; }
     public int currweight { get => currentWeight; set => currentWeight = value; }
     public int Maxweight { get => maxWeight; set => maxWeight = value; }

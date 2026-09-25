@@ -210,6 +210,6 @@ public class ChapterSelectManager : MonoBehaviour
     private IEnumerator LoadSceneByNameAfterDelay(string sceneName, float delay)
     {
         yield return new WaitForSeconds(delay);
-        SceneManager.LoadScene(sceneName);
+        ScreenFader.LoadSceneWithFade(sceneName, 0.5f);
     }
 }

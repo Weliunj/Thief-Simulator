@@ -2,6 +2,15 @@ using System.Collections;
 using UnityEngine;
 using StarterAssets;
 
+/// <summary>
+/// Quản lý trạng thái tử vong và hồi sinh (Death & Respawn) của người chơi:
+/// - Khi bị bắt: Kích hoạt Trigger/Animation "Die", thả rơi toàn bộ đồ trong túi (văng ra sàn).
+/// - Bật đèn cảnh báo (dieLight / warningLight).
+/// - Bộ đếm hồi sinh 10 giây (Respawn Cooldown):
+///   + Từ 0s -> 5s: Chạy animation chết, camera kéo lùi quan sát toàn cảnh.
+///   + Từ giây thứ 5 (khi còn 5s cuối): Bắt đầu phát âm thanh còi cảnh sát (Police Siren), to dần (Fade In) ở đầu và nhỏ dần (Fade Out) ở cuối.
+///   + Hết 10s: Tắt còi cảnh sát, tắt dieLight, dịch chuyển Player về điểm xuất phát (Spawn Point) và khôi phục trạng thái hoạt động bình thường.
+/// </summary>
 public class PlayerDeathHandler : MonoBehaviour
 {
     [Header("⚙️ References")]
@@ -25,6 +34,15 @@ public class PlayerDeathHandler : MonoBehaviour
     [Tooltip("Offset tâm ngắm camera hướng vào cơ thể Player khi chết")]
     public Vector3 lookAtBodyOffset = new Vector3(0f, 0.5f, 0f);
 
+    [Header("⏱️ Respawn Settings")]
+    [Tooltip("Thời gian chờ đếm ngược để hồi sinh (mặc định 10 giây)")]
+    public float respawnCooldown = 10.0f;
+
+    [Header("💡 Lights & Visuals")]
+    [Tooltip("Đèn cảnh báo chết (dieLight / warningLight)")]
+    public GameObject dieLight;
+    public GameObject warningLight;
+
     [Header("🔊 Audio & Effects")]
     [Tooltip("AudioSource 1: Âm thanh phát ngay khi Player chết")]
     public AudioSource deathAudioSource;
@@ -34,14 +52,12 @@ public class PlayerDeathHandler : MonoBehaviour
     [Tooltip("Hoặc kéo thả AudioClip còi cảnh sát vào đây nếu dùng chung AudioSource")]
     public AudioClip policeSirenClip;
 
-    [Tooltip("Thời gian chờ trước khi còi cảnh sát hú (mặc định 3 giây)")]
-    public float policeSirenDelay = 3.0f;
-
-    [Tooltip("Đèn cảnh báo khi chết (optional)")]
-    public GameObject warningLight;
-
     [HideInInspector] public bool isDeadProcessed = false;
+
     private Vector3 originalCameraTargetLocalPos;
+    private Vector3 _initialSpawnPos;
+    private Quaternion _initialSpawnRot;
+    private Coroutine _respawnCoroutine;
 
     void Start()
     {
@@ -65,7 +81,30 @@ public class PlayerDeathHandler : MonoBehaviour
             originalCameraTargetLocalPos = cameraTarget.localPosition;
         }
 
-        // Kết nối AudioSource với SFX Mixer Group trong Settings
+        // Lưu vị trí spawn ban đầu của Player
+        _initialSpawnPos = transform.position;
+        _initialSpawnRot = transform.rotation;
+
+        // Tự động tìm kiếm dieLight / warningLight nếu chưa gán
+        if (dieLight == null)
+        {
+            Transform t = transform.Find("DieLight") ?? transform.Find("dieLight") ?? transform.Find("WarningLight") ?? transform.Find("warningLight");
+            if (t != null) dieLight = t.gameObject;
+        }
+        if (dieLight == null && warningLight != null) dieLight = warningLight;
+        if (warningLight == null && dieLight != null) warningLight = dieLight;
+
+        SetDieLight(false);
+
+        // Kết nối AudioSource với SFX Mixer Group trong Settings và cấu hình 3D Spatial Audio
+        if (policeSirenAudioSource != null)
+        {
+            policeSirenAudioSource.spatialBlend = 1.0f; // 3D Sound để các người chơi khác nghe thấy từ vị trí người chết
+            policeSirenAudioSource.minDistance = 1.0f;
+            policeSirenAudioSource.maxDistance = 30f;
+            policeSirenAudioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        }
+
         if (SettingsManager.Instance != null && SettingsManager.Instance.sfxGroup != null)
         {
             if (deathAudioSource != null && deathAudioSource.outputAudioMixerGroup == null)
@@ -97,12 +136,27 @@ public class PlayerDeathHandler : MonoBehaviour
         }
     }
 
+    [Header("🛡️ Respawn Immunity")]
+    [Tooltip("Thời gian bất tử (không thể bị bắt lại) ngay sau khi vừa hồi sinh")]
+    public float spawnImmunityDuration = 4.0f;
+    [HideInInspector] public float lastRespawnTime = -10f;
+    public bool IsInvulnerable => Time.time < lastRespawnTime + spawnImmunityDuration;
+
     /// <summary>
-    /// Hàm công khai kích hoạt cái chết của Player (Tự động phát RPC cho toàn bộ phòng)
+    /// Bật hoặc tắt đèn cảnh báo DieLight
+    /// </summary>
+    public void SetDieLight(bool active)
+    {
+        if (dieLight != null) dieLight.SetActive(active);
+        if (warningLight != null && warningLight != dieLight) warningLight.SetActive(active);
+    }
+
+    /// <summary>
+    /// Hàm công khai kích hoạt cái chết của Player (Tự động phát RPC cho toàn bộ phòng nếu chơi Online)
     /// </summary>
     public void TriggerDeath(string caughtBy = "Guard")
     {
-        if (isDeadProcessed) return;
+        if (isDeadProcessed || IsInvulnerable) return;
 
         var netSync = GetComponent<NetworkPlayerSync>();
         if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
@@ -120,7 +174,7 @@ public class PlayerDeathHandler : MonoBehaviour
     /// </summary>
     public void ExecuteDeath(string caughtBy, bool isLocal)
     {
-        if (isDeadProcessed) return;
+        if (isDeadProcessed || IsInvulnerable) return;
         isDeadProcessed = true;
 
         if (isLocal && playerStats != null)
@@ -170,40 +224,48 @@ public class PlayerDeathHandler : MonoBehaviour
 
         // 4. Phát thông báo Status trên màn hình ("Player got caught by ...")
         string pName = "Player";
-        if (netSync != null && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
+        if (netSync != null && netSync.Object != null && netSync.Object.IsValid && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
         {
             pName = netSync.NetworkPlayerName.ToString();
         }
-        else if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null)
+        else if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null && !string.IsNullOrEmpty(FirebaseDataService.Instance.CurrentUserProfile.username))
         {
             pName = FirebaseDataService.Instance.CurrentUserProfile.username;
+        }
+        else
+        {
+            pName = PlayerPrefs.GetString("PlayerNickname", "Player");
         }
 
         string deathNotice = $"{pName} got caught by {caughtBy}!";
         GameStatusHUD.Show(deathNotice);
 
-        // 5. Kéo lùi Camera ra đằng sau xa hơn và mượt mà (Chỉ cho chính người chết)
+        // 5. Ẩn Main HUD và kéo lùi Camera ra đằng sau xa hơn (Chỉ cho chính người chết)
         if (isLocal)
         {
+            UI_Manager ui = FindFirstObjectByType<UI_Manager>(FindObjectsInactive.Include);
+            if (ui != null)
+            {
+                ui.SetMainHUDActive(false);
+            }
+
             StartCoroutine(SmoothDeathCameraPullbackRoutine());
         }
 
-        // 6. Bật đèn cảnh báo (nếu có)
-        if (warningLight != null)
-        {
-            warningLight.SetActive(true);
-        }
+        // 6. Bật đèn cảnh báo DieLight
+        SetDieLight(true);
 
         // 7. Phát âm thanh 1 (Kêu khi chết)
         PlayDeathSound();
 
-        // 8. Đồng bộ còi cảnh sát hú (Police Siren) cho toàn bộ người chơi trong phòng
-        StartCoroutine(PlayPoliceSirenRoutine(policeSirenDelay));
-
-        // 9. Tắt va chạm giữa Player và NPC
+        // 8. Tắt va chạm giữa Player và NPC
         Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), true);
 
-        Debug.Log($"[PlayerDeathHandler] {pName} đã bị bắt bởi {caughtBy}. Âm thanh còi cảnh sát và animation đã kích hoạt đồng bộ!");
+        // 9. Bắt đầu chuỗi đếm ngược 10s hồi sinh và còi cảnh sát từ giây thứ 5
+        if (_respawnCoroutine != null) StopCoroutine(_respawnCoroutine);
+        _respawnCoroutine = StartCoroutine(RespawnSequenceRoutine(isLocal));
+
+        Debug.Log($"[PlayerDeathHandler] {pName} đã bị bắt bởi {caughtBy}. Bắt đầu đếm ngược hồi sinh {respawnCooldown}s!");
     }
 
     /// <summary>
@@ -245,39 +307,214 @@ public class PlayerDeathHandler : MonoBehaviour
     }
 
     /// <summary>
-    /// Coroutine chờ delaySeconds rồi phát còi cảnh sát
+    /// Chuỗi đếm ngược 10 giây hồi sinh:
+    /// - Từ 0s -> 5s: Player nằm gục, camera pull-back.
+    /// - Từ giây thứ 5 (5s còn lại): Còi cảnh sát bắt đầu phát với Fade In (to dần) và kết thúc với Fade Out (nhỏ dần).
+    /// - Hết 10s: Tắt còi cảnh sát, tắt dieLight, hồi sinh đưa về Spawn Point.
     /// </summary>
-    private IEnumerator PlayPoliceSirenRoutine(float delaySeconds)
+    private IEnumerator RespawnSequenceRoutine(bool isLocal)
     {
-        yield return new WaitForSeconds(delaySeconds);
+        float totalDuration = Mathf.Max(5f, respawnCooldown); // 10s
+        float sirenStartTime = 5.0f; // Bắt đầu còi cảnh sát từ giây thứ 5
+        float sirenFadeInDuration = 1.0f; // To dần trong 1.0s
+        float sirenFadeOutDuration = 1.5f; // Nhỏ dần trong 1.5s cuối
+        float sirenEndTime = totalDuration; // Kết thúc ở giây thứ 10
 
-        if (policeSirenAudioSource != null)
+        float elapsed = 0f;
+        bool sirenStarted = false;
+
+        AudioSource sirenSource = policeSirenAudioSource != null ? policeSirenAudioSource : deathAudioSource;
+        float baseVolume = 1.0f;
+
+        if (sirenSource != null && sirenSource.volume > 0f)
         {
-            if (!policeSirenAudioSource.gameObject.activeSelf) policeSirenAudioSource.gameObject.SetActive(true);
-            policeSirenAudioSource.loop = true;
-            policeSirenAudioSource.Play();
-            Debug.Log("[PlayerDeathHandler] Còi cảnh sát (Police Siren) bắt đầu hú!");
+            baseVolume = sirenSource.volume;
         }
-        else if (deathAudioSource != null && policeSirenClip != null)
+
+        bool blackFadeStarted = false;
+
+        while (elapsed < totalDuration)
         {
-            deathAudioSource.PlayOneShot(policeSirenClip);
-            Debug.Log("[PlayerDeathHandler] Phát clip còi cảnh sát (Police Siren) qua deathAudioSource!");
+            yield return null;
+            elapsed += Time.deltaTime;
+
+            // Bắt đầu còi cảnh sát từ giây thứ 5
+            if (elapsed >= sirenStartTime && !sirenStarted)
+            {
+                sirenStarted = true;
+                if (sirenSource != null)
+                {
+                    sirenSource.volume = 0f;
+                    if (!sirenSource.gameObject.activeSelf) sirenSource.gameObject.SetActive(true);
+
+                    if (policeSirenAudioSource != null)
+                    {
+                        policeSirenAudioSource.loop = true;
+                        policeSirenAudioSource.Play();
+                    }
+                    else if (policeSirenClip != null)
+                    {
+                        sirenSource.clip = policeSirenClip;
+                        sirenSource.loop = true;
+                        sirenSource.Play();
+                    }
+                    Debug.Log("[PlayerDeathHandler] Còi cảnh sát (Police Siren) bắt đầu hú từ giây thứ 5!");
+                }
+            }
+
+            // Xử lý Fade In (To dần ở đầu) và Fade Out (Nhỏ dần ở cuối)
+            if (sirenStarted && sirenSource != null && sirenSource.isPlaying)
+            {
+                if (elapsed < sirenStartTime + sirenFadeInDuration)
+                {
+                    // Fade In: từ 5.0s -> 6.0s (0 -> baseVolume)
+                    float progress = Mathf.Clamp01((elapsed - sirenStartTime) / sirenFadeInDuration);
+                    sirenSource.volume = Mathf.Lerp(0f, baseVolume, progress);
+                }
+                else if (elapsed >= sirenEndTime - sirenFadeOutDuration)
+                {
+                    // Fade Out: từ 8.5s -> 10.0s (baseVolume -> 0)
+                    float progress = Mathf.Clamp01((elapsed - (sirenEndTime - sirenFadeOutDuration)) / sirenFadeOutDuration);
+                    sirenSource.volume = Mathf.Lerp(baseVolume, 0f, progress);
+                }
+                else
+                {
+                    sirenSource.volume = baseVolume;
+                }
+            }
+
+            // Rõ dần màn hình đen (Fade to Black) khi còn 1.5 giây cuối của chuỗi hồi sinh
+            if (isLocal && !blackFadeStarted && elapsed >= sirenEndTime - sirenFadeOutDuration)
+            {
+                blackFadeStarted = true;
+                ScreenFader.FadeToBlack(sirenFadeOutDuration);
+            }
         }
-        else
+
+        // Tắt còi cảnh sát hoàn toàn
+        if (sirenSource != null)
         {
-            Debug.LogWarning("[PlayerDeathHandler] Chưa gán policeSirenAudioSource hoặc policeSirenClip!");
+            sirenSource.Stop();
+            sirenSource.volume = baseVolume;
         }
+
+        // Tắt đèn cảnh báo / DieLight
+        SetDieLight(false);
+
+        // Hồi sinh người chơi và đưa về điểm xuất phát
+        RespawnPlayer(isLocal);
+
     }
 
     /// <summary>
-    /// Hàm Reset trạng thái khi Replay game
+    /// Hồi sinh người chơi và đưa về điểm xuất phát ban đầu
+    /// </summary>
+    public void RespawnPlayer(bool isLocal)
+    {
+        // 1. Tìm vị trí Spawn thích hợp
+        Vector3 targetSpawnPos = _initialSpawnPos;
+        Quaternion targetSpawnRot = _initialSpawnRot;
+
+        var spawner = ScenePlayerSpawner.Instance != null ? ScenePlayerSpawner.Instance : FindFirstObjectByType<ScenePlayerSpawner>();
+        if (spawner != null && spawner.spawnPoints != null && spawner.spawnPoints.Count > 0)
+        {
+            var netSync = GetComponent<NetworkPlayerSync>();
+            int idx = 0;
+            if (netSync != null && netSync.Object != null && netSync.Object.IsValid)
+            {
+                idx = Mathf.Abs(netSync.Object.InputAuthority.PlayerId) % spawner.spawnPoints.Count;
+            }
+            else if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
+            {
+                idx = Mathf.Abs(netSync.Runner.LocalPlayer.PlayerId) % spawner.spawnPoints.Count;
+            }
+
+            if (idx < spawner.spawnPoints.Count && spawner.spawnPoints[idx] != null)
+            {
+                targetSpawnPos = spawner.spawnPoints[idx].position;
+                targetSpawnRot = spawner.spawnPoints[idx].rotation;
+            }
+        }
+
+        // 2. Di chuyển Player về vị trí Spawn (Tắt tạm CharacterController để không bị kẹt va chạm)
+        CharacterController cc = GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+
+        transform.position = targetSpawnPos;
+        transform.rotation = targetSpawnRot;
+
+        if (cc != null) cc.enabled = true;
+
+        // 3. Khôi phục Animation về trạng thái Idle bình thường
+        if (animator != null)
+        {
+            animator.ResetTrigger("Die");
+            animator.Rebind();
+            animator.Update(0f);
+            animator.Play("Idle", 0, 0f);
+        }
+
+        // 4. Khôi phục Camera Target
+        if (cameraTarget != null)
+        {
+            cameraTarget.localPosition = originalCameraTargetLocalPos;
+        }
+
+        // 5. Khôi phục PlayerStats
+        if (playerStats != null)
+        {
+            playerStats.isDied = false;
+            playerStats.currentStamina = playerStats.maxStamina;
+            playerStats.currweight = 0;
+        }
+
+        // 6. Bật lại va chạm với NPC
+        Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), false);
+
+        // 7. Reset cờ trạng thái chết và kích hoạt thời gian miễn nhiễm
+        isDeadProcessed = false;
+        lastRespawnTime = Time.time;
+
+        // 8. Nếu là Local Player và đang chơi FPV, khôi phục lại ẩn mesh, bật lại MainHUD và mờ dần màn đen
+        if (isLocal)
+        {
+            var netSync = GetComponent<NetworkPlayerSync>();
+            if (netSync != null)
+            {
+                netSync.SetLocalMeshVisibility(false);
+            }
+
+            UI_Manager ui = FindFirstObjectByType<UI_Manager>(FindObjectsInactive.Include);
+            if (ui != null && !ui.isPaused && !UI_Manager.isSolving)
+            {
+                ui.SetMainHUDActive(true);
+            }
+
+            ScreenFader.FadeFromBlack(0.8f);
+            GameStatusHUD.Show("Respawned! Continue your heist...", 3f);
+        }
+
+        Debug.Log($"<color=green>[PlayerDeathHandler] Player đã hồi sinh thành công tại vị trí {targetSpawnPos}!</color>");
+    }
+
+    /// <summary>
+    /// Hàm Reset trạng thái khi tải lại trận hoặc đổi Scene
     /// </summary>
     public void ResetDeathState()
     {
+        if (_respawnCoroutine != null)
+        {
+            StopCoroutine(_respawnCoroutine);
+            _respawnCoroutine = null;
+        }
+
         isDeadProcessed = false;
-        if (warningLight != null) warningLight.SetActive(false);
+        SetDieLight(false);
+
         if (policeSirenAudioSource != null) policeSirenAudioSource.Stop();
+        if (deathAudioSource != null) deathAudioSource.Stop();
         if (cameraTarget != null) cameraTarget.localPosition = originalCameraTargetLocalPos;
+
         Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), false);
     }
 }

@@ -270,6 +270,12 @@ public class PlayerInventory : MonoBehaviour
     /// </summary>
     public void DropAllItemsOnDeath()
     {
+        // Tách item đang cầm ra khỏi Socket của Player trước và không ẩn SetActive
+        if (hotbarManager != null)
+        {
+            hotbarManager.ClearAllSlots(false);
+        }
+
         if (heldItems == null || heldItems.Count == 0)
         {
             Debug.Log("[PlayerInventory] DropAllItemsOnDeath: Không có vật phẩm nào đang giữ.");
@@ -288,7 +294,21 @@ public class PlayerInventory : MonoBehaviour
             item.transform.SetParent(null);
 
             Vector3 randomPosition = GetRandomDropPosition(dropCenter, dropRadius, spawnedPositions, minItemDistance);
-            randomPosition += Vector3.up * Random.Range(-0.05f, 0.05f);
+
+            // 1. Kiểm tra va chạm tường ngang để tránh văng xuyên qua tường nhà
+            Vector3 rayStart = transform.position + Vector3.up * 0.5f;
+            Vector3 rayDir = randomPosition - rayStart;
+            float rayDist = rayDir.magnitude;
+            if (rayDist > 0.01f && Physics.Raycast(rayStart, rayDir.normalized, out RaycastHit wallHit, rayDist, ~LayerMask.GetMask("Player", "Npc", "Ignore Raycast")))
+            {
+                randomPosition = wallHit.point - rayDir.normalized * 0.15f;
+            }
+
+            // 2. Bắn Raycast từ ngang hông (0.5m) thẳng xuống dưới để luôn dính đúng mặt sàn của tầng hiện tại
+            if (Physics.Raycast(randomPosition + Vector3.up * 0.5f, Vector3.down, out RaycastHit groundHit, 3.0f, ~LayerMask.GetMask("Player", "Npc", "Ignore Raycast")))
+            {
+                randomPosition = groundHit.point + Vector3.up * 0.05f;
+            }
 
             item.transform.position = randomPosition;
 
@@ -298,38 +318,31 @@ public class PlayerInventory : MonoBehaviour
                 item.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
             }
 
+            // Bật lại collider, renderer và kích hoạt GameObject
+            var colliders = item.GetComponentsInChildren<Collider>(true);
+            foreach (var c in colliders) if (c != null) c.enabled = true;
+            var renderers = item.GetComponentsInChildren<Renderer>(true);
+            foreach (var r in renderers) if (r != null) r.enabled = true;
+
             item.SetActive(true);
             spawnedPositions.Add(randomPosition);
 
             Rigidbody rb = item.GetComponent<Rigidbody>();
-            Vector3 linVel = Vector3.zero;
-            Vector3 angVel = Vector3.zero;
             if (rb != null)
             {
                 rb.isKinematic = false;
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
+                rb.constraints = RigidbodyConstraints.None;
 
                 if (isLadder)
                 {
-                    rb.constraints = RigidbodyConstraints.None;
                     var ladder = item.GetComponent<LadderController>() ?? item.GetComponentInChildren<LadderController>();
                     if (ladder != null) ladder.SetPlaced(false);
-                    rb.AddForce(Vector3.up * 0.5f, ForceMode.Impulse);
                 }
-                else
-                {
-                    rb.constraints = RigidbodyConstraints.None;
-                    Vector3 force = (Random.insideUnitSphere * 1.2f) + (Vector3.up * Random.Range(0.8f, 1.8f));
-                    rb.AddForce(force, ForceMode.Impulse);
-                    rb.AddTorque(Random.insideUnitSphere * Random.Range(0.5f, 2.0f), ForceMode.Impulse);
-                }
-
-                linVel = rb.linearVelocity;
-                angVel = rb.angularVelocity;
             }
 
-            NetworkItemSync.SyncDropItem(item, item.transform.position, item.transform.rotation, linVel, angVel, isLadder, false);
+            NetworkItemSync.SyncDropItem(item, randomPosition, item.transform.rotation, Vector3.zero, Vector3.zero, isLadder, false);
 
             Debug.Log($"[PlayerInventory] Rớt vật phẩm khi chết: {item.name} tại {randomPosition}");
             droppedCount++;
@@ -341,11 +354,6 @@ public class PlayerInventory : MonoBehaviour
         {
             playerStats.currentWeight = 0;
             UpdateWeight();
-        }
-
-        if (hotbarManager != null)
-        {
-            hotbarManager.ClearAllSlots();
         }
 
         Debug.Log($"[PlayerInventory] Đã rớt {droppedCount} vật phẩm xung quanh thi thể người chơi.");

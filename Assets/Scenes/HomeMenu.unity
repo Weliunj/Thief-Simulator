@@ -41838,11 +41838,12 @@ MonoBehaviour:
   deathCameraHeightOffset: 3
   cameraLerpSpeed: 0.3
   lookAtBodyOffset: {x: 0, y: 0.2, z: 0}
+  respawnCooldown: 10
+  dieLight: {fileID: 0}
+  warningLight: {fileID: 1293124133242659707}
   deathAudioSource: {fileID: 0}
   policeSirenAudioSource: {fileID: 0}
   policeSirenClip: {fileID: 0}
-  policeSirenDelay: 5
-  warningLight: {fileID: 1293124133242659707}
   isDeadProcessed: 0
 --- !u!114 &873616772613272610
 MonoBehaviour:

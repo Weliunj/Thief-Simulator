@@ -77,7 +77,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: f13d157c73eb3334d841869b6a24262a, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.795
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -85,10 +85,10 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 0
-  MaxDistance: 500
+  MinDistance: 1
+  MaxDistance: 30
   Pan2D: 0
-  rolloffMode: 0
+  rolloffMode: 1
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -121,7 +121,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -1644,11 +1644,12 @@ MonoBehaviour:
   deathCameraHeightOffset: 3
   cameraLerpSpeed: 0.3
   lookAtBodyOffset: {x: 0, y: 0.2, z: 0}
+  respawnCooldown: 10
+  dieLight: {fileID: 0}
+  warningLight: {fileID: 1293124133492138432}
   deathAudioSource: {fileID: 0}
   policeSirenAudioSource: {fileID: 3940889254071612315}
   policeSirenClip: {fileID: 8300000, guid: f13d157c73eb3334d841869b6a24262a, type: 3}
-  policeSirenDelay: 3
-  warningLight: {fileID: 1293124133492138432}
   isDeadProcessed: 0
 --- !u!114 &2709826026959698284
 MonoBehaviour:

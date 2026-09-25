@@ -588,7 +588,7 @@ public class HomeScreen : MonoBehaviour
     private IEnumerator LoadSceneAfterDelay(int sceneIndex, float delay)
     {
         yield return new WaitForSeconds(delay);
-        SceneManager.LoadScene(sceneIndex);
+        ScreenFader.LoadSceneWithFade(sceneIndex, 0.5f);
     }
 
     private IEnumerator QuitAfterDelay(float delay)

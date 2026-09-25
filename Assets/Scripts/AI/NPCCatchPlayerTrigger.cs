@@ -84,15 +84,23 @@ public class NPCCatchPlayerTrigger : MonoBehaviour
         if (playerObj == null) return;
         if (Time.time - _lastCatchTime < catchCooldown) return;
 
+        // Trong chế độ Online: Chỉ máy đang điều khiển nhân vật đó (IsLocalPlayer) mới xử lý va chạm với NPC
+        // Giúp cả Host lẫn Guest đều chết chính xác khi chạm NPC và tránh gửi RPC trùng lặp
+        var netSync = playerObj.GetComponent<NetworkPlayerSync>() ?? playerObj.GetComponentInParent<NetworkPlayerSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
+        {
+            if (!netSync.IsLocalPlayer) return;
+        }
+
         // 1. Tìm các component chính của Player
         PlayerDeathHandler deathHandler = playerObj.GetComponent<PlayerDeathHandler>() ?? playerObj.GetComponentInParent<PlayerDeathHandler>();
         PlayerController playerCtrl = playerObj.GetComponent<PlayerController>() ?? playerObj.GetComponentInParent<PlayerController>();
         PlayerStats stats = playerObj.GetComponent<PlayerStats>() ?? playerObj.GetComponentInParent<PlayerStats>();
         PlayerInventory inventory = playerObj.GetComponent<PlayerInventory>() ?? playerObj.GetComponentInParent<PlayerInventory>();
 
-        // Nếu Player đã chết rồi thì bỏ qua
+        // Nếu Player đã chết rồi hoặc đang trong thời gian miễn nhiễm sau hồi sinh thì bỏ qua
         if (stats != null && stats.isDied) return;
-        if (deathHandler != null && deathHandler.isDeadProcessed) return;
+        if (deathHandler != null && (deathHandler.isDeadProcessed || deathHandler.IsInvulnerable)) return;
 
         _lastCatchTime = Time.time;
 
@@ -114,10 +122,17 @@ public class NPCCatchPlayerTrigger : MonoBehaviour
             if (inventory != null) inventory.DropAllItemsOnDeath();
 
             string pName = "Player";
-            var netSync = playerObj.GetComponent<NetworkPlayerSync>() ?? playerObj.GetComponentInParent<NetworkPlayerSync>();
-            if (netSync != null && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
+            if (netSync != null && netSync.Object != null && netSync.Object.IsValid && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
             {
                 pName = netSync.NetworkPlayerName.ToString();
+            }
+            else if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null && !string.IsNullOrEmpty(FirebaseDataService.Instance.CurrentUserProfile.username))
+            {
+                pName = FirebaseDataService.Instance.CurrentUserProfile.username;
+            }
+            else
+            {
+                pName = PlayerPrefs.GetString("PlayerNickname", "Player");
             }
 
             string notice = $"{pName} got caught by {npcName}!";

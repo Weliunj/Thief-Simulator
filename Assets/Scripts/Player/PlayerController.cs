@@ -349,10 +349,6 @@ namespace StarterAssets
 
                 return;
             }
-            else if (player != null && player.totalpoint > 0 && player.currpoint >= player.totalpoint)
-            {
-                return;
-            }
 
             _hasAnimator = TryGetComponent(out _animator);
 
@@ -493,8 +489,8 @@ namespace StarterAssets
         /// </summary>
         public void HandleCameraInput()
         {
-            // Kiểm tra trạng thái giải đố bẻ khóa, chết hoặc thắng game -> tạm dừng xoay camera
-            if (UI_Manager.isSolving || (player != null && (player.isDied || (player.totalpoint > 0 && player.currpoint >= player.totalpoint))))
+            // Kiểm tra trạng thái giải đố bẻ khóa hoặc chết -> tạm dừng xoay camera
+            if (UI_Manager.isSolving || (player != null && player.isDied))
             {
                 return;
             }
@@ -536,9 +532,10 @@ namespace StarterAssets
 
         [HideInInspector] public bool Crouching = false;
         private bool _lastCrouchState = false;
+
         private void Move()
         {
-            if (UI_Manager.isSolving || (player != null && player.totalpoint > 0 && player.currpoint >= player.totalpoint))
+            if (UI_Manager.isSolving)
             {
                 _speed = 0f;
                 if (_hasAnimator)

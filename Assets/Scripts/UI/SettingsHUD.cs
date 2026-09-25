@@ -409,12 +409,22 @@ public class SettingsHUD : MonoBehaviour
         }
     }
 
-    public void OpenPanel()
+    public void OpenPanel(GameObject prevPanel = null)
     {
+        if (prevPanel != null)
+        {
+            previousPanel = prevPanel;
+        }
+
         if (settingRootObject != null)
         {
             settingRootObject.SetActive(true);
         }
+    }
+
+    public void OpenPanel(Component caller)
+    {
+        OpenPanel(caller != null ? caller.gameObject : null);
     }
 
     public void ClosePanel()

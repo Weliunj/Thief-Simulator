@@ -38,10 +38,14 @@ public class ScenePlayerSpawner : MonoBehaviour
     [Header("📦 Spawned Instance")]
     [SerializeField] private GameObject spawnedPlayerInstance;
 
+    public static ScenePlayerSpawner Instance { get; private set; }
+
     public GameObject SpawnedPlayer => spawnedPlayerInstance;
 
     private void Awake()
     {
+        if (Instance == null) Instance = this;
+
         // 1. Đảm bảo Scene luôn có ít nhất 1 AudioListener để không bị lỗi cảnh báo
         EnsureAudioListener();
 

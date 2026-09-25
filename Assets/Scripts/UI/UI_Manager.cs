@@ -18,9 +18,6 @@ public class UI_Manager : MonoBehaviour
 
     public static bool isSolving = false;
 
-    public GameObject diedPanel;
-    public GameObject WinPanel;
-
     [Header("📱 Main HUD")]
     [Tooltip("Component quản lý HUD chính trong trận (Kg, Stamina, Point, Time, Alarm, PauseBtn)")]
     public MainHUD mainHUD;
@@ -29,10 +26,10 @@ public class UI_Manager : MonoBehaviour
 
     [Header("⏸️ Pause & Settings UI")]
     [Tooltip("Component quản lý giao diện Tạm dừng (Resume, Restart, Settings, Menu)")]
-    public PauseHUD pauseHUD;
+    public MenuHUD menuHUD;
     [Tooltip("Component quản lý bảng Cài đặt (Sensitivity, Save, Close)")]
     public SettingsHUD settingsHUD;
-    [Tooltip("Fallback GameObject Panel nếu không dùng component PauseHUD/SettingsHUD")]
+    [Tooltip("Fallback GameObject Panel nếu không dùng component MenuHUD/SettingsHUD")]
     public GameObject settingPanel;
     [HideInInspector] public bool isPaused = false;
 
@@ -61,13 +58,13 @@ public class UI_Manager : MonoBehaviour
             }
         }
 
-        // Tự động tìm PauseHUD nếu chưa gán
-        if (pauseHUD == null)
+        // Tự động tìm MenuHUD nếu chưa gán
+        if (menuHUD == null)
         {
-            pauseHUD = GetComponentInChildren<PauseHUD>(true);
-            if (pauseHUD == null)
+            menuHUD = GetComponentInChildren<MenuHUD>(true);
+            if (menuHUD == null)
             {
-                pauseHUD = FindFirstObjectByType<PauseHUD>(FindObjectsInactive.Include);
+                menuHUD = FindFirstObjectByType<MenuHUD>(FindObjectsInactive.Include);
             }
         }
 
@@ -82,12 +79,9 @@ public class UI_Manager : MonoBehaviour
         }
 
         SetMainHUDActive(true);
-        if (pauseHUD != null) pauseHUD.Hide();
+        if (menuHUD != null) menuHUD.Hide();
         if (settingsHUD != null) settingsHUD.ClosePanel();
         else if (settingPanel != null) settingPanel.SetActive(false);
-
-        if (diedPanel != null) diedPanel.SetActive(false);
-        if (WinPanel != null) WinPanel.SetActive(false);
 
         if (lockpickMinigame == null)
         {
@@ -103,6 +97,15 @@ public class UI_Manager : MonoBehaviour
         {
             currentChapter = GameSession.SelectedChapter;
         }
+        else if (currentChapter == null)
+        {
+            SceneItemSpawner spawner = FindFirstObjectByType<SceneItemSpawner>(FindObjectsInactive.Include);
+            if (spawner != null && spawner.chapterData != null)
+            {
+                currentChapter = spawner.chapterData;
+            }
+        }
+
         if (GameSession.NextChapter != null)
         {
             nextChapter = GameSession.NextChapter;
@@ -180,7 +183,7 @@ public class UI_Manager : MonoBehaviour
             mainHUD.UpdateHUD(playerStats);
         }
 
-        // --- XỬ LÝ TRẠNG THÁI GAME ---
+        // --- XỬ LÝ TRẠNG THÁI TIẾN ĐỘ GAME ---
         UpdateGameState();
 
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -189,56 +192,28 @@ public class UI_Manager : MonoBehaviour
         }
     }
 
-    private bool isWinHandled = false;
-    private bool isDiedHandled = false;
+    private bool isChapterCompleted = false;
 
     void UpdateGameState()
     {
         if (playerStats == null) return;
 
-        if (playerStats.isDied)
+        // Khi đạt đủ điểm mục tiêu của Chapter, tự động mở khóa Chapter tiếp theo
+        if (!isChapterCompleted && playerStats.totalpoint > 0 && playerStats.currpoint >= playerStats.totalpoint)
         {
-            if (!isDiedHandled)
-            {
-                isDiedHandled = true;
-                if (isSolving) CancelLockpicking();
-                if (pauseHUD != null) pauseHUD.Hide();
-                if (settingsHUD != null) settingsHUD.ClosePanel();
-                else if (settingPanel != null) settingPanel.SetActive(false);
-                SetMainHUDActive(false);
-                if (WinPanel != null) WinPanel.SetActive(false);
-                if (diedPanel != null) diedPanel.SetActive(true);
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-        }
-        else if (playerStats.totalpoint > 0 && playerStats.currpoint >= playerStats.totalpoint)
-        {
-            if (!isWinHandled)
-            {
-                isWinHandled = true;
-                if (isSolving) CancelLockpicking();
-                if (pauseHUD != null) pauseHUD.Hide();
-                if (settingsHUD != null) settingsHUD.ClosePanel();
-                else if (settingPanel != null) settingPanel.SetActive(false);
-                SetMainHUDActive(false);
-                if (diedPanel != null) diedPanel.SetActive(false);
-                if (WinPanel != null) WinPanel.SetActive(true);
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+            isChapterCompleted = true;
 
-                // Tự động tích hoàn thành Chapter hiện tại và mở khóa Chapter tiếp theo
-                if (currentChapter != null)
-                {
-                    currentChapter.isCompleted = true;
-                }
-                if (nextChapter != null)
-                {
-                    nextChapter.isUnlocked = true;
-                }
-
-                Debug.Log($"WIN! Đã hoàn thành '{currentChapter?.chapterTitle ?? "Chapter"}' - Đạt {playerStats.currpoint}/{playerStats.totalpoint} điểm!");
+            // Tự động tích hoàn thành Chapter hiện tại và mở khóa Chapter tiếp theo
+            if (currentChapter != null)
+            {
+                currentChapter.isCompleted = true;
             }
+            if (nextChapter != null)
+            {
+                nextChapter.isUnlocked = true;
+            }
+
+            Debug.Log($"[UI_Manager] Hoàn thành mục tiêu '{currentChapter?.chapterTitle ?? "Chapter"}' - Đạt {playerStats.currpoint}/{playerStats.totalpoint} điểm!");
         }
     }
 
@@ -278,9 +253,9 @@ public class UI_Manager : MonoBehaviour
 
         SetMainHUDActive(false);
 
-        if (pauseHUD != null)
+        if (menuHUD != null)
         {
-            pauseHUD.Show();
+            menuHUD.Show();
         }
         else if (settingsHUD != null)
         {
@@ -300,9 +275,9 @@ public class UI_Manager : MonoBehaviour
         isPaused = false;
         Time.timeScale = 1f;
 
-        if (pauseHUD != null)
+        if (menuHUD != null)
         {
-            pauseHUD.Hide();
+            menuHUD.Hide();
         }
         if (settingsHUD != null)
         {
@@ -313,8 +288,8 @@ public class UI_Manager : MonoBehaviour
             settingPanel.SetActive(false);
         }
 
-        // Chỉ bật lại Main HUD nếu không ở trong Minigame và chưa Win / Lose
-        if (!isSolving && !isDiedHandled && !isWinHandled)
+        // Chỉ bật lại Main HUD nếu không ở trong Minigame
+        if (!isSolving)
         {
             SetMainHUDActive(true);
             Cursor.lockState = CursorLockMode.None;
@@ -327,9 +302,9 @@ public class UI_Manager : MonoBehaviour
     /// </summary>
     public void OpenSettings()
     {
-        if (pauseHUD != null)
+        if (menuHUD != null)
         {
-            pauseHUD.OpenSettings();
+            menuHUD.OpenSettings();
         }
         else if (settingsHUD != null)
         {
@@ -346,9 +321,9 @@ public class UI_Manager : MonoBehaviour
     /// </summary>
     public void CloseSettings()
     {
-        if (pauseHUD != null)
+        if (menuHUD != null)
         {
-            pauseHUD.CloseSettings();
+            menuHUD.CloseSettings();
         }
         else if (settingsHUD != null)
         {
@@ -403,7 +378,7 @@ public class UI_Manager : MonoBehaviour
             onSuccess: () =>
             {
                 isSolving = false;
-                if (!isPaused && !isDiedHandled && !isWinHandled)
+                if (!isPaused)
                 {
                     SetMainHUDActive(true);
                     Cursor.lockState = CursorLockMode.None;
@@ -414,7 +389,7 @@ public class UI_Manager : MonoBehaviour
             onFailed: () =>
             {
                 isSolving = false;
-                if (!isPaused && !isDiedHandled && !isWinHandled)
+                if (!isPaused)
                 {
                     SetMainHUDActive(true);
                     Cursor.lockState = CursorLockMode.None;
@@ -429,7 +404,7 @@ public class UI_Manager : MonoBehaviour
     public void CancelLockpicking()
     {
         isSolving = false;
-        if (!isPaused && !isDiedHandled && !isWinHandled)
+        if (!isPaused)
         {
             SetMainHUDActive(true);
             Cursor.lockState = CursorLockMode.None;
@@ -478,6 +453,6 @@ public class UI_Manager : MonoBehaviour
             hotbar.ClearAllSlots();
         }
 
-        SceneManager.LoadScene("HomeMenu");
+        ScreenFader.LoadSceneWithFade("HomeMenu", 0.4f);
     }
 }

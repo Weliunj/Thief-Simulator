@@ -947,26 +947,46 @@ public class HotbarManager : MonoBehaviour
     /// <summary>
     /// Xóa toàn bộ item khỏi Hotbar (khi chết hoặc reset game)
     /// </summary>
-    public void ClearAllSlots()
+    public void ClearAllSlots(bool disableHeldModel = false)
     {
-        HideHeldModel();
+        if (currentHeldModel != null)
+        {
+            // Bật lại collider đã tắt
+            foreach (var col in disabledColliders)
+            {
+                if (col != null) col.enabled = true;
+            }
+            disabledColliders.Clear();
+
+            var colliders = currentHeldModel.GetComponentsInChildren<Collider>(true);
+            foreach (var c in colliders) if (c != null) c.enabled = true;
+            var renderers = currentHeldModel.GetComponentsInChildren<Renderer>(true);
+            foreach (var r in renderers) if (r != null) r.enabled = true;
+
+            EnsureLocalPlayerController();
+            if (playerController != null && playerController.TryGetComponent<NetworkPlayerSync>(out var netSync))
+            {
+                netSync.SetHeldItem(null);
+            }
+
+            if (disableHeldModel)
+            {
+                currentHeldModel.SetActive(false);
+            }
+            else
+            {
+                currentHeldModel.SetActive(true);
+            }
+
+            currentHeldModel.transform.SetParent(null);
+            currentHeldModel = null;
+        }
+
         foreach (var slot in slots)
         {
             if (slot != null)
             {
                 slot.ClearSlot();
-            }
-        }
-
-        if (itemHoldPoint != null)
-        {
-            for (int i = itemHoldPoint.childCount - 1; i >= 0; i--)
-            {
-                Transform child = itemHoldPoint.GetChild(i);
-                if (child != null)
-                {
-                    Destroy(child.gameObject);
-                }
             }
         }
 

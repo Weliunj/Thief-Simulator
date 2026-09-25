@@ -264,6 +264,13 @@ public class NetworkLobbyHUD : MonoBehaviour
             waitingRoomMapImage.gameObject.SetActive(sprite != null);
         }
 
+        if (chapterList != null && index >= 0 && index < chapterList.Count)
+        {
+            GameSession.SelectedChapter = chapterList[index];
+            int nextIndex = index + 1;
+            GameSession.NextChapter = (nextIndex < chapterList.Count) ? chapterList[nextIndex] : null;
+        }
+
         if (waitingRoomMapTitleText != null)
         {
             waitingRoomMapTitleText.text = title;
@@ -491,18 +498,36 @@ public class NetworkLobbyHUD : MonoBehaviour
         int maxPlayers = 4;
         if (maxPlayersDropdown != null)
         {
-            maxPlayers = maxPlayersDropdown.value switch
+            // Trích xuất số lượng từ nội dung tùy chọn đang chọn trong Dropdown (VD: "1", "2 Players", "3", "4")
+            string selectedText = (maxPlayersDropdown.options != null && maxPlayersDropdown.options.Count > maxPlayersDropdown.value)
+                ? maxPlayersDropdown.options[maxPlayersDropdown.value].text
+                : "";
+
+            var match = System.Text.RegularExpressions.Regex.Match(selectedText, @"\d+");
+            if (match.Success && int.TryParse(match.Value, out int parsedNum) && parsedNum > 0)
             {
-                0 => 2,
-                1 => 3,
-                _ => 4
-            };
+                maxPlayers = parsedNum;
+            }
+            else
+            {
+                // Fallback theo index: Index 0 = 1 player, Index 1 = 2 players, Index 2 = 3 players, Index 3 = 4 players
+                maxPlayers = maxPlayersDropdown.value + 1;
+            }
+
+            maxPlayers = Mathf.Clamp(maxPlayers, 1, 10);
         }
 
         bool isPrivate = (privateRoomToggle != null) && privateRoomToggle.isOn;
 
         int mapIndex = (mapSelectDropdown != null) ? mapSelectDropdown.value : 0;
         string selectedMap = GetMapSceneName(mapIndex);
+
+        if (chapterList != null && mapIndex >= 0 && mapIndex < chapterList.Count)
+        {
+            GameSession.SelectedChapter = chapterList[mapIndex];
+            int nextIndex = mapIndex + 1;
+            GameSession.NextChapter = (nextIndex < chapterList.Count) ? chapterList[nextIndex] : null;
+        }
 
         if (loadingSpinner != null) loadingSpinner.SetActive(true);
 
@@ -611,7 +636,21 @@ public class NetworkLobbyHUD : MonoBehaviour
         int mapIndex = (mapSelectDropdown != null) ? mapSelectDropdown.value : 0;
         string sceneToLoad = GetMapSceneName(mapIndex);
 
+        if (chapterList != null && mapIndex >= 0 && mapIndex < chapterList.Count)
+        {
+            GameSession.SelectedChapter = chapterList[mapIndex];
+            int nextIndex = mapIndex + 1;
+            GameSession.NextChapter = (nextIndex < chapterList.Count) ? chapterList[nextIndex] : null;
+        }
+
         ShowStatus($"Starting game on '{sceneToLoad}'...", false);
+        StartCoroutine(StartGameWithFadeRoutine(sceneToLoad));
+    }
+
+    private IEnumerator StartGameWithFadeRoutine(string sceneToLoad)
+    {
+        ScreenFader.FadeToBlack(0.5f);
+        yield return new WaitForSecondsRealtime(0.5f);
         FusionConnectionManager.Instance?.LoadGameplayScene(sceneToLoad);
     }
 

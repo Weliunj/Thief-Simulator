@@ -441,8 +441,16 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress) { }
-    public void OnSceneLoadStart(NetworkRunner runner) { }
-    public void OnSceneLoadDone(NetworkRunner runner) { }
+    public void OnSceneLoadStart(NetworkRunner runner)
+    {
+        Debug.Log("[FusionConnectionManager] OnSceneLoadStart -> FadeToBlack");
+        ScreenFader.FadeToBlack(0.5f);
+    }
+    public void OnSceneLoadDone(NetworkRunner runner)
+    {
+        Debug.Log("[FusionConnectionManager] OnSceneLoadDone -> FadeFromBlack");
+        ScreenFader.FadeFromBlack(0.6f);
+    }
     public void OnObjectExitAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player) { }
 }
