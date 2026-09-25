@@ -107,11 +107,19 @@ public class LadderController : MonoBehaviour, IInteractable
 
     void Start()
     {
-        EnsureUpright();
         InitializeAudio();
         InitializePoints();
-        FindPlayerReferences();
-        SetLadderCollisionsIgnored(false);
+        EnsureLocalPlayerReferences();
+        if (isPlaced)
+        {
+            EnsureUpright();
+            SetLadderCollisionsIgnored(false);
+        }
+        else
+        {
+            SetUprightLocked(false);
+            HotbarManager.IgnoreCollisionWithAllPlayers(gameObject, true);
+        }
     }
 
     private void InitializeAudio()
@@ -134,17 +142,17 @@ public class LadderController : MonoBehaviour, IInteractable
 
     void OnEnable()
     {
+        EnsureLocalPlayerReferences();
         if (isPlaced)
         {
             EnsureUpright();
+            SetLadderCollisionsIgnored(false);
         }
         else
         {
             SetUprightLocked(false);
             HotbarManager.IgnoreCollisionWithAllPlayers(gameObject, true);
         }
-        EnsureLocalPlayerReferences();
-        SetLadderCollisionsIgnored(false);
     }
 
     /// <summary>
@@ -181,7 +189,12 @@ public class LadderController : MonoBehaviour, IInteractable
         isClimbing = false;
         reClimbCooldownTimer = 0f;
         SetUprightLocked(placed);
-        if (!placed)
+        if (placed)
+        {
+            EnsureUpright();
+            SetLadderCollisionsIgnored(false);
+        }
+        else
         {
             if (isClimbing)
             {

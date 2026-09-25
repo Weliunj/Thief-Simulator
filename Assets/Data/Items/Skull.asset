@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: Skull
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Skull
+  rarity: 5
+  itemIcon: {fileID: -330256318, guid: c287ffda887447e408165b8b0902911a, type: 3}
+  description: An ancient ceremonial skull inscribed with mysterious mystic carvings. An eerie, legendary occult artifact sought after by eccentric buyers.
+  basePrice: 80
+  minPrice: 50
+  maxPrice: 130
+  baseKg: 9
+  minKg: 7
+  maxKg: 15

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: NightVSPotionI
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Night Vision Potion I
+  rarity: 3
+  itemIcon: {fileID: -48455409, guid: 9310373d7a2329c4f862b695206cc1c5, type: 3}
+  description: A glowing amber glass phial holding a luminescent tincture that gleams in dark corners. Highly valued by night crawlers.
+  basePrice: 30
+  minPrice: 30
+  maxPrice: 50
+  baseKg: 3
+  minKg: 3
+  maxKg: 5

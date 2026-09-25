@@ -168,7 +168,7 @@ public class NetworkPlayerSync : NetworkBehaviour
             {
                 ladder.SetPlaced(isLadderPlaced);
             }
-            else if (!isLadderPlaced)
+            if (!isLadderPlaced)
             {
                 HotbarManager.IgnoreCollisionWithAllPlayers(targetItem, true);
             }

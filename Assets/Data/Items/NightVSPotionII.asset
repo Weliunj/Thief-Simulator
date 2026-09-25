@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: NightVSPotionII
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Night Vision Potion II
+  rarity: 5
+  itemIcon: {fileID: -665655762, guid: de1d2c2278e043149b2bd2ac014732a2, type: 3}
+  description: A rare obsidian flask containing an enchanted twilight essence that radiates subtle purple luminescence. A masterwork potion worth a handsome sum.
+  basePrice: 80
+  minPrice: 70
+  maxPrice: 100
+  baseKg: 7
+  minKg: 6
+  maxKg: 8

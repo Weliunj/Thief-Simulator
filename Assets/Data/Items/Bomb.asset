@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: Bomb
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Bomb
+  rarity: 2
+  itemIcon: {fileID: -1514893779, guid: 0235de7fcbc81f54d991fcd00fba4da0, type: 3}
+  description: A heavy cast-iron round bomb with a braided gunpowder fuse. A dangerous explosive item that fetches good money on the black market.
+  basePrice: 40
+  minPrice: 30
+  maxPrice: 70
+  baseKg: 7
+  minKg: 7
+  maxKg: 10

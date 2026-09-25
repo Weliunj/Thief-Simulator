@@ -889,10 +889,7 @@ public class HotbarManager : MonoBehaviour
                 {
                     ladder.SetPlaced(false);
                 }
-                else
-                {
-                    IgnoreCollisionWithAllPlayers(itemObj, true);
-                }
+                IgnoreCollisionWithAllPlayers(itemObj, true);
             }
 
             itemObj.transform.position = dropPos;

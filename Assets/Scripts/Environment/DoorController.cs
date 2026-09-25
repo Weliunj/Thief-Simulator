@@ -107,6 +107,7 @@ public class DoorController : MonoBehaviour, IInteractable
     {
         var netObj = GetComponent<NetworkObject>();
         var netSync = GetComponent<NetworkDoorSync>();
+        bool isNetworkActive = netSync != null && netSync.IsNetworkSpawned;
 
         // 1. Quét cục bộ: Xem nhân vật trên MÁY NÀY có đang ở gần cửa không
         Vector3 centerPos = transform.position + detectionCenterOffset;
@@ -129,21 +130,40 @@ public class DoorController : MonoBehaviour, IInteractable
             }
         }
 
-        // 2. Nếu trạng thái vào/ra của máy này thay đổi -> Gửi báo hiệu lên Host
+        // Nếu chơi Offline / Singleplayer (Chưa Spawn qua Fusion):
+        if (!isNetworkActive)
+        {
+            if (amINearby && isUnlocked)
+            {
+                closeTimer = closeDelayDuration;
+                if (!isOpen)
+                {
+                    ApplyDoorVisual(true, true);
+                }
+            }
+            else if (isOpen)
+            {
+                closeTimer -= checkInterval;
+                if (closeTimer <= 0f)
+                {
+                    ApplyDoorVisual(false, true);
+                }
+            }
+            return;
+        }
+
+        // 2. Nếu chơi Online: Trạng thái vào/ra của máy này thay đổi -> Gửi báo hiệu lên Host
         if (amINearby != isLocalPlayerInsideZone)
         {
             isLocalPlayerInsideZone = amINearby;
-            if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
-            {
-                netSync.RpcUpdatePlayerPresence(netSync.Runner.LocalPlayer, isLocalPlayerInsideZone);
-            }
+            netSync.RpcUpdatePlayerPresence(netSync.Runner.LocalPlayer, isLocalPlayerInsideZone);
         }
 
         // 3. Logic Đóng/Mở CHỈ chạy trên máy nắm StateAuthority (Host)
         if (netObj != null && netObj.HasStateAuthority)
         {
-            bool effectiveUnlocked = (netSync != null) ? (bool)netSync.NetworkIsUnlocked : isUnlocked;
-            bool someoneIsInside = (netSync != null && netSync.PlayersNearbyCount > 0) || amINearby;
+            bool effectiveUnlocked = netSync.NetworkIsUnlocked;
+            bool someoneIsInside = (netSync.PlayersNearbyCount > 0) || amINearby;
 
             if (someoneIsInside && effectiveUnlocked)
             {
@@ -399,15 +419,17 @@ public class DoorController : MonoBehaviour, IInteractable
     public bool CanInteract(PlayerController player, out string failReason)
     {
         var netSync = GetComponent<NetworkDoorSync>();
-        bool networkLocking = netSync != null && netSync.NetworkIsBeingLockpicked;
-        bool networkUnlocked = netSync != null && netSync.NetworkIsUnlocked;
+        bool isNetworkActive = netSync != null && netSync.IsNetworkSpawned;
 
-        if (isUnlocked || networkUnlocked)
+        bool effectiveUnlocked = isNetworkActive ? (bool)netSync.NetworkIsUnlocked : isUnlocked;
+        bool effectiveLocking = isNetworkActive ? (bool)netSync.NetworkIsBeingLockpicked : isBeingLockpicked;
+
+        if (effectiveUnlocked)
         {
             failReason = "Already Unlocked";
             return false;
         }
-        if (isBeingLockpicked || networkLocking)
+        if (effectiveLocking)
         {
             failReason = "Someone is picking this lock...";
             return false;
@@ -424,15 +446,20 @@ public class DoorController : MonoBehaviour, IInteractable
     public void Interact(PlayerController player)
     {
         var netSync = GetComponent<NetworkDoorSync>();
-        bool networkLocking = netSync != null && netSync.NetworkIsBeingLockpicked;
-        bool networkUnlocked = netSync != null && netSync.NetworkIsUnlocked;
+        bool isNetworkActive = netSync != null && netSync.IsNetworkSpawned;
 
-        if (!isUnlocked && !networkUnlocked && !UI_Manager.isSolving && !isBeingLockpicked && !networkLocking)
+        bool effectiveUnlocked = isNetworkActive ? (bool)netSync.NetworkIsUnlocked : isUnlocked;
+        bool effectiveLocking = isNetworkActive ? (bool)netSync.NetworkIsBeingLockpicked : isBeingLockpicked;
+
+        if (!effectiveUnlocked && !UI_Manager.isSolving && !effectiveLocking)
         {
-            var netObj = GetComponent<NetworkObject>();
-            if (netObj != null && !netObj.HasStateAuthority)
+            if (isNetworkActive)
             {
-                netObj.RequestStateAuthority();
+                var netObj = GetComponent<NetworkObject>();
+                if (netObj != null && !netObj.HasStateAuthority)
+                {
+                    netObj.RequestStateAuthority();
+                }
             }
 
             StartLockpicking();

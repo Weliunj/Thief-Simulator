@@ -19,6 +19,8 @@ public class NetworkDoorSync : NetworkBehaviour
 
     public DoorController doorController;
 
+    public bool IsNetworkSpawned => Object != null && Object.IsValid && Runner != null && Runner.IsRunning;
+
     private void Awake()
     {
         if (doorController == null) doorController = GetComponent<DoorController>();

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: Diamond 4
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Diamond
+  rarity: 6
+  itemIcon: {fileID: 1618817080, guid: ec414985ec7dcab449bc48779ff87233, type: 3}
+  description: A fiery crimson ruby-red diamond glowing with deep internal brilliance. An extravagant prize for any burglar.
+  basePrice: 120
+  minPrice: 90
+  maxPrice: 150
+  baseKg: 1
+  minKg: 1
+  maxKg: 1

@@ -1394,8 +1394,13 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - **Hiển thị Toàn thân Nhân vật khi Chết/Bị bắt (Death Model Visibility)**:
     - Trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs) (`ExecuteDeath`): Khi người chơi bị bắt hoặc chết, hệ thống lập tức gọi `netSync.SetLocalMeshVisibility(true)` và kích hoạt lại toàn bộ `SkinnedMeshRenderer` / `Renderer` của bản thân (`shadowCastingMode = On`).
     - Giúp người chơi ở góc nhìn FPV (vốn ẩn mesh của bản thân khi chơi) nhìn thấy rõ ràng toàn bộ cơ thể nhân vật và chuyển động ngã gục khi Camera kéo lùi ra sau.
+  - **Sửa lỗi InvalidOperationException khi chơi Offline (NetworkDoorSync Safe Access)**:
+    - Thêm `IsNetworkSpawned` trong [NetworkDoorSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkDoorSync.cs) để kiểm tra an toàn xem đối tượng mạng đã được Fusion `Spawned()` hay chưa trước khi đọc các thuộc tính `[Networked]` (`NetworkIsUnlocked`, `NetworkIsBeingLockpicked`).
+    - Trong [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/DoorController.cs): Khi chơi chế độ thường/Offline/Singleplayer (chưa vào phòng mạng), hệ thống tự động fallback sử dụng biến trạng thái cục bộ (`isUnlocked`, `isBeingLockpicked`) mà không cố truy cập các biến mạng, triệt tiêu hoàn toàn lỗi crash game.
 - **Danh sách file thay đổi**:
-  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified — Full mesh visibility on ExecuteDeath and Start fallback)
+  - `Assets/Scripts/Environment/DoorController.cs` (Modified — Safe network checks in CheckNearbyEntities, CanInteract, Interact)
+  - `Assets/Scripts/Network/NetworkDoorSync.cs` (Modified — Added IsNetworkSpawned safe property)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified — Fixed duplicate netSync variable, full mesh visibility on death)
   - `Assets/Scripts/Items/Item.cs` (Modified — Deterministic seed InitializeStats, _isSold guard, SyncSellItem on trigger)
   - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified — Added RpcSyncSellItem)
   - `Assets/Scripts/Network/NetworkItemSync.cs` (Modified — Added SyncSellItem)
@@ -1403,7 +1408,73 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/UI/HotbarManager.cs` (Modified — Added IgnoreCollisionWithAllPlayers, Place vs Throw logic, customHoldOffset/Rotation, Update dropButton hide)
   - `Assets/Scripts/Player/MobileActionButtons.cs` (Modified — Fix dropButton visibility in SetClimbingMode)
 - **Ảnh hưởng**:
-  - Khi chết hoặc bị bắt, toàn bộ người chơi (cả bản thân và người khác) đều thấy rõ mô hình 3D ngã gục cùng góc nhìn camera kéo lùi mượt mà.
+  - Chế độ chơi Offline (Chơi bình thường) và Online Multiplayer đều hoạt động trơn tru 100%, không bị lỗi khi tương tác bẻ khóa cửa hay di chuyển qua cửa.
+
+---
+
+### [2026-09-25 17:50] — fix(ladder): ignore player collisions when dropped to prevent ramp jumping/launching glitch
+- **Tác vụ**:
+  - **Khắc phục triệt để lỗi bay lên đỉnh thang khi nhảy vào thang thả tự do (Dropped Ladder Ramp Launch Glitch)**:
+    - **Nguyên nhân**: Khi thang ở trạng thái vứt/ném tự do (`isPlaced == false`), nếu rơi đứng nghiêng dựa vào tường, `OnEnable()` và `Start()` trong `LadderController` trước đây gọi `SetLadderCollisionsIgnored(false)` khiến Collider vật lý của thang va chạm với `CharacterController` của người chơi. Khi người chơi đi vào và bấm Nhảy, thuật toán xử lý dốc trượt (`Slope / Step resolution`) của `CharacterController` coi bề mặt thang nghiêng là dốc dốc thẳng đứng, đẩy gia tốc Y vọt lên và phóng Player bay thẳng lên đỉnh thang trước khi rơi xuống.
+    - **Khắc phục**:
+      - Cập nhật [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs) trong `Start()`, `OnEnable()`, và `SetPlaced(bool placed)`:
+        - Khi `isPlaced == false` (thang bị thả/ném/rơi tự do): Luôn duy trì gọi `HotbarManager.IgnoreCollisionWithAllPlayers(gameObject, true)`. Player có thể đi xuyên qua thang đã rơi tự do mà không bị kẹt, không bị coi là dốc trượt và không bị hất tung lên cao khi nhảy.
+        - Khi `isPlaced == true` (thang được đặt vào tường cẩn thận): Kích hoạt `EnsureUpright()` và bật lại va chạm vật lý `SetLadderCollisionsIgnored(false)` để phục vụ tương tác trèo.
+      - Cập nhật [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) (`DropSelectedItem`) và [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs) (`RpcShowDroppedSceneItem`): Luôn kích hoạt bỏ qua va chạm với Player ngay tại thời điểm thả đồ ra thế giới.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/LadderController.cs` (Modified — Start, OnEnable, SetPlaced collision ignore state logic)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified — Ensure IgnoreCollisionWithAllPlayers on drop)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified — Sync collision ignore on drop RPC)
+- **Ảnh hưởng**:
+  - Thang khi vứt/ném tự do (Drop) sẽ nằm trên sàn/tựa vào tường như đồ loot thông thường, người chơi đi qua hoặc nhảy vào không còn bị phóng bay lên không trung hay bị đẩy lệch vị trí.
+
+---
+
+### [2026-09-25 18:05] — feat(items): write detailed descriptions and lore for all 23 newly added items
+- **Tác vụ**:
+  - **Bổ sung mô tả chi tiết (Description & Lore) cho toàn bộ 23 vật phẩm mới trong [Assets/Data/Items](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Data/Items)**:
+    - **Bom / Vũ khí / Cổ vật**:
+      - `Bomb.asset`: Quả bom tròn gang đúc cổ điển với ngòi nổ thuốc súng, vật phẩm buôn lậu giá trị trên chợ đen.
+      - `Clock.asset`: Đồng hồ cơ để bàn cổ điển với bánh răng đồng sáng bóng và kim tích tắc sống động.
+      - `Coin.asset`: Đồng xu đúc cổ quý hiếm bằng hợp kim đặc biệt, nhẹ và dễ bỏ túi.
+      - `GoldBar.asset`: Thỏi vàng 24K nguyên chất khắc dấu chuẩn, cực kỳ nặng và có giá trị cao.
+      - `SandClock.asset`: Đồng hồ cát cổ tinh xảo với cát vàng mịn chảy qua bầu thủy tinh.
+      - `Shield.asset`: Khiên chiến đấu thời trung cổ bọc sắt rèn và khung gỗ chịu lực.
+      - `Skull.asset`: Đầu lâu nghi lễ cổ xưa khắc ký tự thần bí, cổ vật huyền thoại được các nhà sưu tầm ngầm săn đón.
+    - **Thuốc & Dược phẩm giả kim (Potions)**:
+      - `JumpPotionI.asset` & `JumpPotionII.asset`: Bình thuốc nhảy thảo dược xanh ngọc bích & bình pha lê nắp vàng chứa tinh chất động lực đậm đặc.
+      - `NightVSPotionI.asset` & `NightVSPotionII.asset`: Lọ thuốc nhìn đêm màu hổ phách phát quang & bình hắc diện thạch chứa tinh hoa hoàng hôn huyền ảo.
+      - `SpeedPotionI.asset` & `SpeedPotionII.asset`: Bình thuốc tốc độ phát sáng tích điện & bình giả kim tinh luyện cực hạn.
+    - **10 Viên Kim cương & Đá quý Thần thoại (Diamonds 1-10)**:
+      - `Diamond 1.asset`: Kim cương giác cắt tròn rực rỡ với độ trong suốt hoàn hảo, phản chiếu ánh sáng cầu vồng.
+      - `Diamond 2.asset`: Kim cương xanh sapphire hoàng gia cực kỳ quý hiếm.
+      - `Diamond 3.asset`: Đá quý cắt giác ngọc lục bảo (emerald-cut) với các cạnh sắc nét.
+      - `Diamond 4.asset`: Kim cương đỏ ruby bốc lửa tỏa sáng với chiều sâu rực rỡ.
+      - `Diamond 5.asset`: Kim cương vàng hoàng yến (canary yellow) không tì vết.
+      - `Diamond 6.asset`: Kim cương tím thạch anh được cắt gọt chuẩn bậc thầy.
+      - `Diamond 7.asset`: Kim cương xanh ngọc biển (aquamarine) lấp lánh như băng tinh khiết.
+      - `Diamond 8.asset`: Kim cương hồng cánh sen tuyệt mỹ với độ đối xứng hoàn hảo.
+      - `Diamond 9.asset`: Kim cương đen hắc diện thạch huyền bí với ánh kim loại sâu thẳm.
+      - `Diamond 10.asset`: Viên ngọc báu hoàng gia lăng kính phát quang đa sắc màu.
+- **Danh sách file thay đổi**:
+  - `Assets/Data/Items/Bomb.asset`
+  - `Assets/Data/Items/Clock.asset`
+  - `Assets/Data/Items/Coin.asset`
+  - `Assets/Data/Items/GoldBar.asset`
+  - `Assets/Data/Items/SandClock.asset`
+  - `Assets/Data/Items/Shield.asset`
+  - `Assets/Data/Items/Skull.asset`
+  - `Assets/Data/Items/JumpPotionI.asset`
+  - `Assets/Data/Items/JumpPotionII.asset`
+  - `Assets/Data/Items/NightVSPotionI.asset`
+  - `Assets/Data/Items/NightVSPotionII.asset`
+  - `Assets/Data/Items/SpeedPotionI.asset`
+  - `Assets/Data/Items/SpeedPotionII.asset`
+  - `Assets/Data/Items/Diamond 1.asset` đến `Assets/Data/Items/Diamond 10.asset`
+- **Ảnh hưởng**:
+  - Khi người chơi nhặt hoặc soi thông tin vật phẩm trên HUD/Túi đồ, toàn bộ 23 item đều hiển thị phần mô tả ngoại hình và giá trị hoàn chỉnh, sống động và hấp dẫn.
+
+
 
 
 

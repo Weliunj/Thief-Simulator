@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: Coin
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Coin
+  rarity: 2
+  itemIcon: {fileID: -873302890, guid: d3c0e798db32b8b44979abb2d3f78b0b, type: 3}
+  description: A rare antique minted collector coin crafted from gleaming precious alloy. Lightweight and easy to pocket.
+  basePrice: 20
+  minPrice: 15
+  maxPrice: 25
+  baseKg: 0
+  minKg: 0
+  maxKg: 0

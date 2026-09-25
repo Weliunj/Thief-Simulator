@@ -170,7 +170,6 @@ public class PlayerDeathHandler : MonoBehaviour
 
         // 4. Phát thông báo Status trên màn hình ("Player got caught by ...")
         string pName = "Player";
-        var netSync = GetComponent<NetworkPlayerSync>();
         if (netSync != null && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
         {
             pName = netSync.NetworkPlayerName.ToString();

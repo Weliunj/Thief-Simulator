@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: SpeedPotionII
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Speed Potion II
+  rarity: 5
+  itemIcon: {fileID: 1649871777, guid: 486e54f8fdfbd6148bcf3337fc221c18, type: 3}
+  description: An ultra-refined celestial elixir in an embellished alchemical flask. Its liquid lightning texture commands top dollar from underground brokers.
+  basePrice: 80
+  minPrice: 70
+  maxPrice: 100
+  baseKg: 7
+  minKg: 6
+  maxKg: 8
