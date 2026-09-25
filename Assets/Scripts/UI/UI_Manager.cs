@@ -470,6 +470,8 @@ public class UI_Manager : MonoBehaviour
         Cursor.visible = true;
         GameSession.ClearSession();
 
+        _ = FusionConnectionManager.Instance?.LeaveSession();
+
         HotbarManager hotbar = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
         if (hotbar != null)
         {

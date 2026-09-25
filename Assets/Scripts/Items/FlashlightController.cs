@@ -123,16 +123,32 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
     }
 
     /// <summary>
-    /// Thiết lập trạng thái Bật / Tắt cụ thể kèm âm thanh 3D
+    /// Thiết lập trạng thái Bật / Tắt và đồng bộ qua mạng Photon Fusion
     /// </summary>
     public void SetFlashlightState(bool enable)
+    {
+        var localSync = NetworkItemSync.GetLocalPlayerSync();
+        if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
+        {
+            NetworkItemSync.SyncFlashlightState(gameObject, enable);
+        }
+        else
+        {
+            ApplyFlashlightVisualAndAudio(enable);
+        }
+    }
+
+    /// <summary>
+    /// Áp dụng ánh sáng và phát âm thanh Bật/Tắt (được gọi từ RPC mạng hoặc cục bộ)
+    /// </summary>
+    public void ApplyFlashlightVisualAndAudio(bool enable)
     {
         isOn = enable;
         UpdateLightState();
 
-        // Phát âm thanh 3D
+        // Phát âm thanh 3D tại vị trí Đèn pin
         AudioClip clipToPlay = isOn ? turnOnSound : turnOffSound;
-        if (clipToPlay == null) clipToPlay = turnOnSound ?? turnOffSound; // Fallback nếu chỉ có 1 clip
+        if (clipToPlay == null) clipToPlay = turnOnSound ?? turnOffSound;
 
         if (clipToPlay != null && audioSource != null)
         {

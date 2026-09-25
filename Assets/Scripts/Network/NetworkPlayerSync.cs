@@ -26,82 +26,272 @@ public class NetworkPlayerSync : NetworkBehaviour
     [Networked, OnChangedRender(nameof(OnHeldItemPathChanged))]
     public NetworkString<_64> NetworkHeldItemPath { get; set; }
 
-    private Transform _remoteRightHandBone;
-    private GameObject _remoteHeldInstance;
 
     public void SetHeldItem(GameObject itemObj)
-    {
-        if (Runner == null || !Runner.IsRunning || !IsLocalPlayer) return;
-
-        if (itemObj != null)
         {
-            NetworkHeldItemPath = NetworkItemSync.GetGameObjectPath(itemObj);
-        }
-        else
-        {
-            NetworkHeldItemPath = "";
-        }
-    }
+            if (Runner == null || !Runner.IsRunning || !IsLocalPlayer) return;
 
-    private void OnHeldItemPathChanged()
+            if (itemObj != null)
+            {
+                // Truyền trực tiếp tên duy nhất của item (VD: Item_0_Flashlight)
+                NetworkHeldItemPath = itemObj.name;
+            }
+            else
+            {
+                NetworkHeldItemPath = "";
+            }
+        }
+
+   private void OnHeldItemPathChanged()
     {
-        if (IsLocalPlayer) return; // Local player hiển thị qua HotbarManager
+        if (IsLocalPlayer) return;
 
         string itemPath = NetworkHeldItemPath.ToString();
 
         if (string.IsNullOrEmpty(itemPath))
         {
-            if (_remoteHeldInstance != null)
-            {
-                _remoteHeldInstance.SetActive(false);
-                _remoteHeldInstance.transform.SetParent(null);
-                _remoteHeldInstance = null;
-            }
+            ClearRemoteHeldItem();
             return;
         }
 
-        if (_remoteRightHandBone == null)
-        {
-            foreach (var t in GetComponentsInChildren<Transform>(true))
-            {
-                if (t.name == "Hand.R" || t.name == "RightHand" || t.name.Contains("Hand_R") || t.name.Contains("RightHand"))
-                {
-                    _remoteRightHandBone = t;
-                    break;
-                }
-            }
-            if (_remoteRightHandBone == null) _remoteRightHandBone = transform;
-        }
-
         GameObject itemObj = NetworkItemSync.FindSceneObjectByPath(itemPath);
+
         if (itemObj != null)
         {
+            if (_remoteHeldInstance != null && _remoteHeldInstance != itemObj)
+            {
+                ClearRemoteHeldItem();
+            }
+
             _remoteHeldInstance = itemObj;
-            _remoteHeldInstance.transform.SetParent(_remoteRightHandBone);
+
+            Transform socket = GetOrCreateRemoteSocket();
+
+            // Khóa Rigidbody
+            var rb = _remoteHeldInstance.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+
+            // Gắn vào socket con của Player
+            _remoteHeldInstance.transform.SetParent(socket, false);
             _remoteHeldInstance.transform.localPosition = Vector3.zero;
             _remoteHeldInstance.transform.localRotation = Quaternion.identity;
 
-            Vector3 lossy = _remoteRightHandBone.lossyScale;
-            if (lossy.x != 0 && lossy.y != 0 && lossy.z != 0)
+            // Bù trừ Scale chống phóng to
+            Vector3 parentLossy = socket.lossyScale;
+            if (parentLossy.x != 0 && parentLossy.y != 0 && parentLossy.z != 0)
             {
-                _remoteHeldInstance.transform.localScale = new Vector3(1f / lossy.x, 1f / lossy.y, 1f / lossy.z);
+                _remoteHeldInstance.transform.localScale = new Vector3(1f / parentLossy.x, 1f / parentLossy.y, 1f / parentLossy.z);
             }
             else
             {
                 _remoteHeldInstance.transform.localScale = Vector3.one;
             }
 
+            // Tắt Collider
             var colliders = _remoteHeldInstance.GetComponentsInChildren<Collider>(true);
             foreach (var c in colliders) if (c != null) c.enabled = false;
 
+            // Bật Renderers
             var renderers = _remoteHeldInstance.GetComponentsInChildren<Renderer>(true);
             foreach (var r in renderers) if (r != null) r.enabled = true;
 
-            var rb = _remoteHeldInstance.GetComponent<Rigidbody>();
-            if (rb != null) rb.isKinematic = true;
-
             _remoteHeldInstance.SetActive(true);
         }
+    }
+
+    private void ClearRemoteHeldItem()
+    {
+        if (_remoteHeldInstance != null)
+        {
+            // Chỉ tắt GameObject nếu item này vẫn đang nằm trên người (socket) của Player
+            // Nếu item đã được ném/thả ra ngoài thế giới (parent == null hoặc không còn ở socket), KHÔNG ĐƯỢC tắt GameObject!
+            if (_remoteHoldSocket != null && _remoteHeldInstance.transform.parent == _remoteHoldSocket)
+            {
+                _remoteHeldInstance.SetActive(false);
+                _remoteHeldInstance.transform.SetParent(null);
+            }
+            _remoteHeldInstance = null;
+        }
+    }
+
+    #region 🌐 Item Network RPCs (Đồng bộ nhặt / ném / đèn pin qua Player)
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcDespawnSceneItem(string itemHierarchyPath)
+    {
+        if (string.IsNullOrEmpty(itemHierarchyPath)) return;
+
+        GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+        if (targetItem != null)
+        {
+            targetItem.SetActive(false);
+            Debug.Log($"<color=cyan>[NetworkPlayerSync] Đã ẩn vật phẩm trên map: {itemHierarchyPath}</color>");
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcShowDroppedSceneItem(string itemHierarchyPath, Vector3 position, Quaternion rotation, Vector3 linearVelocity, Vector3 angularVelocity, bool isLadder, bool isLadderPlaced, RpcInfo info = default)
+    {
+        if (string.IsNullOrEmpty(itemHierarchyPath)) return;
+
+        GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+        if (targetItem != null)
+        {
+            if (Runner != null && info.Source == Runner.LocalPlayer && targetItem.activeSelf)
+            {
+                return;
+            }
+
+            targetItem.transform.SetParent(null);
+            targetItem.transform.position = position;
+            targetItem.transform.rotation = rotation;
+            targetItem.transform.localScale = Vector3.one;
+            targetItem.SetActive(true);
+
+            var renderers = targetItem.GetComponentsInChildren<Renderer>(true);
+            foreach (var r in renderers) if (r != null) r.enabled = true;
+
+            var colliders = targetItem.GetComponentsInChildren<Collider>(true);
+            foreach (var c in colliders) if (c != null) c.enabled = true;
+
+            var ladder = targetItem.GetComponent<LadderController>() ?? targetItem.GetComponentInChildren<LadderController>();
+            if (ladder != null) ladder.SetPlaced(isLadderPlaced);
+
+            Rigidbody rb = targetItem.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = false;
+                rb.WakeUp();
+                rb.linearVelocity = linearVelocity;
+                rb.angularVelocity = angularVelocity;
+            }
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcSetFlashlightState(string itemHierarchyPath, bool isOn)
+    {
+        if (string.IsNullOrEmpty(itemHierarchyPath)) return;
+
+        GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+        if (targetItem != null)
+        {
+            FlashlightController flash = targetItem.GetComponent<FlashlightController>() ?? targetItem.GetComponentInChildren<FlashlightController>();
+            if (flash != null)
+            {
+                flash.ApplyFlashlightVisualAndAudio(isOn);
+            }
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcBroadcastStatusMessage(string message)
+    {
+        GameStatusHUD.Show(message);
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcTriggerPlayerDeath(string caughtBy)
+    {
+        var deathHandler = GetComponent<PlayerDeathHandler>() ?? GetComponentInChildren<PlayerDeathHandler>();
+        if (deathHandler != null)
+        {
+            deathHandler.ExecuteDeath(caughtBy, IsLocalPlayer);
+        }
+    }
+
+    #endregion
+
+    [Header("✋ Hand Attachment (Điểm gắn item trên người khác)")]
+    [Tooltip("Kéo trực tiếp xương tay phải (RightHand / Hand.R) của Prefab nhân vật vào đây")]
+    public Transform rightHandSocket;
+
+    private Transform _remoteRightHandBone;
+    private GameObject _remoteHeldInstance;
+    private Transform _remoteHoldSocket;
+
+    [Header("🎯 Remote Held Item Offset")]
+public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
+
+    private Transform GetOrCreateRemoteSocket()
+    {
+        if (_remoteHoldSocket == null)
+        {
+            Transform existing = transform.Find("RemoteFixedHoldSocket");
+            if (existing != null)
+            {
+                _remoteHoldSocket = existing;
+            }
+            else
+            {
+                GameObject socket = new GameObject("RemoteFixedHoldSocket");
+                socket.transform.SetParent(transform, false);
+                _remoteHoldSocket = socket.transform;
+            }
+        }
+
+        // Cố định cứng tọa độ trước mặt Remote Player
+        _remoteHoldSocket.localPosition = remoteHoldPosition;
+        _remoteHoldSocket.localRotation = Quaternion.identity;
+        _remoteHoldSocket.localScale = Vector3.one;
+
+        return _remoteHoldSocket;
+    }
+
+    private void EnsureRightHandBone()
+    {
+        // 1. Ưu tiên biến gán cứng từ Inspector (chính xác 100%)
+        if (rightHandSocket != null)
+        {
+            _remoteRightHandBone = rightHandSocket;
+            return;
+        }
+
+        if (_remoteRightHandBone != null) return;
+
+        // 2. Tìm qua Animator Humanoid Bone của nhân vật
+        Animator anim = GetComponent<Animator>();
+        if (anim == null) anim = GetComponentInChildren<Animator>(true);
+
+        if (anim != null && anim.isHuman)
+        {
+            Transform hand = anim.GetBoneTransform(HumanBodyBones.RightHand);
+            if (hand != null)
+            {
+                _remoteRightHandBone = hand;
+                return;
+            }
+        }
+
+        // 3. Quét tất cả Transform con tìm các tên quy chuẩn phổ biến của Rig xương
+        string[] handPatterns = new string[] 
+        { 
+            "righthand", "hand.r", "hand_r", "hand (r)", "right_hand", 
+            "b_r_hand", "wrist_r", "wrist.r", "mixamorig:righthand" 
+        };
+
+        Transform[] allTransforms = GetComponentsInChildren<Transform>(true);
+        foreach (var t in allTransforms)
+        {
+            string lowerName = t.name.ToLower().Trim();
+            foreach (var pattern in handPatterns)
+            {
+                if (lowerName == pattern || lowerName.EndsWith(pattern))
+                {
+                    _remoteRightHandBone = t;
+                    return;
+                }
+            }
+        }
+
+        // Nếu quét hết vẫn không thấy, log cảnh báo để kiểm tra Rig nhân vật
+        Debug.LogWarning($"<color=orange>[NetworkPlayerSync] Không tìm thấy xương tay phải trên {gameObject.name}! Tạm thời gắn vào root.</color>");
+        _remoteRightHandBone = transform;
     }
 
     [Header("🏃 Networked Animation & HeadLook State")]
@@ -611,17 +801,17 @@ public class NetworkPlayerSync : NetworkBehaviour
                 }
             }
 
-            if (_spineLookBone == null)
-            {
-                foreach (var t in GetComponentsInChildren<Transform>(true))
-                {
-                    if (t.name == "Stomach" || t.name == "Spine" || t.name == "Chest")
-                    {
-                        _spineLookBone = t;
-                        break;
-                    }
-                }
-            }
+            // if (_spineLookBone == null)
+            // {
+            //     foreach (var t in GetComponentsInChildren<Transform>(true))
+            //     {
+            //         if (t.name == "Stomach" || t.name == "Spine" || t.name == "Chest")
+            //         {
+            //             _spineLookBone = t;
+            //             break;
+            //         }
+            //     }
+            // }
 
             float targetPitch = Mathf.Clamp(NetworkHeadPitch, -45f, 60f);
             float targetYaw = Mathf.Clamp(NetworkHeadYaw, -75f, 75f);
@@ -629,12 +819,12 @@ public class NetworkPlayerSync : NetworkBehaviour
             _smoothRemotePitch = Mathf.Lerp(_smoothRemotePitch, targetPitch, Time.deltaTime * 12f);
             _smoothRemoteYaw = Mathf.Lerp(_smoothRemoteYaw, targetYaw, Time.deltaTime * 12f);
 
-            if (_spineLookBone != null)
-            {
-                Quaternion spineRot = Quaternion.AngleAxis(_smoothRemoteYaw * 0.25f, transform.up)
-                                    * Quaternion.AngleAxis(-_smoothRemotePitch * 0.25f, transform.right);
-                _spineLookBone.rotation = spineRot * _spineLookBone.rotation;
-            }
+            // if (_spineLookBone != null)
+            // {
+            //     Quaternion spineRot = Quaternion.AngleAxis(_smoothRemoteYaw * 0.25f, transform.up)
+            //                         * Quaternion.AngleAxis(-_smoothRemotePitch * 0.25f, transform.right);
+            //     _spineLookBone.rotation = spineRot * _spineLookBone.rotation;
+            // }
 
             if (_headLookBone != null)
             {
@@ -652,6 +842,21 @@ public class NetworkPlayerSync : NetworkBehaviour
             if (mainCam != null)
             {
                 targetBillboard.rotation = mainCam.transform.rotation;
+            }
+        }
+
+        // ĐỒNG BỘ GÓC NGỬA/CÚI (Đã đảo dấu -NetworkHeadPitch để không bị ngược chiều)
+        if (!IsLocalPlayer && _remoteHoldSocket != null && _remoteHeldInstance != null && _remoteHeldInstance.activeSelf)
+        {
+            Item itemComp = _remoteHeldInstance.GetComponent<Item>();
+            if (itemComp != null && itemComp.followCameraPitch)
+            {
+                // Dấu trừ (-) ở đây để sửa lỗi ngửa thành chúi xuống
+                _remoteHoldSocket.localRotation = Quaternion.Euler(-NetworkHeadPitch, 0f, 0f);
+            }
+            else
+            {
+                _remoteHoldSocket.localRotation = Quaternion.identity;
             }
         }
     }

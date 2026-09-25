@@ -1331,6 +1331,44 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Ảnh hưởng**:
   - Model 3D nhân vật hiển thị trực quan ngoài sảnh HomeScreen, tự động đổi ngoại hình theo nhân vật đã chọn và luôn hiển thị lại chính xác khi thoát từ Multiplayer Lobby hoặc bất kỳ menu con nào về HomeMenu.
 
+---
+
+### [2026-09-25 13:30] — feat(network, gameplay, ui): network item sync, flashlight rpc, pause player count, on-screen status banner, and synchronized catch/death system
+- **Tác vụ**:
+  - **Đồng bộ nhặt / ném / thả vật phẩm qua mạng Photon Fusion (Network Item Sync)**:
+    - Chuyển `NetworkItemSync` thành static helper đáng tin cậy (`GetLocalPlayerSync()`) để phát RPC thông qua `NetworkPlayerSync` của Local Player.
+    - Bổ sung `RpcDespawnSceneItem`: Khi 1 người chơi nhặt đồ, ẩn ngay lập tức vật phẩm trên toàn bộ các máy khác trong phòng mà không cần đợi cầm lên tay.
+    - Bổ sung `RpcShowDroppedSceneItem`: Đồng bộ hiển thị lại vật phẩm, gán vị trí/góc xoay và áp dụng vector vận tốc ném / lực xoáy vật lý (`linearVelocity`, `angularVelocity`) trên tất cả máy khi có người thả/ném đồ.
+    - Tinh chỉnh `ClearRemoteHeldItem()`: Chỉ ẩn GameObject khi item vẫn đang nằm trên socket tay của Player, triệt tiêu lỗi item sau khi ném ra bị biến mất sau 1 giây.
+    - Chuẩn hóa vị trí cầm item: Cố định cứng tọa độ `(0, 1.2, 0.5)` đồng bộ 100% giữa máy mình (`HotbarManager.cs`, `PlayerUI.prefab`) và máy người khác (`NetworkPlayerSync.cs`).
+    - Cố định góc ngửa/cúi đèn pin bám theo góc nhìn Camera của người chơi qua mạng (`-NetworkHeadPitch`).
+  - **Đồng bộ Đèn pin (Flashlight Controller)**:
+    - Bổ sung `RpcSetFlashlightState`: Đồng bộ trạng thái Bật/Tắt chùm sáng (`Spotlight`) và âm thanh Click On/Off 3D Spatial Audio cho toàn bộ phòng.
+  - **Hệ thống Status Banner trên màn hình & Cập nhật Pause Menu**:
+    - Tạo mới `GameStatusHUD.cs`: Banner thông báo động nổi phía trên màn hình (với hiệu ứng Fade In/Out mượt mà) cho các sự kiện quan trọng trong trận (VD: `"[PlayerName] got caught by [NPCName]!"`).
+    - Bổ sung `RpcBroadcastStatusMessage` trong `NetworkPlayerSync.cs` để phát thông báo đồng bộ lên màn hình của mọi người chơi trong phòng.
+    - Cập nhật `PauseHUD.cs`: Hiển thị thông tin mã phòng và số lượng người chơi thời gian thực (`Room: Room_123 | Players: 3/4`).
+    - Tinh chỉnh `UI_Manager.cs`: Nút `Menu()` tự động ngắt kết nối sạch sẽ qua `LeaveSession()` khi thoát trận để giải phóng slot cho người khác.
+  - **Cơ chế Bắt giữ & Đồng bộ Hiệu ứng Tử vong (NPC Catch & Death System)**:
+    - Tạo mới `NPCCatchPlayerTrigger.cs` (hỗ trợ quét bán kính khoảng cách hoặc va chạm Collider/Trigger): Mô phỏng AI/NPC/Bẫy chạm vào Player sẽ kích hoạt bắt giữ.
+    - Bổ sung `RpcTriggerPlayerDeath` trong `NetworkPlayerSync.cs` và nâng cấp `PlayerDeathHandler.cs`:
+      - Khi bị bắt: Kích hoạt animation chết (`Die`), bật đèn cảnh báo đỏ (`Warning Light`), và phát lực đẩy vật lý văng toàn bộ vật phẩm đang giữ trong balo ra sàn (`DropAllItemsOnDeath`).
+      - Đồng bộ Còi cảnh sát hú (`Police Siren`) và âm thanh kêu chết (`Death Sound`) trên toàn bộ loa của người chơi trong phòng.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Network/NetworkItemSync.cs` (Rewritten static helper)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Added RpcDespawnSceneItem, RpcShowDroppedSceneItem, RpcSetFlashlightState, RpcBroadcastStatusMessage, RpcTriggerPlayerDeath)
+  - `Assets/Scripts/Items/FlashlightController.cs` (Modified)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+  - `Assets/Prefabs/HUD/PlayerUI.prefab` (Modified — fixedHoldPosition to 0, 1.2, 0.5)
+  - `Assets/Scripts/UI/GameStatusHUD.cs` (New)
+  - `Assets/Scripts/AI/NPCCatchPlayerTrigger.cs` (New)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified — ExecuteDeath & Network RPC)
+  - `Assets/Scripts/UI/PauseHUD.cs` (Modified — Realtime player count & Room ID)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified — Clean LeaveSession on Menu)
+- **Ảnh hưởng**:
+  - Toàn bộ cơ chế nhặt/ném đồ, đèn pin, giao diện thông báo, còi cảnh sát và chết/bị bắt đều được đồng bộ hóa hoàn chỉnh qua mạng Photon Fusion.
+
+
 
 
 

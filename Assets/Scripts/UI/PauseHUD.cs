@@ -125,27 +125,52 @@ public class PauseHUD : MonoBehaviour
         }
     }
 
-    public void Show()
+    private void Update()
     {
-        gameObject.SetActive(true);
+        if (gameObject.activeSelf)
+        {
+            UpdateOnlineRoomInfo();
+        }
+    }
 
-        // Hiển thị Room ID nếu đang chơi Online qua Photon Fusion
+    private void UpdateOnlineRoomInfo()
+    {
         bool isOnline = FusionConnectionManager.Instance != null &&
                         FusionConnectionManager.Instance.currentRunner != null &&
                         FusionConnectionManager.Instance.currentRunner.IsRunning;
 
         if (roomCodeText != null)
         {
-            if (isOnline && !string.IsNullOrEmpty(FusionConnectionManager.Instance.currentSessionName))
+            if (isOnline)
             {
+                var runner = FusionConnectionManager.Instance.currentRunner;
+                string roomName = !string.IsNullOrEmpty(FusionConnectionManager.Instance.currentSessionName)
+                    ? FusionConnectionManager.Instance.currentSessionName
+                    : (runner.SessionInfo.IsValid ? runner.SessionInfo.Name : "Room");
+
+                int activePlayers = runner.SessionInfo.IsValid ? runner.SessionInfo.PlayerCount : 1;
+                int maxPlayers = runner.SessionInfo.IsValid ? runner.SessionInfo.MaxPlayers : 4;
+
                 roomCodeText.gameObject.SetActive(true);
-                roomCodeText.text = $"Room ID: {FusionConnectionManager.Instance.currentSessionName}";
+                roomCodeText.text = $"Room: {roomName}   |   Players: {activePlayers}/{maxPlayers}";
             }
             else
             {
                 roomCodeText.gameObject.SetActive(false);
             }
         }
+    }
+
+    public void Show()
+    {
+        gameObject.SetActive(true);
+
+        // Cập nhật thông tin phòng và số lượng người chơi
+        UpdateOnlineRoomInfo();
+
+        bool isOnline = FusionConnectionManager.Instance != null &&
+                        FusionConnectionManager.Instance.currentRunner != null &&
+                        FusionConnectionManager.Instance.currentRunner.IsRunning;
 
         // Nếu đang chơi Online: Làm mờ nút Restart (Chơi lại) và không cho bấm vì không thể restart trận đấu nhiều người
         if (restartButton != null)

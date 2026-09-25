@@ -42,6 +42,25 @@ DoorController.cs
 
 LadderController.cs
 ) qua RPC ([PunRPC]).
+
+
+
+
+
+
+
+
+
+
+rework pause ui class -> menu ui coins text, menubtn, setting btn, resume , restart btn  - vote
+co che vote end run world btn
+
+fix point khong giong nhau
+xoa bo restart trong losepanel khi bi bat doi 5s set player vao pos khac + doi 30s + thems moi lan bi bat va mo cua cho phep player di tiep, 
+xoa bo win panel               thay co che chi tieu can dat de mo khoa man tiep theo, 
+tinh so value item spawn trong ham cho chi tieu dat duoc -> neu hon thanh se check map cua local map tiep chua mo thi unlock map tiep
+---------------------------------------
+
 🔹 GIAI ĐOẠN 3: Rework AI (Network Synchronized AI)
 Mục tiêu: AI tuần tra, phát hiện và săn đuổi bất kỳ người chơi nào trong phòng.
 
@@ -52,6 +71,12 @@ Nâng cấp tầm nhìn FOV và thính giác (Hearing footsteps/sound): Phát hi
 Cơ chế báo động (Alarm/Siren) sync cho cả phòng.
  Task 3.3 — Bắt giữ & Cứu đồng đội (Downed & Revive State):
 Khi bị AI bắt: Chuyển player sang trạng thái Bị Bắt / Còng Tay (IsCuffed), cho phép đồng đội khác lại gần bấm nút tương tác để giải cứu.
+
+
+
+
+
+
 🔹 GIAI ĐOẠN 4: Rework Intro & Chapter 1 (Hoàn thiện nội dung)
 Mục tiêu: Đưa người chơi qua cốt truyện, intro và màn chơi trộm đồ co-op hoàn chỉnh.
 

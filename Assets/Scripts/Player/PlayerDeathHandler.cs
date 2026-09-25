@@ -92,56 +92,97 @@ public class PlayerDeathHandler : MonoBehaviour
     }
 
     /// <summary>
-    /// Hàm công khai xử lý toàn bộ logic khi Player chết (Có thể gọi từ bất kỳ script nào).
+    /// Hàm công khai kích hoạt cái chết của Player (Tự động phát RPC cho toàn bộ phòng)
     /// </summary>
-    public void TriggerDeath()
+    public void TriggerDeath(string caughtBy = "Guard")
+    {
+        if (isDeadProcessed) return;
+
+        var netSync = GetComponent<NetworkPlayerSync>();
+        if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
+        {
+            netSync.RpcTriggerPlayerDeath(caughtBy);
+        }
+        else
+        {
+            ExecuteDeath(caughtBy, true);
+        }
+    }
+
+    /// <summary>
+    /// Thực thi cái chết trên từng máy (Được gọi từ RPC Mạng hoặc Cục bộ)
+    /// </summary>
+    public void ExecuteDeath(string caughtBy, bool isLocal)
     {
         if (isDeadProcessed) return;
         isDeadProcessed = true;
 
-        if (playerStats != null)
+        if (isLocal && playerStats != null)
         {
             playerStats.isDied = true;
             playerStats.currweight = 0;
         }
 
-        // 1. Đảm bảo hiển thị Full Model Player (nếu trước đó đang ở POV 1)
+        // 1. Đảm bảo hiển thị Full Model Player
         if (playerModel != null)
         {
             playerModel.SetActive(true);
         }
 
-        // 2. Chạy Animation chết
+        // 2. Chạy Animation chết trên máy
         if (animator != null)
         {
             animator.SetTrigger("Die");
         }
 
-        // 3. Thả toàn bộ vật phẩm đang cầm xuống đất
-        if (playerController != null)
+        // 3. Thả toàn bộ vật phẩm đang cầm xuống đất kèm lực đẩy vật lý (Chỉ Local Player thực hiện để tránh lặp RPC)
+        if (isLocal)
         {
-            playerController.DropItemsOnDeathPublic();
+            PlayerInventory inv = GetComponent<PlayerInventory>();
+            if (inv == null && playerController != null) inv = playerController.inventory;
+            if (inv != null)
+            {
+                inv.DropAllItemsOnDeath();
+            }
         }
 
-        // 4. Kéo lùi Camera ra đằng sau xa hơn và mượt mà để nhìn toàn thân (Full Model)
-        StartCoroutine(SmoothDeathCameraPullbackRoutine());
+        // 4. Phát thông báo Status trên màn hình ("Player got caught by ...")
+        string pName = "Player";
+        var netSync = GetComponent<NetworkPlayerSync>();
+        if (netSync != null && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
+        {
+            pName = netSync.NetworkPlayerName.ToString();
+        }
+        else if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null)
+        {
+            pName = FirebaseDataService.Instance.CurrentUserProfile.username;
+        }
 
-        // 5. Bật đèn cảnh báo (nếu có)
+        string deathNotice = $"{pName} got caught by {caughtBy}!";
+        GameStatusHUD.Show(deathNotice);
+
+        // 5. Kéo lùi Camera ra đằng sau xa hơn và mượt mà (Chỉ cho chính người chết)
+        if (isLocal)
+        {
+            StartCoroutine(SmoothDeathCameraPullbackRoutine());
+        }
+
+        // 6. Bật đèn cảnh báo (nếu có)
         if (warningLight != null)
         {
             warningLight.SetActive(true);
         }
 
-        // 6. Phát âm thanh 1 (Kêu khi chết)
+        // 7. Phát âm thanh 1 (Kêu khi chết)
         PlayDeathSound();
 
-        // 7. Khởi chạy đếm lùi 3s phát Police Siren
+        // 8. Đồng bộ còi cảnh sát hú (Police Siren) cho toàn bộ người chơi trong phòng
         StartCoroutine(PlayPoliceSirenRoutine(policeSirenDelay));
 
-        // 8. Tắt va chạm giữa Player và NPC
+        // 9. Tắt va chạm giữa Player và NPC
         Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), true);
 
-        Debug.Log($"[PlayerDeathHandler] Player đã chết. Camera kéo mượt ra sau và Lock-On vào xác Player.");
+        Debug.Log($"[PlayerDeathHandler] {pName} đã bị bắt bởi {caughtBy}. Âm thanh còi cảnh sát và animation đã kích hoạt đồng bộ!");
     }
 
     /// <summary>
