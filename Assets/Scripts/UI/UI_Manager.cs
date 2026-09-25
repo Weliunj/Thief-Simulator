@@ -153,12 +153,18 @@ public class UI_Manager : MonoBehaviour
             playerStats.currentTime = playerStats.MaxTime;
         }
 
+        if (SceneItemSpawner.LastCalculatedTargetPoint > 0)
+        {
+            playerStats.totalpoint = SceneItemSpawner.LastCalculatedTargetPoint;
+        }
+
         // Khởi tạo thông số hiển thị ban đầu trên HUD
         if (mainHUD != null)
         {
             mainHUD.InitializeMaxValues(playerStats);
+            mainHUD.UpdateHUD(playerStats);
         }
-        Debug.Log($"<color=green>[UI_Manager] Đã liên kết và khởi tạo PlayerStats cho '{stats.name}' thành công!</color>");
+        Debug.Log($"<color=green>[UI_Manager] Đã liên kết và khởi tạo PlayerStats cho '{stats.name}' thành công (Target Point: {playerStats.totalpoint})!</color>");
     }
 
     void Update()
@@ -435,6 +441,27 @@ public class UI_Manager : MonoBehaviour
 
         // Tải lại đúng Scene hiện tại của màn chơi đang chơi
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    /// <summary>
+    /// Người chơi bấm nút Escape trong EscapeZone khi đã đủ điểm chỉ tiêu -> Hoàn thành màn và về sảnh
+    /// </summary>
+    public void EscapeToHome()
+    {
+        // 1. Tích hoàn thành Chapter và mở khóa Chapter tiếp theo
+        if (currentChapter != null)
+        {
+            currentChapter.isCompleted = true;
+        }
+        if (nextChapter != null)
+        {
+            nextChapter.isUnlocked = true;
+        }
+
+        Debug.Log($"<color=green>[UI_Manager] Người chơi đã tẩu thoát thành công về Sảnh!</color>");
+
+        // 2. Chuyển cảnh về HomeMenu
+        Menu();
     }
 
     public void Menu()

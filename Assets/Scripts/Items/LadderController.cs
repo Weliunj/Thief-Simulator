@@ -864,6 +864,8 @@ public class LadderController : MonoBehaviour, IInteractable
     private Item GetItemComponent()
     {
         if (itemComp == null) itemComp = GetComponent<Item>();
+        if (itemComp == null) itemComp = GetComponentInParent<Item>();
+        if (itemComp == null) itemComp = GetComponentInChildren<Item>();
         return itemComp;
     }
 

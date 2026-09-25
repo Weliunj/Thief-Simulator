@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,8 +8,18 @@ using UnityEngine.SceneManagement;
 /// - Khi 1 người chơi nhặt vật phẩm, phát RPC thông báo cho tất cả các máy khác ẩn vật phẩm đó.
 /// - Khi 1 người chơi thả/vứt vật phẩm, phát RPC thông báo cho tất cả các máy khác hiện lại vật phẩm tại vị trí rơi kèm lực vật lý.
 /// </summary>
-public static class NetworkItemSync
+public class NetworkItemSync : MonoBehaviour
 {
+    private void Awake()
+    {
+        ResetSoldItems();
+    }
+
+    private void OnDestroy()
+    {
+        ResetSoldItems();
+    }
+
     /// <summary>
     /// Tìm NetworkPlayerSync của chính người chơi cục bộ
     /// </summary>
@@ -100,26 +111,54 @@ public static class NetworkItemSync
         }
     }
 
+    private static readonly HashSet<string> _soldItemPaths = new HashSet<string>();
+
+    public static void ResetSoldItems()
+    {
+        _soldItemPaths.Clear();
+    }
+
+    public static bool IsItemAlreadySold(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return false;
+        return _soldItemPaths.Contains(path);
+    }
+
+    public static void MarkItemAsSold(string path)
+    {
+        if (!string.IsNullOrEmpty(path))
+        {
+            _soldItemPaths.Add(path);
+        }
+    }
+
     /// <summary>
     /// Đồng bộ bán vật phẩm khi ném/đưa vào xe (Giao hàng) cho toàn bộ người chơi trong phòng
     /// </summary>
     public static void SyncSellItem(GameObject itemObj, int earnedPoints, string itemName)
     {
         if (itemObj == null) return;
+        string itemPath = GetGameObjectPath(itemObj);
+
+        // Kiểm tra chống gọi bán nhiều lần cho cùng 1 item
+        if (!string.IsNullOrEmpty(itemPath) && IsItemAlreadySold(itemPath))
+        {
+            return;
+        }
 
         NetworkPlayerSync localSync = GetLocalPlayerSync();
         if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
         {
-            string itemPath = GetGameObjectPath(itemObj);
             localSync.RpcSyncSellItem(itemPath, earnedPoints, itemName);
         }
         else
         {
             // Fallback khi chơi Offline / Solo
-            UI_Manager ui = Object.FindFirstObjectByType<UI_Manager>();
-            if (ui != null && ui.playerManager != null)
+            MarkItemAsSold(itemPath);
+            UI_Manager ui = Object.FindFirstObjectByType<UI_Manager>(FindObjectsInactive.Include);
+            if (ui != null && ui.playerStats != null)
             {
-                ui.playerManager.currpoint += earnedPoints;
+                ui.playerStats.currpoint += earnedPoints;
             }
             GameStatusHUD.Show($"Sold {itemName} (+${earnedPoints})!", 2.5f);
             itemObj.SetActive(false);

@@ -14,12 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSO
   characterId: char_02
   characterName: Fat Human
-  avatar: {fileID: 0}
+  maleAvatar: {fileID: 2009629907, guid: d6911968d5c91ba44841ef82f16974e3, type: 3}
+  femaleAvatar: {fileID: 948580334, guid: 144eb1932be025c49be6c237628b001e, type: 3}
   description: Slower with lower base stamina, but boasts massive physical strength
     capable of carrying heavy loot.
   characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
   isUnlockedByDefault: 0
   unlockPrice: 1500
+  maleMesh: {fileID: 4300000, guid: 1c19609be8f7cfc45bfba5d1fa696f05, type: 2}
+  femaleMesh: {fileID: 4300000, guid: 1bb78ba630b090742afddbf9dd300411, type: 2}
   maleMeshes:
   - {fileID: 4300000, guid: 1c19609be8f7cfc45bfba5d1fa696f05, type: 2}
   - {fileID: 4300000, guid: 31fa6743ae2f1c34f873937824c4725f, type: 2}
@@ -35,7 +38,7 @@ MonoBehaviour:
   baseCrouchSpeed: 1.1
   baseJumpHeight: 1
   baseMaxStamina: 8
-  staminaDepletionRate: 3
-  staminaRegenRate: 2
+  staminaDepletionRate: 1.5
+  staminaRegenRate: 1.5
   staminaRegenCooldown: 1
   baseMaxWeight: 60

@@ -46,11 +46,15 @@ public class PlayerDeathHandler : MonoBehaviour
     [Header("🔊 Audio & Effects")]
     [Tooltip("AudioSource 1: Âm thanh phát ngay khi Player chết")]
     public AudioSource deathAudioSource;
+    [Tooltip("AudioClip phát ngay khi Player chết (kêu la / bị bắt 1 lần)")]
+    public AudioClip deathClip;
 
     [Tooltip("AudioSource 2: Còi cảnh sát (Police Siren)")]
     public AudioSource policeSirenAudioSource;
-    [Tooltip("Hoặc kéo thả AudioClip còi cảnh sát vào đây nếu dùng chung AudioSource")]
+    [Tooltip("AudioClip còi cảnh sát (Police Siren)")]
     public AudioClip policeSirenClip;
+    [Tooltip("Thời điểm còi cảnh sát bắt đầu hú (giây thứ 3)")]
+    public float policeSirenStartTime = 3.0f;
 
     [HideInInspector] public bool isDeadProcessed = false;
 
@@ -295,28 +299,47 @@ public class PlayerDeathHandler : MonoBehaviour
     }
 
     /// <summary>
-    /// Phát âm thanh kêu khi chết ban đầu
+    /// Phát âm thanh kêu khi chết ban đầu (1 lần duy nhất)
     /// </summary>
     public void PlayDeathSound()
     {
+        if (deathAudioSource == null)
+        {
+            deathAudioSource = gameObject.AddComponent<AudioSource>();
+            deathAudioSource.playOnAwake = false;
+            deathAudioSource.spatialBlend = 0.5f;
+            if (SettingsManager.Instance != null && SettingsManager.Instance.sfxGroup != null)
+            {
+                deathAudioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
+            }
+        }
+
         if (deathAudioSource != null)
         {
             if (!deathAudioSource.gameObject.activeSelf) deathAudioSource.gameObject.SetActive(true);
-            deathAudioSource.Play();
+
+            if (deathClip != null)
+            {
+                deathAudioSource.PlayOneShot(deathClip);
+            }
+            else if (deathAudioSource.clip != null)
+            {
+                deathAudioSource.PlayOneShot(deathAudioSource.clip);
+            }
         }
     }
 
     /// <summary>
     /// Chuỗi đếm ngược 10 giây hồi sinh:
-    /// - Từ 0s -> 5s: Player nằm gục, camera pull-back.
-    /// - Từ giây thứ 5 (5s còn lại): Còi cảnh sát bắt đầu phát với Fade In (to dần) và kết thúc với Fade Out (nhỏ dần).
+    /// - Từ 0s -> 3s: Player nằm gục, camera pull-back.
+    /// - Từ giây thứ 3: Còi cảnh sát bắt đầu phát với Fade In (to dần) và kết thúc với Fade Out (nhỏ dần).
     /// - Hết 10s: Tắt còi cảnh sát, tắt dieLight, hồi sinh đưa về Spawn Point.
     /// </summary>
     private IEnumerator RespawnSequenceRoutine(bool isLocal)
     {
         float totalDuration = Mathf.Max(5f, respawnCooldown); // 10s
-        float sirenStartTime = 5.0f; // Bắt đầu còi cảnh sát từ giây thứ 5
-        float sirenFadeInDuration = 1.0f; // To dần trong 1.0s
+        float sirenStartTime = Mathf.Clamp(policeSirenStartTime, 0f, totalDuration - 2f); // Bắt đầu còi cảnh sát từ giây thứ 3
+        float sirenFadeInDuration = 1.5f; // To dần trong 1.5s
         float sirenFadeOutDuration = 1.5f; // Nhỏ dần trong 1.5s cuối
         float sirenEndTime = totalDuration; // Kết thúc ở giây thứ 10
 
@@ -338,7 +361,7 @@ public class PlayerDeathHandler : MonoBehaviour
             yield return null;
             elapsed += Time.deltaTime;
 
-            // Bắt đầu còi cảnh sát từ giây thứ 5
+            // Bắt đầu còi cảnh sát từ giây thứ 3
             if (elapsed >= sirenStartTime && !sirenStarted)
             {
                 sirenStarted = true;
@@ -358,7 +381,7 @@ public class PlayerDeathHandler : MonoBehaviour
                         sirenSource.loop = true;
                         sirenSource.Play();
                     }
-                    Debug.Log("[PlayerDeathHandler] Còi cảnh sát (Police Siren) bắt đầu hú từ giây thứ 5!");
+                    Debug.Log($"[PlayerDeathHandler] Còi cảnh sát (Police Siren) bắt đầu hú từ giây thứ {sirenStartTime:F1}!");
                 }
             }
 

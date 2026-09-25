@@ -203,18 +203,21 @@ public class ItemInfoHUD : MonoBehaviour
             interactIcon.SetActive(true);
         }
 
+        bool hasPriceOrWeight = (interactable.GetPrice() > 0 || interactable.GetWeight() > 0);
+
         // 1. Tên đối tượng & Combined Text
         string actionPrompt = interactable.GetActionPrompt();
         if (singleCombinedText != null)
         {
             singleCombinedText.gameObject.SetActive(true);
-            if (interactable.IsLootItem())
+            string keyPrompt = interactable.IsLootItem() ? "[E]" : "[F]";
+            if (hasPriceOrWeight)
             {
-                singleCombinedText.text = $"[E] {actionPrompt} - {interactable.GetInteractableName()} (${interactable.GetPrice()} - {interactable.GetWeight()}Kg)";
+                singleCombinedText.text = $"{keyPrompt} {actionPrompt} - {interactable.GetInteractableName()} (${interactable.GetPrice()} - {interactable.GetWeight()}Kg)";
             }
             else
             {
-                singleCombinedText.text = $"[F] {actionPrompt} ({interactable.GetInteractableName()})";
+                singleCombinedText.text = $"{keyPrompt} {actionPrompt} ({interactable.GetInteractableName()})";
             }
         }
 
@@ -245,8 +248,8 @@ public class ItemInfoHUD : MonoBehaviour
             }
         }
 
-        // 2. Nếu là vật phẩm (Loot Item) thì hiển thị Giá tiền, Cân nặng & Độ hiếm
-        if (interactable.IsLootItem())
+        // 2. Nếu là vật phẩm (Loot Item) hoặc có giá tiền / cân nặng thì hiển thị Giá tiền, Cân nặng & Độ hiếm
+        if (interactable.IsLootItem() || hasPriceOrWeight)
         {
             if (priceText != null)
             {
@@ -264,15 +267,15 @@ public class ItemInfoHUD : MonoBehaviour
 
             if (rarityText != null)
             {
-                rarityText.gameObject.SetActive(true);
                 ItemRarity r = interactable.GetRarity();
+                rarityText.gameObject.SetActive(true);
                 rarityText.text = r.GetDisplayName();
                 rarityText.color = r.GetColor();
             }
         }
         else
         {
-            // Cửa, thang... không hiển thị giá tiền, cân nặng & độ hiếm
+            // Cửa, switch... không hiển thị giá tiền, cân nặng & độ hiếm
             if (priceText != null) priceText.gameObject.SetActive(false);
             if (weightText != null) weightText.gameObject.SetActive(false);
             if (rarityText != null) rarityText.gameObject.SetActive(false);

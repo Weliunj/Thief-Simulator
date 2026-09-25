@@ -79,13 +79,38 @@ public class Item : MonoBehaviour, IInteractable
         Random.state = oldState; // Khôi phục Random State mặc định
     }
 
+    public bool IsSold => _isSold;
+
+    public void SellItem()
+    {
+        if (_isSold) return;
+        _isSold = true;
+
+        // Vô hiệu hóa ngay lập tức mọi Collider để tránh kích hoạt nhiều lần liên tục
+        var colliders = GetComponentsInChildren<Collider>(true);
+        foreach (var col in colliders)
+        {
+            if (col != null) col.enabled = false;
+        }
+
+        NetworkItemSync.SyncSellItem(gameObject, Mathf.RoundToInt(Price), GetInteractableName());
+    }
+
     public void OnTriggerEnter(Collider other)
     {
         if (_isSold) return;
         if (other != null && other.CompareTag("home"))
         {
-            _isSold = true;
-            NetworkItemSync.SyncSellItem(gameObject, Mathf.RoundToInt(Price), GetInteractableName());
+            SellItem();
+        }
+    }
+
+    public void OnCollisionEnter(Collision collision)
+    {
+        if (_isSold) return;
+        if (collision != null && collision.gameObject != null && collision.gameObject.CompareTag("home"))
+        {
+            SellItem();
         }
     }
 

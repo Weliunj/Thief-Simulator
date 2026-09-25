@@ -57,8 +57,15 @@ public class SceneItemSpawner : MonoBehaviour
         new RarityWeightConfig(ItemRarity.Mythic, 0.2f)
     };
 
-    [Header("📦 Spawned Instances")]
+    [Header("📦 Spawned Instances & Calculated Target")]
     [SerializeField] private List<GameObject> spawnedItems = new List<GameObject>();
+    [Tooltip("Tổng giá trị tiền của tất cả vật phẩm đã sinh ra trong màn")]
+    public int calculatedTotalValue = 0;
+    [Tooltip("Điểm mục tiêu để qua màn (Tổng giá trị - 25%)")]
+    public int calculatedTargetPoint = 0;
+
+    public static int LastCalculatedTotalItemValue { get; private set; } = 0;
+    public static int LastCalculatedTargetPoint { get; private set; } = 0;
 
     // Bảng phân loại Item theo Rarity để truy xuất nhanh
     private Dictionary<ItemRarity, List<GameObject>> categorizedPrefabs = new Dictionary<ItemRarity, List<GameObject>>();
@@ -114,12 +121,16 @@ public class SceneItemSpawner : MonoBehaviour
         if (chapterData == null)
         {
             Debug.LogWarning("[SceneItemSpawner] Chưa gán ChapterSO và GameSession.SelectedChapter là null!");
+            ScreenFader.FadeFromBlack(0.6f);
             return;
         }
 
-        // 1. Đồng bộ Random Seed: Giúp tất cả người chơi trong cùng phòng (Multiplayer) sinh ra 100% vật phẩm giống hệt nhau
-        int seed = 12345;
+        // 1. Đồng bộ Random Seed:
+        // - Khi chơi Online: Seed lấy theo Tên phòng để tất cả người chơi trong cùng phòng sinh đồ giống hệt nhau 100%.
+        // - Khi chơi Offline: Tạo seed ngẫu nhiên theo thời gian thực để mỗi ván chơi sinh đồ mới mẻ khác nhau.
+        int seed = System.Environment.TickCount ^ System.Guid.NewGuid().GetHashCode();
         if (FusionConnectionManager.Instance != null &&
+            FusionConnectionManager.Instance.IsInGameplaySession &&
             FusionConnectionManager.Instance.currentRunner != null &&
             FusionConnectionManager.Instance.currentRunner.SessionInfo != null &&
             !string.IsNullOrEmpty(FusionConnectionManager.Instance.currentRunner.SessionInfo.Name))
@@ -134,6 +145,7 @@ public class SceneItemSpawner : MonoBehaviour
         if (chapterData.spawnableItems == null || chapterData.spawnableItems.Count == 0)
         {
             Debug.LogWarning($"[SceneItemSpawner] Chapter '{chapterData.chapterTitle}' không có Prefab nào trong danh sách spawnableItems.");
+            ScreenFader.FadeFromBlack(0.6f);
             return;
         }
 
@@ -147,6 +159,7 @@ public class SceneItemSpawner : MonoBehaviour
         if (targetPositions.Count == 0)
         {
             Debug.LogWarning("[SceneItemSpawner] Không tìm thấy vị trí Spawn nào trong Scene!");
+            ScreenFader.FadeFromBlack(0.6f);
             return;
         }
 
@@ -157,6 +170,7 @@ public class SceneItemSpawner : MonoBehaviour
         }
 
         // 5. Tiến hành chọn Item theo Rarity và Instantiate tại tất cả các vị trí
+        int totalValue = 0;
         for (int i = 0; i < targetPositions.Count; i++)
         {
             Vector3 pos = targetPositions[i] + spawnOffset;
@@ -175,13 +189,49 @@ public class SceneItemSpawner : MonoBehaviour
                 if (itemComp != null)
                 {
                     itemComp.InitializeStats();
+                    totalValue += itemComp.GetPrice();
                 }
 
                 spawnedItems.Add(instance);
             }
         }
 
-        Debug.Log($"<color=cyan>[SceneItemSpawner] Đã spawn thành công {spawnedItems.Count} vật phẩm đồng bộ (Seed: {seed}) cho '{chapterData.chapterTitle}'!</color>");
+        // 6. Tính toán điểm mục tiêu (Target Point = Tổng giá trị - 25% = 75% tổng giá trị, làm tròn đẹp theo bội số 50: 300, 700, 750...)
+        calculatedTotalValue = totalValue;
+        float rawTarget = totalValue * 0.75f;
+        int roundedTarget = Mathf.RoundToInt(rawTarget / 50f) * 50;
+        if (roundedTarget <= 0 && rawTarget > 0)
+        {
+            roundedTarget = Mathf.Max(10, Mathf.RoundToInt(rawTarget / 10f) * 10);
+        }
+        calculatedTargetPoint = Mathf.Max(1, roundedTarget);
+        LastCalculatedTotalItemValue = calculatedTotalValue;
+        LastCalculatedTargetPoint = calculatedTargetPoint;
+
+        // 7. Cập nhật trực tiếp vào PlayerStats và UI_Manager trong Scene
+        UI_Manager ui = FindFirstObjectByType<UI_Manager>(FindObjectsInactive.Include);
+        if (ui != null && ui.playerStats != null)
+        {
+            ui.playerStats.totalpoint = calculatedTargetPoint;
+            if (ui.mainHUD != null)
+            {
+                ui.mainHUD.InitializeMaxValues(ui.playerStats);
+                ui.mainHUD.UpdateHUD(ui.playerStats);
+            }
+        }
+        else
+        {
+            PlayerStats stats = FindFirstObjectByType<PlayerStats>(FindObjectsInactive.Include);
+            if (stats != null)
+            {
+                stats.totalpoint = calculatedTargetPoint;
+            }
+        }
+
+        Debug.Log($"<color=cyan>[SceneItemSpawner] Đã spawn {spawnedItems.Count} vật phẩm (Seed: {seed}) cho '{chapterData.chapterTitle}'! Tổng giá trị: ${calculatedTotalValue} | Target Point (-25%): ${calculatedTargetPoint}</color>");
+
+        // 8. Chuyển cảnh mượt mà: Mở màn hình (Fade From Black) sau khi đã nạp và tính xong Target Point
+        ScreenFader.FadeFromBlack(0.6f);
     }
 
     /// <summary>

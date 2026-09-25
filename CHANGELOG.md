@@ -1667,6 +1667,193 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Ảnh hưởng**:
   - Khắc phục tình trạng lệch số lượng phòng; số slot chứa tối đa của phòng hiển thị và hoạt động khớp 100% với tùy chọn của Host khi tạo phòng.
 
+---
+
+### [2026-09-25 20:52] — fix(animation, network): freeze remote climb animation when standing still on ladder
+- **Tác vụ**:
+  - Cập nhật hàm `Render()` trong [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs):
+    - Khi `NetworkIsClimbing == true`, kiểm tra tốc độ leo `NetworkClimbSpeed`:
+      - Nếu `Mathf.Abs(NetworkClimbSpeed) > 0.01f`: gán `_remoteAnimator.speed = 1.0f` (chạy animation khi đang leo lên/xuống).
+      - Nếu `Mathf.Abs(NetworkClimbSpeed) <= 0.01f`: gán `_remoteAnimator.speed = 0f` (đóng băng animation tại frame hiện tại khi người chơi đứng im trên thang).
+    - Khi `NetworkIsClimbing == false` (rời khỏi thang): khôi phục `_remoteAnimator.speed = 1.0f` để các animation chạy/nhảy/ngồi hoạt động bình thường.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+- **Ảnh hưởng**:
+  - Khắc phục triệt để hiện tượng người chơi đứng im trên thang nhưng máy đối phương vẫn thấy animation leo liên tục do `NetworkMecanimAnimator` không tự đồng bộ thuộc tính `Animator.speed`.
+
+---
+
+### [2026-09-25 21:40] — feat(level, spawner): dynamic target point from spawned items and seamless loading fade
+- **Tác vụ**:
+  - **Loại bỏ biến `targetPoint` thủ công trong [ChapterSO.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ChapterSO.cs)**: Điểm mục tiêu giờ đây được tính toán động 100% dựa trên thực tế các vật phẩm được sinh ra trong màn chơi.
+  - **Nâng cấp [SceneItemSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/SceneItemSpawner.cs)**:
+    - Sau khi hoàn tất quá trình Instantiate toàn bộ vật phẩm theo seed đồng bộ:
+      - Tính tổng giá trị tiền của tất cả các vật phẩm đã sinh (`totalValue = sum(Item.GetPrice())`).
+      - Tự động tính điểm chỉ tiêu qua màn: $\text{TargetPoint} = \text{Tổng giá trị} - 25\% = 75\% \times \text{Tổng giá trị}$, đồng thời làm tròn đẹp theo **bội số 50** (ví dụ: `300`, `700`, `750`, `1200`...) bằng công thức `Mathf.RoundToInt(rawTarget / 50f) * 50`.
+      - Đồng bộ và cập nhật chỉ tiêu này vào `PlayerStats.totalpoint` và giao diện `MainHUD` (`0 / TargetPoint`).
+    - Lưu giữ giá trị static `LastCalculatedTargetPoint` và `LastCalculatedTotalItemValue` cho mọi hệ thống truy xuất.
+  - **Màn hình đen lúc load & Fade out khi tính toán xong**:
+    - Cập nhật [ScreenFader.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ScreenFader.cs): Trong `OnSceneLoaded`, nếu Scene có `SceneItemSpawner`, giữ nguyên màn hình đen (Overlay Alpha = 1) trong khi hệ thống nạp và tính toán chỉ tiêu.
+    - Khi [SceneItemSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/SceneItemSpawner.cs) hoàn tất sinh vật phẩm và cập nhật Target Point lên HUD, gọi `ScreenFader.FadeFromBlack(0.6f)` để chuyển cảnh mượt mà.
+  - **Cập nhật [PlayerStats.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerStats.cs) và [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs)**: Nạp `totalpoint` trực tiếp từ `SceneItemSpawner.LastCalculatedTargetPoint`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/ChapterSO.cs` (Modified — Removed `targetPoint`)
+  - `Assets/Scripts/Items/SceneItemSpawner.cs` (Modified — Added dynamic target point calculation & fade reveal)
+  - `Assets/Scripts/UI/ScreenFader.cs` (Modified — Hold black screen until item spawner completes)
+  - `Assets/Scripts/Player/PlayerStats.cs` (Modified — Initialized totalpoint from dynamic target point)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified — Applied dynamic target point on BindPlayer)
+  - `TaskList.txt` (Modified — Marked task done)
+- **Ảnh hưởng**:
+  - Hoạt động chính xác 100% trên cả **Chơi đơn (Offline)** và **Chơi nhiều người (Online Photon Fusion)** nhờ cơ chế Random Seed đồng bộ theo phòng. Màn chơi có số điểm mục tiêu luôn cân bằng hợp lý với số lượng và độ hiếm của vật phẩm thực tế sinh ra.
+
+---
+
+### [2026-09-25 22:04] — fix(item, sell): prevent duplicate double scoring (x2 points) and add HomeSellZone handler
+- **Tác vụ**:
+  - **Khắc phục lỗi cộng điểm x2 khi bán đồ**:
+    - **Nguyên nhân**: Trong chế độ Multiplayer hoặc khi vật phẩm có nhiều collider / va chạm liên tục, cả máy Host và máy Guest đều phát hiện `OnTriggerEnter` trên vật lý local và cùng gửi `RpcSyncSellItem`, dẫn đến điểm số bị cộng 2 lần.
+    - **Giải pháp**:
+      - Bổ sung `_soldItemPaths` HashSet và hàm `IsItemAlreadySold` trong [NetworkItemSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkItemSync.cs).
+      - Cập nhật [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs): `RpcSyncSellItem` tự động kiểm tra deduplication; nếu một vật phẩm đã được ghi nhận bán rồi thì mọi RPC trùng lặp gửi sau sẽ bị bỏ qua và không cộng điểm thêm lần nữa.
+  - **Nâng cấp cơ chế bán vật phẩm trong [Item.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Item.cs)**:
+    - Bổ sung phương thức `SellItem()`: ngay khi kích hoạt bán, lập tức vô hiệu hóa toàn bộ `Collider` trên vật phẩm để ngăn trigger liên hoàn trong cùng physics frame.
+    - Hỗ trợ cả `OnTriggerEnter` và `OnCollisionEnter` khi va chạm với tag `"home"`.
+  - **Tạo mới component [HomeSellZone.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/HomeSellZone.cs)**:
+    - Gắn vào vùng bán đồ (thùng xe / nhà / ô đích).
+    - Tự động nhận diện mọi vật phẩm mang tag `"item"` hoặc chứa component `Item` khi rơi vào vùng bán để thực hiện bán an toàn.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/Item.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkItemSync.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+  - `Assets/Scripts/Environment/HomeSellZone.cs` (New)
+- **Ảnh hưởng**:
+  - Đảm bảo điểm số màn chơi (Target Point & Current Point) được giữ nguyên vẹn 100%, không bị xáo trộn hay xóa mất code tính điểm cũ, đồng thời triệt tiêu hoàn toàn hiện tượng cộng điểm x2 khi bán đồ.
+
+---
+
+### [2026-09-25 22:09] — feat(audio, death): 1-shot player death sound and start police siren from second 3
+- **Tác vụ**:
+  - **Nâng cấp âm thanh khi chết (`PlayDeathSound`) trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs)**:
+    - Bổ sung trường `public AudioClip deathClip` trong Inspector cho phép kéo thả clip âm thanh kêu la / bị bắt.
+    - Sử dụng `PlayOneShot` phát đúng **1 lần duy nhất** ngay khoảnh khắc người chơi va chạm với NPC (`ExecuteDeath`).
+    - Tự động gắn và cấu hình `AudioSource` an toàn kết nối tới SFX AudioMixerGroup nếu chưa gán thủ công.
+  - **Điều chỉnh thời gian còi cảnh sát hú (`policeSirenStartTime = 3.0f`)**:
+    - **Từ 0s -> 3s**: Người chơi nằm gục, camera pull-back bao quát toàn cảnh.
+    - **Từ giây thứ 3 (7 giây còn lại)**: Còi cảnh sát bắt đầu hú với Fade In (to dần từ 3s -> 4.5s) và Fade Out (nhỏ dần từ 8.5s -> 10s trước khi hồi sinh).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+---
+
+### [2026-09-25 22:10] — fix(compile): resolve CS0246 missing HashSet in NetworkItemSync.cs
+- **Tác vụ**:
+  - Bổ sung `using System.Collections.Generic;` vào đầu file [NetworkItemSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkItemSync.cs).
+---
+
+### [2026-09-25 22:18] — fix(player, spawner): ensure exact spawnpoint positioning on scene start
+- **Tác vụ**:
+  - **Khắc phục lỗi vị trí Spawn ban đầu trong [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs)**:
+    - **Nguyên nhân**: Trước đây, nếu trong Scene Editor đã đặt sẵn GameObject `Player`, hàm `SpawnPlayer` phát hiện `existingPlayer` và thoát sớm (`return`) trước khi tính toán `targetSpawnPoint`, khiến người chơi bắt đầu ở vị trí ngẫu nhiên của Scene Editor thay vì `spawnPoints[0]`. Khi chết và hồi sinh thì `RespawnPlayer` mới đưa về đúng `spawnPoints`.
+    - **Giải pháp**:
+      - Đưa bước tính toán `targetSpawnPoint` (từ `spawnPoints` và index người chơi) lên đầu tiên.
+      - Nếu phát hiện `existingPlayer`, tạm thời tắt `CharacterController.enabled = false`, dịch chuyển về đúng `targetSpawnPoint.position`, gọi `Physics.SyncTransforms()` rồi bật lại `CharacterController`.
+      - Khi Instantiate/Spawn Player mới, cũng đảm bảo đồng bộ vị trí chính xác với `CharacterController`.
+- **Ảnh hưởng**:
+  - Người chơi ngay từ giây đầu tiên khi vào màn chơi sẽ xuất hiện đúng 100% tại vị trí cấu hình trong `spawnPoints[]`, đồng nhất tuyệt đối với vị trí sau khi hồi sinh.
+
+---
+
+### [2026-09-25 22:28] — feat(level, ui): implement EscapeZone with 3D camera-following point billboard & dynamic HUD escape button
+- **Tác vụ**:
+  - **Tạo mới component [EscapeZone.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/EscapeZone.cs)**:
+    - Gắn vào khu vực tẩu thoát / xe tẩu thoát (Exit Van / Truck).
+    - Tự động tạo và quản lý **3D Billboard Text** hiển thị điểm số (`$currPoint / $totalPoint`).
+    - **Hiệu ứng Billboard Camera-Follow**: Mỗi frame trong `LateUpdate()`, TextMeshPro 3D tự động xoay mặt đồng bộ theo góc quay `Camera.main`, giúp người chơi quan sát điểm số trực quan từ mọi hướng trong không gian 3D.
+    - Đổi màu trạng thái động: Vàng sáng khi đang thu thập và Xanh lá sáng kèm thông báo `★ READY TO ESCAPE ★` khi phòng đã đạt đủ chỉ tiêu.
+    - Phát hiện khi Local Player bước vào vùng thoát (`OnTriggerEnter` / `OnTriggerStay` / `OnTriggerExit`).
+  - **Cập nhật [MainHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MainHUD.cs)**:
+    - Ẩn hiển thị `currPointText` trên HUD 2D màn hình theo thiết kế mới (chuyển sang hiển thị 3D tại EscapeZone).
+    - Thêm nút `escapeButton` (chỉ hiển thị khi người chơi đang đứng trong EscapeZone VÀ phòng đã đạt đủ chỉ tiêu qua màn).
+    - Bấm nút Escape sẽ gọi `uiManager.EscapeToHome()`.
+  - **Cập nhật [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs)**:
+    - Bổ sung hàm `EscapeToHome()`: Tự động đánh dấu hoàn thành Chapter hiện tại, mở khóa Chapter kế tiếp và tải về sảnh chính (`HomeMenu`) qua màn hình fade mượt mà.
+  - **Cập nhật [TaskList.txt](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/TaskList.txt)**: Đánh dấu hoàn thành tính năng Escape Zone.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Environment/EscapeZone.cs` (New)
+  - `Assets/Scripts/UI/MainHUD.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `TaskList.txt` (Modified)
+---
+
+### [2026-09-25 22:30] — refactor(ui): make currPointText fully optional & null-safe in MainHUD
+- **Tác vụ**:
+  - Cập nhật [MainHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MainHUD.cs): Chuyển `currPointText` sang chế độ hoàn toàn tùy chọn (Optional).
+  - Thêm kiểm tra null-safety ở toàn bộ các hàm `Awake()`, `Start()`, `UpdateHUD()` và `AutoFindUIElements()`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/MainHUD.cs` (Modified)
+---
+
+### [2026-09-25 22:37] — fix(compile): resolve CS0246 missing StarterAssets in EscapeZone.cs
+- **Tác vụ**:
+  - Bổ sung `using StarterAssets;` vào đầu file [EscapeZone.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/EscapeZone.cs) để nhận diện class `PlayerController`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Environment/EscapeZone.cs` (Modified)
+---
+
+### [2026-09-25 22:42] — feat(level, ui): add 'DROP ITEM HERE' 3D billboard text & auto-hide after 3 items in HomeSellZone
+- **Tác vụ**:
+  - **Nâng cấp [HomeSellZone.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/HomeSellZone.cs)**:
+    - Tự động tạo TextMeshPro 3D hiển thị dòng chữ hướng dẫn: `▼ DROP ITEM HERE ▼` màu Cyan sáng lơ lửng trên vùng bán.
+    - **Camera-Following Billboard**: Tự động xoay mặt text theo `Camera.main.transform.rotation` trong `LateUpdate()`.
+    - **Bộ đếm ẩn tự động (`hideAfterItemCount = 3`)**: Mỗi khi có 1 vật phẩm được thả/bán vào vùng bán, biến `droppedItemCount` sẽ tăng lên. Khi đạt đủ 3 vật phẩm, dòng chữ hướng dẫn sẽ tự động tắt (`SetActive(false)`), giúp màn chơi gọn gàng và không gây vướng tầm nhìn.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Environment/HomeSellZone.cs` (Modified)
+---
+
+### [2026-09-25 22:58] — fix(network, spawner): resolve ExtensionOfNativeClass warning, dynamic offline item seed, and online NetworkTransform teleport
+- **Tác vụ**:
+  - **Khắc phục cảnh báo `ExtensionOfNativeClass` trong [NetworkItemSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkItemSync.cs)**:
+    - Chuyển `public static class NetworkItemSync` thành `public class NetworkItemSync` (với các hàm static) để Unity không nhận diện nhầm file script này là một native component bị thiếu attribute.
+  - **Random hóa vật phẩm khi chơi Offline trong [SceneItemSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/SceneItemSpawner.cs)**:
+    - Trước đây: Seed được hardcode cố định `12345` khi chơi offline, dẫn tới mỗi lần chơi offline đều ra đúng 11 món đồ với vị trí và giá trị y hệt nhau.
+    - Cải tiến: Khi chơi Offline, hệ thống tạo seed ngẫu nhiên theo thời gian thực (`Environment.TickCount ^ Guid.NewGuid()`), giúp mỗi lần chơi offline sinh ra vật phẩm, vị trí và độ hiếm ngẫu nhiên phong phú. Khi chơi Online, seed vẫn lấy theo Tên phòng để đồng bộ 100% giữa các máy.
+  - **Sửa lỗi Online Player bị snap về tọa độ (0, 0, 0)**:
+    - Cập nhật [ScenePlayerSpawner.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/ScenePlayerSpawner.cs) và [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs):
+    - Khi sinh nhân vật mạng qua `runner.Spawn()`, gọi `NetworkTransform.Teleport(targetPos, targetRot)` kết hợp tắt/bật `CharacterController` và `Physics.SyncTransforms()` trong `Spawned()`.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Network/NetworkItemSync.cs` (Modified)
+  - `Assets/Scripts/Items/SceneItemSpawner.cs` (Modified)
+  - `Assets/Scripts/Player/ScenePlayerSpawner.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+- **Ảnh hưởng**:
+  - Triệt tiêu hoàn toàn cảnh báo Unity, vật phẩm offline ngẫu nhiên phong phú theo từng trận đấu, và nhân vật khi chơi Online xuất hiện chính xác 100% tại các điểm `spawnPoints[]`.
+
+---
+
+### [2026-09-25 23:20] — fix(physics, ui, network): resolve kinematic velocity warnings, ladder price/kg on infohud, and item sell point accumulation
+- **Tác vụ**:
+  - **Sửa cảnh báo `Setting angular velocity of a kinematic body is not supported` trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) & [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs)**:
+    - Bổ sung kiểm tra an toàn `if (!rb.isKinematic)` trước khi gán `rb.linearVelocity = Vector3.zero` và `rb.angularVelocity = Vector3.zero` trong `ShowHeldModel()` và khi đồng bộ model cầm trên tay của remote player.
+  - **Kế thừa MonoBehaviour và tự động dọn sạch cache trong [NetworkItemSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkItemSync.cs)**:
+    - Kế thừa `MonoBehaviour` để loại bỏ hoàn toàn cảnh báo `missing class attribute 'ExtensionOfNativeClass'`.
+    - Tự động gọi `ResetSoldItems()` trong `Awake()` và `OnDestroy()`.
+  - **Khắc phục lỗi ném vật phẩm vào SellZone không được cộng điểm (`0/...`)**:
+    - Trước đây `SyncSellItem()` thêm `itemPath` vào `_soldItemPaths` trước khi gọi `RpcSyncSellItem()`, khiến `RpcSyncSellItem()` khi chạy trên chính máy gửi tưởng nhầm item đã được xử lý và lập tức `return` mà không cộng điểm vào `playerStats.currpoint`.
+    - Tách biệt logic: Đảm bảo cả chế độ Offline và Online đều cộng điểm vào `UI_Manager.playerStats.currpoint` một cách an toàn và dứt khoát.
+  - **Hiển thị Giá trị ($) và Cân nặng (Kg) của Thang trên [ItemInfoHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ItemInfoHUD.cs)**:
+    - Cập nhật [ItemInfoHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ItemInfoHUD.cs) để hiển thị Giá tiền ($) và Cân nặng (Kg) cho bất kỳ đối tượng tương tác nào có giá/cân nặng > 0 (kể cả khi `IsLootItem()` trả về `false` như Thang để phục vụ tương tác trèo).
+    - Cải tiến [LadderController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/LadderController.cs): `GetItemComponent()` tự động tìm kiếm `Item` ở cả component cha và component con.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkItemSync.cs` (Modified)
+  - `Assets/Scripts/UI/ItemInfoHUD.cs` (Modified)
+  - `Assets/Scripts/Items/LadderController.cs` (Modified)
+  - `Assets/Scripts/Environment/EscapeZone.cs` (Modified)
+- **Ảnh hưởng**:
+  - Loại bỏ hoàn toàn lỗi Physics Rigidbody và ExtensionOfNativeClass trong Unity Console.
+  - Thang và các vật phẩm đặc biệt hiển thị đầy đủ thông tin giá tiền và khối lượng trên Info HUD khi nhìn vào.
+  - Vùng bán điểm hoàn trả và cộng dồn điểm số chính xác 100% trong cả Offline lẫn Online.
+
 
 
 

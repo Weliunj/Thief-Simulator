@@ -758,8 +758,11 @@ public class HotbarManager : MonoBehaviour
         var rb = itemObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            if (!rb.isKinematic)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
             rb.isKinematic = true;
         }
         // Tắt collider để tránh cấn va đập với player

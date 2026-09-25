@@ -19,9 +19,13 @@ public class MainHUD : MonoBehaviour
     [Tooltip("Text hiển thị tải trọng (VD: 0/100Kg, 25/100Kg)")]
     public TextMeshProUGUI currKg;
 
-    [Header("🌟 Point UI (HiệnTại/TốiĐa)")]
-    [Tooltip("Text hiển thị điểm số (VD: 0/400, 150/400)")]
+    [Header("🌟 Point UI (Đã chuyển sang hiển thị tại EscapeZone)")]
+    [Tooltip("Text hiển thị điểm số (Đã ẩn theo yêu cầu thiết kế mới)")]
     public TextMeshProUGUI currPointText;
+
+    [Header("🚪 Escape UI")]
+    [Tooltip("Nút Tẩu Thoát / Về Sảnh (Chỉ hiện khi đứng trong EscapeZone và đã đủ chỉ tiêu)")]
+    public Button escapeButton;
 
     [Header("⏰ Time UI")]
     [Tooltip("Text hiển thị thời gian đếm ngược (VD: 04:59)")]
@@ -53,15 +57,39 @@ public class MainHUD : MonoBehaviour
             pauseButton.onClick.RemoveListener(OnPauseButtonClicked);
             pauseButton.onClick.AddListener(OnPauseButtonClicked);
         }
+
+        if (escapeButton != null)
+        {
+            escapeButton.onClick.RemoveListener(OnEscapeButtonClicked);
+            escapeButton.onClick.AddListener(OnEscapeButtonClicked);
+            escapeButton.gameObject.SetActive(false);
+        }
     }
 
     private void Start()
     {
         uiManager = FindFirstObjectByType<UI_Manager>();
+
+        // Ẩn Point Text trên Main HUD (Điểm số giờ hiển thị trực quan 3D tại EscapeZone)
+        if (currPointText != null)
+        {
+            currPointText.gameObject.SetActive(false);
+        }
     }
 
     /// <summary>
-    /// Tự động tìm kiếm các Text UI nếu chưa được gán thủ công trên Inspector
+    /// Bật hoặc ẩn nút Escape trên MainHUD
+    /// </summary>
+    public void SetEscapeButtonActive(bool active)
+    {
+        if (escapeButton != null && escapeButton.gameObject.activeSelf != active)
+        {
+            escapeButton.gameObject.SetActive(active);
+        }
+    }
+
+    /// <summary>
+    /// Tự động tìm kiếm các UI Elements nếu chưa được gán thủ công trên Inspector
     /// </summary>
     public void AutoFindUIElements()
     {
@@ -73,6 +101,26 @@ public class MainHUD : MonoBehaviour
             if (pauseButton == null) pauseButton = GetComponentInChildren<Button>(true);
         }
 
+        // Tự động tìm Escape Button
+        if (escapeButton == null)
+        {
+            Transform eBtn = transform.Find("EscapeBtn") ?? transform.Find("EscapeButton") ?? transform.Find("ExitBtn") ?? transform.Find("LeaveBtn");
+            if (eBtn != null) escapeButton = eBtn.GetComponent<Button>();
+
+            if (escapeButton == null)
+            {
+                foreach (var b in GetComponentsInChildren<Button>(true))
+                {
+                    string bName = b.gameObject.name.ToLower();
+                    if (bName.Contains("escape") || bName.Contains("exit") || bName.Contains("leave"))
+                    {
+                        escapeButton = b;
+                        break;
+                    }
+                }
+            }
+        }
+
         // Tự động tìm Alarm Audio
         if (alarmAudio == null)
         {
@@ -80,7 +128,7 @@ public class MainHUD : MonoBehaviour
         }
 
         // Tự động tìm TextMeshProUGUI trong các nhánh con
-        if (currStamina == null || currKg == null || currPointText == null || timeText == null)
+        if (currStamina == null || currKg == null || timeText == null)
         {
             var allTexts = GetComponentsInChildren<TextMeshProUGUI>(true);
             foreach (var t in allTexts)
@@ -97,11 +145,6 @@ public class MainHUD : MonoBehaviour
                 else if (currKg == null && (parentName.Contains("kg") || objName.Contains("kg") || parentName.Contains("weight")))
                 {
                     currKg = t;
-                }
-                // Point
-                else if (currPointText == null && (parentName.Contains("point") || objName.Contains("point")))
-                {
-                    currPointText = t;
                 }
                 // Time
                 else if (timeText == null && (parentName.Contains("time") || objName.Contains("time")))
@@ -225,6 +268,17 @@ public class MainHUD : MonoBehaviour
         if (uiManager != null)
         {
             uiManager.PauseGame();
+        }
+    }
+
+    private void OnEscapeButtonClicked()
+    {
+        PlayClickSound();
+
+        if (uiManager == null) uiManager = FindFirstObjectByType<UI_Manager>();
+        if (uiManager != null)
+        {
+            uiManager.EscapeToHome();
         }
     }
 

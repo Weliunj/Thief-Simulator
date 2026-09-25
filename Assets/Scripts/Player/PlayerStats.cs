@@ -215,7 +215,11 @@ public class PlayerStats : MonoBehaviour
         if (chapter != null)
         {
             maxTime = chapter.maxTime;
-            totalPoint = chapter.targetPoint;
+        }
+
+        if (SceneItemSpawner.LastCalculatedTargetPoint > 0)
+        {
+            totalPoint = SceneItemSpawner.LastCalculatedTargetPoint;
         }
 
         currentTime = maxTime;

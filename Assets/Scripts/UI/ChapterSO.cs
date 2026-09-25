@@ -20,8 +20,6 @@ public class ChapterSO : ScriptableObject
     [Header("⏰ Chapter Objectives & Time")]
     [Tooltip("Thời gian tối đa (giây) cho màn chơi")]
     public float maxTime = 300f;
-    [Tooltip("Điểm mục tiêu cần đạt để qua màn")]
-    public int targetPoint = 400;
 
     [Header("🎁 Spawnable Items")]
     [Tooltip("Danh sách các Prefab vật phẩm có thể xuất hiện trong Chapter này")]

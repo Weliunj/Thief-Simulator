@@ -71,8 +71,11 @@ public class NetworkPlayerSync : NetworkBehaviour
             var rb = _remoteHeldInstance.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                rb.linearVelocity = Vector3.zero;
-                rb.angularVelocity = Vector3.zero;
+                if (!rb.isKinematic)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
                 rb.isKinematic = true;
             }
 
@@ -249,7 +252,24 @@ public class NetworkPlayerSync : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.All)]
     public void RpcSyncSellItem(string itemHierarchyPath, int earnedPoints, string itemName)
     {
-        // 1. Cộng điểm đồng bộ 100% cho mọi người chơi trong phòng
+        // 1. Kiểm tra chống cộng điểm x2 khi nhiều máy gửi RPC cùng lúc
+        if (!string.IsNullOrEmpty(itemHierarchyPath))
+        {
+            if (NetworkItemSync.IsItemAlreadySold(itemHierarchyPath))
+            {
+                // Item này đã được cộng điểm rồi -> Chỉ đảm bảo GameObject bị ẩn/hủy nếu còn tồn tại
+                GameObject existItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+                if (existItem != null)
+                {
+                    existItem.SetActive(false);
+                    Destroy(existItem);
+                }
+                return;
+            }
+            NetworkItemSync.MarkItemAsSold(itemHierarchyPath);
+        }
+
+        // 2. Cộng điểm đồng bộ 100% cho mọi người chơi trong phòng
         UI_Manager ui = FindFirstObjectByType<UI_Manager>();
         if (ui != null && ui.playerManager != null)
         {
@@ -257,10 +277,10 @@ public class NetworkPlayerSync : NetworkBehaviour
             Debug.Log($"<color=green>[NetworkPlayerSync] Đã bán '{itemName}' (+${earnedPoints}). Điểm phòng: {ui.playerManager.currpoint}/{ui.playerManager.totalpoint}</color>");
         }
 
-        // 2. Hiện banner thông báo nổi trên màn hình
+        // 3. Hiện banner thông báo nổi trên màn hình
         GameStatusHUD.Show($"Sold {itemName} ( +${earnedPoints} )", 2.5f);
 
-        // 3. Ẩn & hủy vật phẩm trên tất cả các máy
+        // 4. Ẩn & hủy vật phẩm trên tất cả các máy
         if (!string.IsNullOrEmpty(itemHierarchyPath))
         {
             GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
@@ -505,6 +525,41 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
             SetNameTagVisible(showForLocalPlayer);
 
             ConfigureLocalNetworkTransform();
+
+            // Đặt vị trí xuất phát chính xác từ ScenePlayerSpawner
+            ScenePlayerSpawner spawner = FindFirstObjectByType<ScenePlayerSpawner>();
+            if (spawner != null && spawner.spawnPoints != null && spawner.spawnPoints.Count > 0)
+            {
+                int targetIdx = 0;
+                if (Object != null && Object.IsValid)
+                {
+                    targetIdx = Mathf.Abs(Object.InputAuthority.PlayerId) % spawner.spawnPoints.Count;
+                }
+                else if (Runner != null)
+                {
+                    targetIdx = Mathf.Abs(Runner.LocalPlayer.PlayerId) % spawner.spawnPoints.Count;
+                }
+
+                if (targetIdx < spawner.spawnPoints.Count && spawner.spawnPoints[targetIdx] != null)
+                {
+                    Vector3 targetPos = spawner.spawnPoints[targetIdx].position;
+                    Quaternion targetRot = spawner.spawnPoints[targetIdx].rotation;
+
+                    var nt = GetComponent<NetworkTransform>();
+                    if (characterController != null) characterController.enabled = false;
+
+                    transform.position = targetPos;
+                    transform.rotation = targetRot;
+
+                    if (nt != null)
+                    {
+                        nt.Teleport(targetPos, targetRot);
+                    }
+
+                    Physics.SyncTransforms();
+                    Debug.Log($"<color=cyan>[NetworkPlayerSync] Đã teleport Local Player về SpawnPoint [{targetIdx}] tại {targetPos}!</color>");
+                }
+            }
 
             // Cập nhật skin cho chính mình
             ApplySkin(CharacterSkinIndex, NetworkIsMale);
@@ -846,6 +901,14 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
                 if (NetworkIsClimbing)
                 {
                     _remoteAnimator.SetFloat("ClimbSpeed", NetworkClimbSpeed);
+                    _remoteAnimator.speed = Mathf.Abs(NetworkClimbSpeed) > 0.01f ? 1.0f : 0f;
+                }
+                else
+                {
+                    if (_remoteAnimator.speed <= 0.01f)
+                    {
+                        _remoteAnimator.speed = 1.0f;
+                    }
                 }
             }
         }

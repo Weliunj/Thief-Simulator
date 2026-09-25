@@ -133,25 +133,12 @@ public class ScenePlayerSpawner : MonoBehaviour
         bool isMultiplayer = FusionConnectionManager.Instance != null &&
                              FusionConnectionManager.Instance.IsInGameplaySession;
 
-        // 1. Kiểm tra tránh sinh trùng lặp nếu đã có Player trong Scene (CHỈ ÁP DỤNG OFFLINE)
-        if (!isMultiplayer && preventDuplicateIfPlayerExists)
-        {
-            GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
-            if (existingPlayer != null && existingPlayer != spawnedPlayerInstance)
-            {
-                Debug.Log($"[ScenePlayerSpawner] Đã phát hiện Player '{existingPlayer.name}' trong Scene. Bỏ qua sinh mới.");
-                spawnedPlayerInstance = existingPlayer;
-                SetupCameraAndUI(spawnedPlayerInstance);
-                return spawnedPlayerInstance;
-            }
-        }
-
-        // 2. Xác định điểm xuất phát (Phân bổ vị trí khác nhau cho từng người chơi khi Multiplayer)
+        // 1. Xác định điểm xuất phát từ danh sách spawnPoints (Phân bổ vị trí khác nhau cho từng người chơi khi Multiplayer)
         Transform targetSpawnPoint = transform;
         if (spawnPoints != null && spawnPoints.Count > 0)
         {
             int targetIdx = 0;
-            if (isMultiplayer)
+            if (isMultiplayer && FusionConnectionManager.Instance.currentRunner != null)
             {
                 var runner = FusionConnectionManager.Instance.currentRunner;
                 targetIdx = Mathf.Abs(runner.LocalPlayer.PlayerId) % spawnPoints.Count;
@@ -171,6 +158,33 @@ public class ScenePlayerSpawner : MonoBehaviour
                         break;
                     }
                 }
+            }
+        }
+
+        Vector3 spawnPos = targetSpawnPoint.position;
+        Quaternion spawnRot = targetSpawnPoint.rotation;
+
+        // 2. Kiểm tra nếu trong Scene đã có sẵn Player (CHỈ ÁP DỤNG OFFLINE) -> Dịch chuyển về đúng spawnPoints
+        if (!isMultiplayer && preventDuplicateIfPlayerExists)
+        {
+            GameObject existingPlayer = GameObject.FindGameObjectWithTag("Player");
+            if (existingPlayer != null && existingPlayer != spawnedPlayerInstance)
+            {
+                Debug.Log($"[ScenePlayerSpawner] Đã phát hiện Player '{existingPlayer.name}' trong Scene. Đặt lại đúng vị trí spawn {spawnPos}.");
+                spawnedPlayerInstance = existingPlayer;
+
+                // Tắt CharacterController để dịch chuyển vị trí chính xác không bị kẹt va chạm
+                CharacterController ccExisting = spawnedPlayerInstance.GetComponent<CharacterController>();
+                if (ccExisting != null) ccExisting.enabled = false;
+
+                spawnedPlayerInstance.transform.position = spawnPos;
+                spawnedPlayerInstance.transform.rotation = spawnRot;
+                Physics.SyncTransforms();
+
+                if (ccExisting != null) ccExisting.enabled = true;
+
+                SetupCameraAndUI(spawnedPlayerInstance);
+                return spawnedPlayerInstance;
             }
         }
 
@@ -216,9 +230,6 @@ public class ScenePlayerSpawner : MonoBehaviour
         }
 
         // 5. Spawn Player (Fusion Multiplayer nếu đang kết nối phòng, hoặc Instantiate nếu chơi Offline)
-        Vector3 spawnPos = targetSpawnPoint.position;
-        Quaternion spawnRot = targetSpawnPoint.rotation;
-
         if (isMultiplayer)
         {
             var runner = FusionConnectionManager.Instance.currentRunner;
@@ -242,6 +253,21 @@ public class ScenePlayerSpawner : MonoBehaviour
 
         if (spawnedPlayerInstance == null) return null;
         spawnedPlayerInstance.name = prefabToInstantiate.name;
+
+        // Đảm bảo vị trí chính xác trên CharacterController & NetworkTransform
+        CharacterController ccNew = spawnedPlayerInstance.GetComponent<CharacterController>();
+        if (ccNew != null) ccNew.enabled = false;
+        spawnedPlayerInstance.transform.position = spawnPos;
+        spawnedPlayerInstance.transform.rotation = spawnRot;
+
+        var ntNew = spawnedPlayerInstance.GetComponent<NetworkTransform>();
+        if (ntNew != null)
+        {
+            ntNew.Teleport(spawnPos, spawnRot);
+        }
+
+        Physics.SyncTransforms();
+        if (ccNew != null) ccNew.enabled = true;
 
         // 6. Nạp dữ liệu PlayerSO vào PlayerStats & PlayerController
         PlayerController pc = spawnedPlayerInstance.GetComponent<PlayerController>();

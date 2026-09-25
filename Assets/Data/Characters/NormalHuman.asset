@@ -14,11 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSO
   characterId: char_01
   characterName: Normal Human
-  avatar: {fileID: 0}
-  description: A balanced and agile all-rounder thief. Standard stats across the board, ideal for any beginner heist.
+  maleAvatar: {fileID: 1874408292, guid: ede48b5bf690b7747bdb8ad5a6cdbe3c, type: 3}
+  femaleAvatar: {fileID: -1035408496, guid: 58f5ba33cc0d9ca41b0492072b30a938, type: 3}
+  description: A balanced and agile all-rounder thief. Standard stats across the
+    board, ideal for any beginner heist.
   characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
   isUnlockedByDefault: 1
   unlockPrice: 0
+  maleMesh: {fileID: 4300000, guid: 2f61417073545d64d95684bfd769baa1, type: 2}
+  femaleMesh: {fileID: 4300000, guid: ab82583a73fbab045b54cbc29635a6ab, type: 2}
   maleMeshes:
   - {fileID: 4300000, guid: 2f61417073545d64d95684bfd769baa1, type: 2}
   - {fileID: 4300000, guid: 2bb6ae854329f6546b214b7b94b89f8c, type: 2}
@@ -34,7 +38,7 @@ MonoBehaviour:
   baseCrouchSpeed: 1.3
   baseJumpHeight: 1
   baseMaxStamina: 10
-  staminaDepletionRate: 3
-  staminaRegenRate: 2
+  staminaDepletionRate: 1.5
+  staminaRegenRate: 1.5
   staminaRegenCooldown: 1
-  baseMaxWeight: 30
+  baseMaxWeight: 40

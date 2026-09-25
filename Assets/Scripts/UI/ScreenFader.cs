@@ -53,7 +53,13 @@ public class ScreenFader : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Khi Scene mới tải xong: Nếu màn hình đang đen thì mờ dần ra (Fade From Black)
+        // Nếu Scene có SceneItemSpawner, giữ màn hình đen và chờ SceneItemSpawner spawn xong + tính Target Point mới mờ dần ra
+        if (FindFirstObjectByType<SceneItemSpawner>(FindObjectsInactive.Include) != null)
+        {
+            return;
+        }
+
+        // Khi Scene mới tải xong (Menu, Intro, v.v.): Nếu màn hình đang đen thì mờ dần ra (Fade From Black)
         if (canvasGroup != null && canvasGroup.alpha > 0.01f)
         {
             FadeFromBlack(0.6f);

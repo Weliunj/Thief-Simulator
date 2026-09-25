@@ -14,12 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSO
   characterId: char_03
   characterName: Strong Human
-  avatar: {fileID: 0}
+  maleAvatar: {fileID: 1193821354, guid: 7773233546415354fb706d9cc05a544e, type: 3}
+  femaleAvatar: {fileID: 1897468992, guid: 05112ecf63ddf7f4ea6af3439ef87d5e, type: 3}
   description: An elite powerhouse thief superior in every aspect, boasting top-tier
     sprint speed, high stamina, and supreme carry capacity.
   characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
   isUnlockedByDefault: 0
   unlockPrice: 3000
+  maleMesh: {fileID: 4300000, guid: bf560778e8c9e3b40ba95d0cc63a3665, type: 2}
+  femaleMesh: {fileID: 4300000, guid: b2c78190d09fe4b41a37a36872fc2985, type: 2}
   maleMeshes:
   - {fileID: 4300000, guid: bf560778e8c9e3b40ba95d0cc63a3665, type: 2}
   - {fileID: 4300000, guid: 039076ca34355b24ab73eec2514f950b, type: 2}
@@ -35,7 +38,7 @@ MonoBehaviour:
   baseCrouchSpeed: 1.5
   baseJumpHeight: 1.1
   baseMaxStamina: 12
-  staminaDepletionRate: 3
-  staminaRegenRate: 2
+  staminaDepletionRate: 1.5
+  staminaRegenRate: 1.5
   staminaRegenCooldown: 1
   baseMaxWeight: 80
