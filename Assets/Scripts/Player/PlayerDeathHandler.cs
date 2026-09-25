@@ -54,6 +54,12 @@ public class PlayerDeathHandler : MonoBehaviour
             cameraTarget = playerController.CinemachineCameraTarget.transform;
         }
 
+        if (playerModel == null)
+        {
+            var smr = GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (smr != null) playerModel = smr.gameObject;
+        }
+
         if (cameraTarget != null)
         {
             originalCameraTargetLocalPos = cameraTarget.localPosition;
@@ -123,10 +129,26 @@ public class PlayerDeathHandler : MonoBehaviour
             playerStats.currweight = 0;
         }
 
-        // 1. Đảm bảo hiển thị Full Model Player
+        // 1. Đảm bảo hiển thị Full Model Player (bật lại tất cả SkinnedMeshRenderer và Renderer của chính mình)
         if (playerModel != null)
         {
             playerModel.SetActive(true);
+        }
+
+        var netSync = GetComponent<NetworkPlayerSync>();
+        if (netSync != null)
+        {
+            netSync.SetLocalMeshVisibility(true);
+        }
+
+        var allRenderers = GetComponentsInChildren<Renderer>(true);
+        foreach (var r in allRenderers)
+        {
+            if (r != null)
+            {
+                r.enabled = true;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            }
         }
 
         // 2. Chạy Animation chết trên máy

@@ -1368,6 +1368,44 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Ảnh hưởng**:
   - Toàn bộ cơ chế nhặt/ném đồ, đèn pin, giao diện thông báo, còi cảnh sát và chết/bị bắt đều được đồng bộ hóa hoàn chỉnh qua mạng Photon Fusion.
 
+### [2026-09-25 13:45] — feat(ladder): Synchronize LadderController for Multiplayer (Lock, 3D Sound, Fall On Pickup, Place/Drop State)
+- **Tác vụ**:
+  - **Cơ chế Thang giống Cửa & Vật phẩm đa năng**: Thang có thể nhặt vào túi/hotbar, bán trong shop, thả rơi tự do hoặc dựng vào tường/sàn để leo trèo.
+  - **Khóa tương tác đơn người (Concurrency Lock)**: Chỉ cho phép 1 người leo thang cùng lúc (`isOccupied`). Người khác khi lại gần sẽ thấy thông báo *"Ladder is in use"* và bị chặn tương tác.
+  - **Đồng bộ Âm thanh leo thang 3D (Spatial Audio Sync)**: Khi người chơi di chuyển lên/xuống thang, âm thanh bước chân leo thang được phát đồng bộ qua `RpcSetLadderAudio` cho tất cả người chơi trong phạm vi 3D.
+  - **Tự động buông tay rơi tự do (Fall Off Ladder on Pickup/Drop)**: Nếu người chơi đang leo mà có người khác nhặt thang vào balo (hoặc thang bị ném/vứt/hủy kích hoạt), người đang leo sẽ lập tức buông tay (`FallOffLadder()`), bật lại vật lý trọng lực và rơi xuống tự nhiên mà không bị kẹt hay treo lơ lửng trên không trung.
+  - **Phân biệt & Đồng bộ Đặt (Place) vs Ném (Drop)**:
+    - **Đặt thang (Place)**: Khi nhắm vào chân tường/sàn, thang dựng thẳng đứng (`isPlaced = true`), khóa trục X/Z (`constraints`) và cho phép leo (`canClimb = true`).
+    - **Ném thang (Drop/Throw)**: Khi ném ra không trung, thang ở trạng thái vật lý tự do (`isPlaced = false`, `constraints = None`), chỉ có thể nhặt lại chứ không thể leo trèo.
+  - **Khóa trục thang khi đặt (Place Constraints) & Chống đẩy va chạm người chơi (Anti-push Collider)**:
+    - Khi **Đặt thang (Place)**: Khóa cứng `FreezePositionX | FreezePositionZ | FreezeRotation` để thang đứng thẳng vững chắc, không bao giờ bị xô lệch hay bị đẩy khi người chơi va chạm, nhưng **thả tự do trục Y** (`PositionY`) để thang tự động rơi tiếp đất thẳng đứng nếu được đặt trên không trung.
+    - Khi **Ném/Thả tự do (Drop)**: Bỏ qua va chạm vật lý giữa item và toàn bộ `PlayerController` (`IgnoreCollisionWithAllPlayers`), triệt tiêu hoàn toàn lỗi ném item trúng người chơi khác khiến item văng sai chỗ hoặc đẩy xô người chơi.
+  - **Sửa lỗi Guest không trèo được thang sau khi nhặt & đặt lại**:
+    - Nâng cấp `EnsureLocalPlayerReferences`: Đảm bảo `LadderController` luôn trỏ chính xác vào đúng thực thể Local Player của máy hiện tại thay vì trỏ nhầm sang Host (hoặc máy khác).
+  - **Sửa lỗi Nút Drop/Place bị hiện sai sau khi thoát khỏi Thang**:
+    - Trong [MobileActionButtons.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/MobileActionButtons.cs) (`SetClimbingMode`): Thay vì ép bật lại `dropButton` khi thoát thang, code kiểm tra xem Hotbar có đang thực sự chọn một vật phẩm không.
+    - Trong [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs): Đảm bảo tự động tắt `dropButton` mỗi frame nếu không có slot vật phẩm nào đang được chọn.
+  - **Đồng bộ Giá trị Vật phẩm & Điểm số khi Bán ($ Point Sync)**:
+    - **Khởi tạo Giá ngẫu nhiên đồng bộ (Deterministic Random Seed)**: Trong [Item.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/Item.cs) (`InitializeStats`), sử dụng `Random.InitState(gameObject.name.GetHashCode())` để đảm bảo Host và Guest trên mọi máy đều tạo ra cùng một giá trị `Price` và `kg` chính xác 100% cho mỗi vật phẩm trong Scene.
+    - **Đồng bộ Điểm bán qua Mạng (`RpcSyncSellItem`)**: Khi 1 người ném đồ vào vùng xe giao hàng (`home`), RPC `RpcSyncSellItem` được kích hoạt trên toàn phòng:
+      - Cộng chính xác và bằng nhau 100% số điểm (`currpoint += earnedPoints`) cho tất cả người chơi.
+      - Hiện banner thông báo nổi trên màn hình (`"Sold [ItemName] (+$[Price])!"`).
+      - Tự động hủy sạch đối tượng vật phẩm trên mọi máy và ngăn chặn kích hoạt bán lặp lại (`_isSold`).
+  - **Hiển thị Toàn thân Nhân vật khi Chết/Bị bắt (Death Model Visibility)**:
+    - Trong [PlayerDeathHandler.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Player/PlayerDeathHandler.cs) (`ExecuteDeath`): Khi người chơi bị bắt hoặc chết, hệ thống lập tức gọi `netSync.SetLocalMeshVisibility(true)` và kích hoạt lại toàn bộ `SkinnedMeshRenderer` / `Renderer` của bản thân (`shadowCastingMode = On`).
+    - Giúp người chơi ở góc nhìn FPV (vốn ẩn mesh của bản thân khi chơi) nhìn thấy rõ ràng toàn bộ cơ thể nhân vật và chuyển động ngã gục khi Camera kéo lùi ra sau.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified — Full mesh visibility on ExecuteDeath and Start fallback)
+  - `Assets/Scripts/Items/Item.cs` (Modified — Deterministic seed InitializeStats, _isSold guard, SyncSellItem on trigger)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified — Added RpcSyncSellItem)
+  - `Assets/Scripts/Network/NetworkItemSync.cs` (Modified — Added SyncSellItem)
+  - `Assets/Scripts/Items/LadderController.cs` (Modified — EnsureUpright freeze X/Z/Rot, EnsureLocalPlayerReferences, clean SetPlaced reset, StartClimbing parameter)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified — Added IgnoreCollisionWithAllPlayers, Place vs Throw logic, customHoldOffset/Rotation, Update dropButton hide)
+  - `Assets/Scripts/Player/MobileActionButtons.cs` (Modified — Fix dropButton visibility in SetClimbingMode)
+- **Ảnh hưởng**:
+  - Khi chết hoặc bị bắt, toàn bộ người chơi (cả bản thân và người khác) đều thấy rõ mô hình 3D ngã gục cùng góc nhìn camera kéo lùi mượt mà.
+
+
 
 
 

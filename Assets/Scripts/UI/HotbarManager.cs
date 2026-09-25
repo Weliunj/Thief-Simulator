@@ -113,6 +113,8 @@ public class HotbarManager : MonoBehaviour
     private GameObject currentHeldModel;
     private List<Collider> disabledColliders = new List<Collider>();
     private bool isFirstFrameHeld = false;
+    private bool lastFoundObstacle = false;
+    private RaycastHit lastValidHit;
 
     void Awake()
     {
@@ -142,6 +144,32 @@ public class HotbarManager : MonoBehaviour
                 Destroy(itemHoldPoint.gameObject);
             }
             itemHoldPoint = null;
+        }
+    }
+
+    /// <summary>
+    /// Bỏ qua va chạm vật lý giữa vật phẩm và tất cả người chơi để chống đẩy văng/kẹt người khi ném/thả đồ
+    /// </summary>
+    public static void IgnoreCollisionWithAllPlayers(GameObject itemObj, bool ignore = true)
+    {
+        if (itemObj == null) return;
+        var itemColliders = itemObj.GetComponentsInChildren<Collider>(true);
+        if (itemColliders == null || itemColliders.Length == 0) return;
+
+        var allPlayers = FindObjectsByType<PlayerController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        foreach (var player in allPlayers)
+        {
+            if (player == null) continue;
+            var playerColliders = player.GetComponentsInChildren<Collider>(true);
+            foreach (var pCol in playerColliders)
+            {
+                if (pCol == null) continue;
+                foreach (var iCol in itemColliders)
+                {
+                    if (iCol == null || iCol == pCol) continue;
+                    Physics.IgnoreCollision(pCol, iCol, ignore);
+                }
+            }
         }
     }
 
@@ -270,6 +298,9 @@ public class HotbarManager : MonoBehaviour
                 break;
             }
 
+            lastFoundObstacle = foundObstacle;
+            lastValidHit = validHit;
+
             // Cập nhật icon nút Drop (Đặt vs Ném)
             UpdateDropButtonVisual(foundObstacle);
 
@@ -301,6 +332,10 @@ public class HotbarManager : MonoBehaviour
             if (placementIndicator != null && placementIndicator.activeSelf)
             {
                 placementIndicator.SetActive(false);
+            }
+            if (dropButton != null && dropButton.gameObject.activeSelf)
+            {
+                dropButton.gameObject.SetActive(false);
             }
         }
     }
@@ -738,10 +773,14 @@ public class HotbarManager : MonoBehaviour
                 disabledColliders.Add(c);
             }
         }
-        // Gắn vào socket và RESET TRIỆT ĐỂ local transform (tránh bị lệch chéo sau nhiều lần ném)
+        // Gắn vào socket và áp dụng Custom Hold Offset & Rotation nếu item có cài đặt riêng
+        Item itemData = itemObj.GetComponent<Item>() ?? itemObj.GetComponentInChildren<Item>();
+        Vector3 customPos = (itemData != null && itemData.useCustomHoldOffset) ? itemData.customHoldOffset : Vector3.zero;
+        Quaternion customRot = (itemData != null && itemData.useCustomHoldRotation) ? Quaternion.Euler(itemData.customHoldRotation) : Quaternion.identity;
+
         itemObj.transform.SetParent(holdSocket, false);
-        itemObj.transform.localPosition = Vector3.zero;
-        itemObj.transform.localRotation = Quaternion.identity;
+        itemObj.transform.localPosition = customPos;
+        itemObj.transform.localRotation = customRot;
         itemObj.transform.localScale = Vector3.one;
         // Bù trừ scale nếu Player cha bị scale khác (1,1,1)
         Vector3 parentLossy = holdSocket.lossyScale;
@@ -818,32 +857,71 @@ public class HotbarManager : MonoBehaviour
             foreach (var r in renderers) if (r != null) r.enabled = true;
             // Tách khỏi Socket
             itemObj.transform.SetParent(null);
-            // Đặt vị trí rơi ngay trước mặt
+
             Transform cam = (Camera.main != null) ? Camera.main.transform : (playerController != null ? playerController.transform : transform);
-            Vector3 dropPos = cam.position + (cam.forward * 0.8f);
-            Quaternion dropRot = Quaternion.identity;
+            Vector3 dropPos;
+            Quaternion dropRot;
+            Vector3 throwVelocity = Vector3.zero;
+            Vector3 throwAngularVel = Vector3.zero;
+
+            LadderController ladder = itemObj.GetComponent<LadderController>() ?? itemObj.GetComponentInChildren<LadderController>();
+            bool isLadder = ladder != null;
+            bool isLadderPlaced = false;
+
+            if (lastFoundObstacle && lastValidHit.collider != null)
+            {
+                // Hành động ĐẶT (PLACE)
+                dropPos = lastValidHit.point + (lastValidHit.normal * 0.1f);
+                dropRot = Quaternion.Euler(0f, cam.eulerAngles.y, 0f);
+                isLadderPlaced = true;
+                if (ladder != null)
+                {
+                    ladder.SetPlaced(true);
+                }
+            }
+            else
+            {
+                // Hành động NÉM / THẢ (THROW / DROP)
+                dropPos = cam.position + (cam.forward * 0.8f);
+                dropRot = Quaternion.Euler(0f, cam.eulerAngles.y, 0f);
+                isLadderPlaced = false;
+                if (ladder != null)
+                {
+                    ladder.SetPlaced(false);
+                }
+                else
+                {
+                    IgnoreCollisionWithAllPlayers(itemObj, true);
+                }
+            }
+
             itemObj.transform.position = dropPos;
             itemObj.transform.rotation = dropRot;
             itemObj.transform.localScale = Vector3.one;
             itemObj.SetActive(true);
-            // Áp dụng lực ném chuẩn theo hướng Camera Forward
+
+            // Áp dụng lực vật lý
             Rigidbody rb = itemObj.GetComponent<Rigidbody>();
-            Vector3 throwVelocity = Vector3.zero;
-            Vector3 throwAngularVel = Vector3.zero;
             if (rb != null)
             {
                 rb.isKinematic = false;
                 rb.WakeUp();
-                Vector3 forceDirection = cam.forward * 4.5f + Vector3.up * 1.5f;
-                rb.linearVelocity = forceDirection;
-                rb.angularVelocity = Random.insideUnitSphere * 2f;
-                throwVelocity = rb.linearVelocity;
-                throwAngularVel = rb.angularVelocity;
+                if (isLadderPlaced)
+                {
+                    rb.linearVelocity = Vector3.zero;
+                    rb.angularVelocity = Vector3.zero;
+                }
+                else
+                {
+                    Vector3 forceDirection = cam.forward * 4.5f + Vector3.up * 1.5f;
+                    rb.linearVelocity = forceDirection;
+                    rb.angularVelocity = Random.insideUnitSphere * 2f;
+                    throwVelocity = rb.linearVelocity;
+                    throwAngularVel = rb.angularVelocity;
+                }
             }
-            // Đồng bộ thả item qua mạng
-            LadderController ladder = itemObj.GetComponent<LadderController>() ?? itemObj.GetComponentInChildren<LadderController>();
-            bool isLadder = ladder != null;
-            bool isLadderPlaced = (isLadder && ladder != null) ? ladder.isPlaced : false;
+
+            // Đồng bộ thả/đặt item qua mạng
             NetworkItemSync.SyncDropItem(itemObj, dropPos, dropRot, throwVelocity, throwAngularVel, isLadder, isLadderPlaced);
             // Trừ khối lượng balo & xóa khỏi danh sách inventory của Player
             EnsureLocalPlayerController();

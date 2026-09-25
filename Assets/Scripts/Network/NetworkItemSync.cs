@@ -71,6 +71,63 @@ public static class NetworkItemSync
     }
 
     /// <summary>
+    /// Đồng bộ trạng thái thang đang có người leo hay không (Khóa tương tác tránh 2 người leo cùng lúc)
+    /// </summary>
+    public static void SyncLadderOccupied(GameObject itemObj, bool isOccupied)
+    {
+        if (itemObj == null) return;
+
+        NetworkPlayerSync localSync = GetLocalPlayerSync();
+        if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
+        {
+            string itemPath = GetGameObjectPath(itemObj);
+            localSync.RpcSetLadderOccupied(itemPath, isOccupied);
+        }
+    }
+
+    /// <summary>
+    /// Đồng bộ âm thanh bước chân leo thang 3D cho những người xung quanh nghe thấy
+    /// </summary>
+    public static void SyncLadderAudio(GameObject itemObj, bool isPlaying)
+    {
+        if (itemObj == null) return;
+
+        NetworkPlayerSync localSync = GetLocalPlayerSync();
+        if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
+        {
+            string itemPath = GetGameObjectPath(itemObj);
+            localSync.RpcSetLadderAudio(itemPath, isPlaying);
+        }
+    }
+
+    /// <summary>
+    /// Đồng bộ bán vật phẩm khi ném/đưa vào xe (Giao hàng) cho toàn bộ người chơi trong phòng
+    /// </summary>
+    public static void SyncSellItem(GameObject itemObj, int earnedPoints, string itemName)
+    {
+        if (itemObj == null) return;
+
+        NetworkPlayerSync localSync = GetLocalPlayerSync();
+        if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
+        {
+            string itemPath = GetGameObjectPath(itemObj);
+            localSync.RpcSyncSellItem(itemPath, earnedPoints, itemName);
+        }
+        else
+        {
+            // Fallback khi chơi Offline / Solo
+            UI_Manager ui = Object.FindFirstObjectByType<UI_Manager>();
+            if (ui != null && ui.playerManager != null)
+            {
+                ui.playerManager.currpoint += earnedPoints;
+            }
+            GameStatusHUD.Show($"Sold {itemName} (+${earnedPoints})!", 2.5f);
+            itemObj.SetActive(false);
+            Object.Destroy(itemObj);
+        }
+    }
+
+    /// <summary>
     /// Tìm kiếm GameObject theo đường dẫn Hierarchy hoặc tìm theo tên duy nhất kể cả khi Object đang SetActive(false)
     /// </summary>
     public static GameObject FindSceneObjectByPath(string hierarchyPath)

@@ -83,6 +83,8 @@ public class LadderController : MonoBehaviour, IInteractable
     [Tooltip("Đánh dấu thang đã được đặt cẩn thận (Place) hay chỉ bị vứt/ném tự do (Drop). Chỉ thang đã Place mới cho phép tương tác leo trèo.")]
     public bool isPlaced = true;
     public bool isClimbing = false;
+    [Tooltip("Trạng thái thang đang có người leo hay không (Khóa tương tác tránh 2 người leo cùng lúc)")]
+    public bool isOccupied = false;
 
     private PlayerController playerController;
     private StarterAssetsInputs starterInputs;
@@ -95,6 +97,7 @@ public class LadderController : MonoBehaviour, IInteractable
     private float climbNormalizedTime = 0f;
     private float climbProgress = 0f; // 0 = Chân thang (A), 1 = Đỉnh thang (B)
     private float reClimbCooldownTimer = 0f;
+    private bool _lastAudioMovingState = false;
 
     void Awake()
     {
@@ -108,7 +111,7 @@ public class LadderController : MonoBehaviour, IInteractable
         InitializeAudio();
         InitializePoints();
         FindPlayerReferences();
-        SetLadderCollisionsIgnored(true);
+        SetLadderCollisionsIgnored(false);
     }
 
     private void InitializeAudio()
@@ -131,12 +134,22 @@ public class LadderController : MonoBehaviour, IInteractable
 
     void OnEnable()
     {
-        EnsureUpright();
-        SetLadderCollisionsIgnored(true);
+        if (isPlaced)
+        {
+            EnsureUpright();
+        }
+        else
+        {
+            SetUprightLocked(false);
+            HotbarManager.IgnoreCollisionWithAllPlayers(gameObject, true);
+        }
+        EnsureLocalPlayerReferences();
+        SetLadderCollisionsIgnored(false);
     }
 
     /// <summary>
-    /// Đảm bảo thang luôn đứng thẳng 100%, khóa góc nghiêng X và Z để thang không bao giờ bị đổ ngã
+    /// Đảm bảo thang luôn đứng thẳng 100%, khóa góc nghiêng (X, Y, Z) và khóa di chuyển ngang (X, Z).
+    /// Trục Y được thả tự do để nếu thang đặt trên không sẽ tự rơi thẳng đứng xuống đất!
     /// </summary>
     public void EnsureUpright()
     {
@@ -146,33 +159,42 @@ public class LadderController : MonoBehaviour, IInteractable
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
             if (!rb.isKinematic)
             {
                 rb.angularVelocity = Vector3.zero;
+                rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
             }
         }
     }
 
     /// <summary>
     /// Thiết lập trạng thái thang đã được đặt (Place) hay ném/vứt tự do (Drop).
-    /// - isPlaced = true: Thang được dựng vào tường/sàn -> Khóa đứng thẳng và cho phép tương tác leo trèo.
+    /// - isPlaced = true: Thang được dựng vào tường/sàn -> Khóa vị trí X/Z & góc xoay, cho phép rơi theo trục Y nếu lơ lửng, cho phép leo trèo.
     /// - isPlaced = false: Thang bị ném tự do -> Vật lý tự do (None) và KHÔNG cho phép leo trèo (chỉ có thể nhặt).
     /// </summary>
     public void SetPlaced(bool placed)
     {
         isPlaced = placed;
+        canClimb = placed;
+        isOccupied = false;
+        isClimbing = false;
+        reClimbCooldownTimer = 0f;
         SetUprightLocked(placed);
-        if (!placed && isClimbing)
+        if (!placed)
         {
-            StopClimbing();
+            if (isClimbing)
+            {
+                FallOffLadder();
+            }
+            HotbarManager.IgnoreCollisionWithAllPlayers(gameObject, true);
         }
     }
 
     /// <summary>
     /// Bật/tắt chế độ khóa đứng thẳng:
-    /// - isLocked = true: Đặt vào tường/sàn -> Khóa trục X & Z để thang đứng vững không bị đổ.
-    /// - isLocked = false: Ném ra không gian -> Vật lý tự do (None), thang có thể xoay và lật đổ tự nhiên.
+    /// - isLocked = true: Đặt vào tường/sàn -> Khóa vị trí X/Z và mọi trục xoay để thang đứng vững không bị xô đẩy.
+    /// - isLocked = false: Ném ra không gian -> Vật lý tự do (None), thang có thể xoay và rơi tự nhiên.
     /// </summary>
     public void SetUprightLocked(bool isLocked)
     {
@@ -195,26 +217,54 @@ public class LadderController : MonoBehaviour, IInteractable
     {
         if (isClimbing)
         {
-            StopClimbing();
+            FallOffLadder();
         }
+        isOccupied = false;
+        _lastAudioMovingState = false;
+        ApplyClimbAudioState(false);
     }
 
-    private void FindPlayerReferences()
+    public void EnsureLocalPlayerReferences(PlayerController specificPlayer = null)
     {
-        if (playerController == null)
+        if (specificPlayer != null)
         {
-            playerController = FindFirstObjectByType<PlayerController>();
+            playerController = specificPlayer;
         }
+        else
+        {
+            bool isCurrentValid = false;
+            if (playerController != null)
+            {
+                var net = playerController.GetComponent<NetworkPlayerSync>();
+                if (net == null || net.IsLocalPlayer)
+                {
+                    isCurrentValid = true;
+                }
+            }
+
+            if (!isCurrentValid)
+            {
+                var allControllers = FindObjectsByType<PlayerController>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                foreach (var pc in allControllers)
+                {
+                    var net = pc.GetComponent<NetworkPlayerSync>();
+                    if (net == null || net.IsLocalPlayer)
+                    {
+                        playerController = pc;
+                        break;
+                    }
+                }
+                if (playerController == null && allControllers.Length > 0)
+                {
+                    playerController = allControllers[0];
+                }
+            }
+        }
+
         if (playerController != null)
         {
-            if (starterInputs == null)
-            {
-                starterInputs = playerController.GetComponent<StarterAssetsInputs>();
-            }
-            if (characterController == null)
-            {
-                characterController = playerController.GetComponent<CharacterController>();
-            }
+            starterInputs = playerController.GetComponent<StarterAssetsInputs>();
+            characterController = playerController.GetComponent<CharacterController>();
             if (!checkedAnimatorParams && playerController._animator != null)
             {
                 hasClimbSpeedParam = HasAnimatorParameter(playerController._animator, "ClimbSpeed");
@@ -230,6 +280,11 @@ public class LadderController : MonoBehaviour, IInteractable
             mainCam = Camera.main;
             if (mainCam == null) mainCam = FindFirstObjectByType<Camera>();
         }
+    }
+
+    private void FindPlayerReferences()
+    {
+        EnsureLocalPlayerReferences();
     }
 
     private bool HasAnimatorParameter(Animator anim, string paramName)
@@ -353,13 +408,15 @@ public class LadderController : MonoBehaviour, IInteractable
     /// <summary>
     /// Bắt đầu gắn người chơi vào thang
     /// </summary>
-    public void StartClimbing(Transform startPoint)
+    public void StartClimbing(Transform startPoint, PlayerController climbingPlayer = null)
     {
+        EnsureLocalPlayerReferences(climbingPlayer);
         if (!isPlaced || !canClimb || playerController == null || pointA == null || pointB == null || reClimbCooldownTimer > 0f) return;
-        if (playerController != null && !playerController.canClimb) return;
+        if (!playerController.canClimb) return;
 
-        FindPlayerReferences();
         isClimbing = true;
+        isOccupied = true;
+        NetworkItemSync.SyncLadderOccupied(gameObject, true);
         playerController.isClimbingLadder = true;
 
         if (mobileActions != null)
@@ -597,11 +654,22 @@ public class LadderController : MonoBehaviour, IInteractable
     }
 
     /// <summary>
-    /// Cập nhật phát/tạm dừng âm thanh bước chân leo thang:
-    /// - Đang di chuyển: Phát tiếp tục (hoặc unpause)
-    /// - Đứng im: Tạm dừng (Pause), giữ nguyên vị trí time để không bị reset nghe từ đầu
+    /// Cập nhật phát/tạm dừng âm thanh bước chân leo thang và đồng bộ qua mạng
     /// </summary>
     private void UpdateClimbAudio(bool isMoving)
+    {
+        if (_lastAudioMovingState != isMoving)
+        {
+            _lastAudioMovingState = isMoving;
+            ApplyClimbAudioState(isMoving);
+            NetworkItemSync.SyncLadderAudio(gameObject, isMoving);
+        }
+    }
+
+    /// <summary>
+    /// Áp dụng bật/tạm dừng âm thanh leo thang 3D (Được gọi từ local hoặc RPC mạng)
+    /// </summary>
+    public void ApplyClimbAudioState(bool isMoving)
     {
         if (audioSource == null || climbSound == null) return;
 
@@ -714,7 +782,10 @@ public class LadderController : MonoBehaviour, IInteractable
     public void StopClimbing()
     {
         isClimbing = false;
-        SetLadderCollisionsIgnored(true);
+        isOccupied = false;
+        NetworkItemSync.SyncLadderOccupied(gameObject, false);
+        NetworkItemSync.SyncLadderAudio(gameObject, false);
+        SetLadderCollisionsIgnored(false);
 
         // Dừng âm thanh leo thang và reset time playback về 0
         if (audioSource != null)
@@ -811,17 +882,17 @@ public class LadderController : MonoBehaviour, IInteractable
         failReason = "";
         if (!isPlaced)
         {
-            failReason = "Thang chưa được dựng";
+            failReason = "Thang chưa được dựng (Cannot climb)";
+            return false;
+        }
+        if (isOccupied || isClimbing)
+        {
+            failReason = "Ladder is in use";
             return false;
         }
         if (!canClimb || (player != null && !player.canClimb))
         {
             failReason = "Cannot climb";
-            return false;
-        }
-        if (isClimbing)
-        {
-            failReason = "Already climbing";
             return false;
         }
         if (reClimbCooldownTimer > 0f)
@@ -841,7 +912,7 @@ public class LadderController : MonoBehaviour, IInteractable
     public void Interact(PlayerController player)
     {
         if (!isPlaced) return;
-        if (playerController == null) playerController = player;
+        EnsureLocalPlayerReferences(player);
         if (pointA == null || pointB == null || reClimbCooldownTimer > 0f) return;
 
         // Xác định leo lên hay leo xuống dựa vào điểm gần người chơi hơn
@@ -849,7 +920,7 @@ public class LadderController : MonoBehaviour, IInteractable
         float distToB = Vector3.Distance(player.transform.position, pointB.position);
 
         Transform startPoint = (distToB < distToA) ? pointB : pointA;
-        StartClimbing(startPoint);
+        StartClimbing(startPoint, player);
     }
 
     private void OnDrawGizmos()

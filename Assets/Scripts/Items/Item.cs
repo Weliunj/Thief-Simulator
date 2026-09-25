@@ -32,16 +32,24 @@ public class Item : MonoBehaviour, IInteractable
     public bool useCustomHoldRotation = false;
     public Vector3 customHoldRotation = Vector3.zero;
 
+    private bool _isSold = false;
+
     void Awake()
     {
         InitializeStats();
     }
 
     /// <summary>
-    /// Khởi tạo và ngẫu nhiên hóa chỉ số mỗi khi màn chơi bắt đầu
+    /// Khởi tạo và ngẫu nhiên hóa chỉ số dựa trên Seed đồng bộ theo tên vật phẩm
+    /// Đảm bảo tất cả người chơi trong phòng đều nhận đúng 100% cùng mức giá và cân nặng cho cùng 1 item!
     /// </summary>
     public void InitializeStats()
     {
+        // Đồng bộ Seed ngẫu nhiên theo tên duy nhất của Object
+        int deterministicSeed = gameObject.name.GetHashCode();
+        Random.State oldState = Random.state;
+        Random.InitState(deterministicSeed);
+
         if (itemData != null)
         {
             var stats = itemData.GenerateRandomStats();
@@ -67,19 +75,17 @@ public class Item : MonoBehaviour, IInteractable
                 description = "A valuable item that can be collected.";
             }
         }
+
+        Random.state = oldState; // Khôi phục Random State mặc định
     }
 
     public void OnTriggerEnter(Collider other)
     {
+        if (_isSold) return;
         if (other != null && other.CompareTag("home"))
         {
-            UI_Manager ui = FindFirstObjectByType<UI_Manager>();
-            if (ui != null && ui.playerManager != null)
-            {
-                ui.playerManager.currpoint += (int)Price;
-                Debug.Log($"Đã giao vật phẩm! Điểm hiện tại: {ui.playerManager.currpoint} / {ui.playerManager.totalpoint}");
-            }
-            Destroy(gameObject);
+            _isSold = true;
+            NetworkItemSync.SyncSellItem(gameObject, Mathf.RoundToInt(Price), GetInteractableName());
         }
     }
 

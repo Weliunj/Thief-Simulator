@@ -76,10 +76,14 @@ public class NetworkPlayerSync : NetworkBehaviour
                 rb.isKinematic = true;
             }
 
-            // Gắn vào socket con của Player
+            // Gắn vào socket con của Player và áp dụng Custom Hold Offset & Rotation nếu có
+            Item itemComp = _remoteHeldInstance.GetComponent<Item>() ?? _remoteHeldInstance.GetComponentInChildren<Item>();
+            Vector3 customPos = (itemComp != null && itemComp.useCustomHoldOffset) ? itemComp.customHoldOffset : Vector3.zero;
+            Quaternion customRot = (itemComp != null && itemComp.useCustomHoldRotation) ? Quaternion.Euler(itemComp.customHoldRotation) : Quaternion.identity;
+
             _remoteHeldInstance.transform.SetParent(socket, false);
-            _remoteHeldInstance.transform.localPosition = Vector3.zero;
-            _remoteHeldInstance.transform.localRotation = Quaternion.identity;
+            _remoteHeldInstance.transform.localPosition = customPos;
+            _remoteHeldInstance.transform.localRotation = customRot;
 
             // Bù trừ Scale chống phóng to
             Vector3 parentLossy = socket.lossyScale;
@@ -160,7 +164,14 @@ public class NetworkPlayerSync : NetworkBehaviour
             foreach (var c in colliders) if (c != null) c.enabled = true;
 
             var ladder = targetItem.GetComponent<LadderController>() ?? targetItem.GetComponentInChildren<LadderController>();
-            if (ladder != null) ladder.SetPlaced(isLadderPlaced);
+            if (ladder != null)
+            {
+                ladder.SetPlaced(isLadderPlaced);
+            }
+            else if (!isLadderPlaced)
+            {
+                HotbarManager.IgnoreCollisionWithAllPlayers(targetItem, true);
+            }
 
             Rigidbody rb = targetItem.GetComponent<Rigidbody>();
             if (rb != null)
@@ -202,6 +213,62 @@ public class NetworkPlayerSync : NetworkBehaviour
         if (deathHandler != null)
         {
             deathHandler.ExecuteDeath(caughtBy, IsLocalPlayer);
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcSetLadderOccupied(string itemHierarchyPath, bool isOccupied)
+    {
+        if (string.IsNullOrEmpty(itemHierarchyPath)) return;
+        GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+        if (targetItem != null)
+        {
+            var ladder = targetItem.GetComponent<LadderController>() ?? targetItem.GetComponentInChildren<LadderController>();
+            if (ladder != null)
+            {
+                ladder.isOccupied = isOccupied;
+            }
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcSetLadderAudio(string itemHierarchyPath, bool isPlaying)
+    {
+        if (string.IsNullOrEmpty(itemHierarchyPath)) return;
+        GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+        if (targetItem != null)
+        {
+            var ladder = targetItem.GetComponent<LadderController>() ?? targetItem.GetComponentInChildren<LadderController>();
+            if (ladder != null)
+            {
+                ladder.ApplyClimbAudioState(isPlaying);
+            }
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcSyncSellItem(string itemHierarchyPath, int earnedPoints, string itemName)
+    {
+        // 1. Cộng điểm đồng bộ 100% cho mọi người chơi trong phòng
+        UI_Manager ui = FindFirstObjectByType<UI_Manager>();
+        if (ui != null && ui.playerManager != null)
+        {
+            ui.playerManager.currpoint += earnedPoints;
+            Debug.Log($"<color=green>[NetworkPlayerSync] Đã bán '{itemName}' (+${earnedPoints}). Điểm phòng: {ui.playerManager.currpoint}/{ui.playerManager.totalpoint}</color>");
+        }
+
+        // 2. Hiện banner thông báo nổi trên màn hình
+        GameStatusHUD.Show($"Sold {itemName} ( +${earnedPoints} )", 2.5f);
+
+        // 3. Ẩn & hủy vật phẩm trên tất cả các máy
+        if (!string.IsNullOrEmpty(itemHierarchyPath))
+        {
+            GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+            if (targetItem != null)
+            {
+                targetItem.SetActive(false);
+                Destroy(targetItem);
+            }
         }
     }
 

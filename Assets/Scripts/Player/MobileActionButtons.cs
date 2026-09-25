@@ -136,7 +136,20 @@ public class MobileActionButtons : MonoBehaviour
 
         if (sprintButton != null) sprintButton.gameObject.SetActive(!climbing);
         if (crouchButton != null) crouchButton.gameObject.SetActive(!climbing);
-        if (dropButton != null) dropButton.gameObject.SetActive(!climbing);
+
+        if (dropButton != null)
+        {
+            if (climbing)
+            {
+                dropButton.gameObject.SetActive(false);
+            }
+            else
+            {
+                var hotbar = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
+                bool hasHeldItem = (hotbar != null && hotbar.currentSelectedIndex >= 0 && hotbar.GetCurrentHeldModel() != null);
+                dropButton.gameObject.SetActive(hasHeldItem);
+            }
+        }
 
         if (jumpButtonImage == null)
         {
