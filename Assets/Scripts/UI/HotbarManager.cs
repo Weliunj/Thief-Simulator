@@ -349,12 +349,20 @@ public class HotbarManager : MonoBehaviour
         {
             if (hasObstacle)
             {
-                if (placeIcon != null) dropButtonIcon.sprite = placeIcon;
+                if (placeIcon != null)
+                {
+                    dropButtonIcon.sprite = placeIcon;
+                    dropButtonIcon.overrideSprite = placeIcon;
+                }
                 dropButtonIcon.rectTransform.localEulerAngles = new Vector3(0f, 0f, placeRotationZ);
             }
             else
             {
-                if (throwIcon != null) dropButtonIcon.sprite = throwIcon;
+                if (throwIcon != null)
+                {
+                    dropButtonIcon.sprite = throwIcon;
+                    dropButtonIcon.overrideSprite = throwIcon;
+                }
                 dropButtonIcon.rectTransform.localEulerAngles = new Vector3(0f, 0f, throwRotationZ);
             }
         }

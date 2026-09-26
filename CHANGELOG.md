@@ -1854,6 +1854,41 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Thang và các vật phẩm đặc biệt hiển thị đầy đủ thông tin giá tiền và khối lượng trên Info HUD khi nhìn vào.
   - Vùng bán điểm hoàn trả và cộng dồn điểm số chính xác 100% trong cả Offline lẫn Online.
 
+---
+
+### [2026-09-26 16:40] — refactor(ai, network): standalone adult guard & kid runner AI, photon fusion shared sync, local flashlight scaling, 3-tier audio, and navmesh safety
+- **Tác vụ**:
+  - **Tái cấu trúc kiến trúc AI độc lập (Standalone AI Architecture)**:
+    - Tối ưu hóa toàn bộ hệ thống AI thành 2 file chuyên biệt, độc lập: [AdultGuardNPC.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/AdultGuardNPC.cs) và [KidRunnerNPC.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/KidRunnerNPC.cs).
+    - Xóa bỏ các file phụ dư thừa (`BaseNPC.cs`, `NPCSensorySystem.cs`, `NPCPatrolController.cs`, `NPCCatchPlayerTrigger.cs`).
+  - **Đồng bộ mạng Photon Fusion (Shared Mode) & An toàn Offline**:
+    - Master Authority / Host phụ trách tính toán AI State Machine và NavMeshAgent.
+    - Đồng bộ `[Networked] NetworkSpeed` và `NetworkMotionSpeed` để kích hoạt hoạt ảnh mượt mà cho các client Remote.
+    - Kiểm tra an toàn `netSync.Object != null && netSync.Object.IsValid` để tránh `InvalidOperationException` khi chơi Offline hoặc test trong Editor.
+  - **Hệ thống Giác quan FOV & Co giãn Đèn pin Cục bộ (Local Flashlight Adaptation)**:
+    - Nón tầm nhìn FOV $100^\circ$ kết hợp Raycast Line-of-sight kiểm tra vật cản.
+    - Khi Player cúi người (Crouch): Tầm nhìn của NPC giảm $50\%$ (`crouchDistanceMultiplier = 0.5f`).
+    - `UpdateLocalFlashlight()`: Tự động co đèn pin của NPC từ $27\text{m}$ về $8\text{m}$ trên màn hình người chơi đang cúi mà không gây giật lag hay ảnh hưởng tầm nhìn của người chơi khác trong phòng.
+  - **Hệ thống Âm thanh 3 Tầng Độc Lập**:
+    - `footstepAudioSource`: Phát âm thanh bước chân 3D (hỗ trợ mảng 10 clips ngẫu nhiên + bắt animation event).
+    - `alertAudioSource`: Phát 1 lần `alertSound` khi bắt đầu rượt đuổi Player, khi nghe tiếng phá cửa / bẻ khóa thất bại, hoặc khi Kid gọi báo trộm.
+    - `themeAudioSource`: Phát loop `chaseThemeSound` / `panicThemeSound` (quản lý bởi cờ static chống trùng lặp âm thanh).
+  - **Chế độ Đứng im (Stationary / Stand Mode) & Kid Alert Mới**:
+    - Hỗ trợ `customStaySpot`: Tự động quay về đúng vị trí và khóa $100\%$ góc xoay ban đầu (`initialRotation`). Tự động quét tuần hoàn 2 bên ($-45^\circ \to 0^\circ \to +45^\circ \to 0^\circ$).
+    - Khi Kid gọi: Adult chỉ nhận tọa độ tức thời của Player lúc Kid gọi, phát âm thanh cảnh báo và chạy tới vị trí khả nghi đó kiểm tra vài giây rồi quay về điểm gốc (chứ không rượt đuổi Player liên tục).
+  - **Tương tác Môi trường & An toàn NavMesh**:
+    - Cập nhật [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/DoorController.cs) kiểm tra kép (Collider + khoảng cách thực) để tự động mở cửa cho cả Adult và Kid.
+    - Bổ sung `EnsureOnNavMesh()` với `NavMeshQueryFilter` theo `agentTypeID` và `HasReachedDestination()` loại bỏ triệt để lỗi `GetRemainingDistance` và `Warp`.
+    - Tối ưu [HotbarManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HotbarManager.cs) cơ chế raycast kiểm tra đặt thang (Place) và leo thang (Climb).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/AI/AdultGuardNPC.cs` (Rewritten & Refactored)
+  - `Assets/Scripts/AI/KidRunnerNPC.cs` (Rewritten & Refactored)
+  - `Assets/Scripts/Environment/DoorController.cs` (Modified)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+  - `TaskList.txt` (Modified)
+- **Ảnh hưởng**:
+  - Hệ thống AI chạy mượt mà, đồng bộ mạng ổn định, không còn bất kỳ lỗi compile hay runtime nào trong cả Offline và Online.
+
 
 
 

@@ -394,7 +394,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: f4b4888fd8b56ea44ad7155c6381cf51, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.466
+  m_Volume: 0.737
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -403,7 +403,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 9
+  MaxDistance: 17
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -715,9 +715,9 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 0.9019608, a: 1}
-  m_Intensity: 15
-  m_Range: 14
-  m_SpotAngle: 45.22479
+  m_Intensity: 50
+  m_Range: 18
+  m_SpotAngle: 51.16245
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
@@ -1086,7 +1086,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: fb23a8a3e6282cd44b7d8ce5e64ab9cf, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.531
+  m_Volume: 0.737
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -1095,7 +1095,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 8
+  MaxDistance: 17
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -1246,11 +1246,8 @@ GameObject:
   - component: {fileID: 4353044697492147510}
   - component: {fileID: 9138144726809913409}
   - component: {fileID: 9185099735431145007}
-  - component: {fileID: 1981457404986024204}
   - component: {fileID: 5096216470007822854}
-  - component: {fileID: 7603211403831218368}
-  - component: {fileID: 1026589475681073018}
-  - component: {fileID: 768691033362227812}
+  - component: {fileID: 8072253623230389928}
   m_Layer: 6
   m_Name: AdultGuard
   m_TagString: adult
@@ -1313,7 +1310,7 @@ NavMeshAgent:
   m_Speed: 3.5
   m_Acceleration: 100000
   avoidancePriority: 50
-  m_AngularSpeed: 120
+  m_AngularSpeed: 100000
   m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
@@ -1340,7 +1337,6 @@ MonoBehaviour:
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 9185099735431145007}
-  - {fileID: 1981457404986024204}
   - {fileID: 5096216470007822854}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &9185099735431145007
@@ -1360,53 +1356,6 @@ MonoBehaviour:
   SyncParent: 0
   _autoAOIOverride: 1
   DisableSharedModeInterpolation: 0
---- !u!114 &1981457404986024204
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7766913038848619475}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ac31f96fb2b26a241ba95c487d9208b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BaseNPC
-  npcName: Idiot Toidi
-  currentState: 0
-  walkSpeed: 2
-  runSpeed: 6.5
-  investigateSpeed: 2.5
-  rotationSpeed: 6
-  noiseReaction: 2
-  noiseInvestigateDuration: 2
-  investigateLookAngle: 50
-  audioSource: {fileID: 6779124504300156587}
-  chaseAudioSource: {fileID: 2842170108636459906}
-  alertSound: {fileID: 8300000, guid: fb23a8a3e6282cd44b7d8ce5e64ab9cf, type: 3}
-  chaseThemeClip: {fileID: 8300000, guid: f4b4888fd8b56ea44ad7155c6381cf51, type: 3}
-  suspectSound: {fileID: 8300000, guid: fb23a8a3e6282cd44b7d8ce5e64ab9cf, type: 3}
-  catchSound: {fileID: 0}
-  footstepAudioClips:
-  - {fileID: 8300000, guid: 72f526a6a9890f643a88e85a61c86c8a, type: 3}
-  - {fileID: 8300000, guid: 85016e0f2b01da248b9663dd49a161b0, type: 3}
-  - {fileID: 8300000, guid: 186de84b3207156479abe98f4958fed0, type: 3}
-  - {fileID: 8300000, guid: 1a91fcd19acf1e54bba0945d9f390849, type: 3}
-  - {fileID: 8300000, guid: 14e8a8d2158bec840b56c54f5266e692, type: 3}
-  - {fileID: 8300000, guid: 29841e7d5bbfb5b419c9ad16ca8bc4c1, type: 3}
-  - {fileID: 8300000, guid: dd1af302b8902684d9381de1f2d3a5af, type: 3}
-  - {fileID: 8300000, guid: 67c8b33e424ccdc4486edf538ab91c5a, type: 3}
-  - {fileID: 8300000, guid: 274649b0e221539409070ebf6c18918b, type: 3}
-  - {fileID: 8300000, guid: a3194b8bbc96ef84fab1f98f4b7dae3e, type: 3}
-  footstepAudioSource: {fileID: 2422203429990513826}
-  footstepVolume: 0.5
-  agent: {fileID: 4353044697492147510}
-  animator: {fileID: 8041902048808632325}
-  senses: {fileID: 768691033362227812}
-  patrolController: {fileID: 7603211403831218368}
-  _NetworkStateInt: 0
-  _NetworkSpeed: 0
-  _NetworkMotionSpeed: 1
 --- !u!114 &5096216470007822854
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1420,21 +1369,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AdultGuardNPC
   npcName: Idiot Toidi
-  currentState: 0
-  walkSpeed: 2
-  runSpeed: 6
-  investigateSpeed: 2.5
-  rotationSpeed: 15
-  noiseReaction: 2
-  noiseInvestigateDuration: 2
-  investigateLookAngle: 50
-  audioSource: {fileID: 6779124504300156587}
-  chaseAudioSource: {fileID: 2842170108636459906}
-  alertSound: {fileID: 8300000, guid: fb23a8a3e6282cd44b7d8ce5e64ab9cf, type: 3}
-  chaseThemeClip: {fileID: 8300000, guid: f4b4888fd8b56ea44ad7155c6381cf51, type: 3}
-  suspectSound: {fileID: 8300000, guid: fb23a8a3e6282cd44b7d8ce5e64ab9cf, type: 3}
-  catchSound: {fileID: 0}
-  footstepAudioClips:
+  agent: {fileID: 4353044697492147510}
+  animator: {fileID: 8041902048808632325}
+  flashlight: {fileID: 2986069340063676008}
+  footstepAudioSource: {fileID: 2422203429990513826}
+  FootstepAudioClips:
   - {fileID: 8300000, guid: 72f526a6a9890f643a88e85a61c86c8a, type: 3}
   - {fileID: 8300000, guid: 85016e0f2b01da248b9663dd49a161b0, type: 3}
   - {fileID: 8300000, guid: 186de84b3207156479abe98f4958fed0, type: 3}
@@ -1445,102 +1384,79 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 67c8b33e424ccdc4486edf538ab91c5a, type: 3}
   - {fileID: 8300000, guid: 274649b0e221539409070ebf6c18918b, type: 3}
   - {fileID: 8300000, guid: a3194b8bbc96ef84fab1f98f4b7dae3e, type: 3}
-  footstepAudioSource: {fileID: 2422203429990513826}
-  footstepVolume: 0.5
-  agent: {fileID: 4353044697492147510}
-  animator: {fileID: 8041902048808632325}
-  senses: {fileID: 768691033362227812}
-  patrolController: {fileID: 7603211403831218368}
-  _NetworkStateInt: 0
-  _NetworkSpeed: 0
-  _NetworkMotionSpeed: 1
-  currentTarget: {fileID: 0}
-  targetSwitchDistanceThreshold: 2.5
-  lostTargetDuration: 3.5
-  catchDistance: 0.65
-  catchOffset: {x: 0, y: 1, z: 0.2}
-  alertOtherNpcRadius: 4
-  alertScanInterval: 1
-  npcLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  catchTrigger: {fileID: 1026589475681073018}
---- !u!114 &7603211403831218368
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7766913038848619475}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d10c86376220c549886d663f8a30fcb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NPCPatrolController
-  patrolMode: 0
-  stationaryLeftAngle: -50
-  stationaryRightAngle: 50
-  stationaryCooldownMin: 3
-  stationaryCooldownMax: 6
-  wanderZoneBoundary: {fileID: 0}
-  wanderRadius: 20
-  wanderLookAroundChance: 0.3
-  wanderRestChance: 0.3
-  wanderRestDurationMin: 3
-  wanderRestDurationMax: 5
-  waypoints:
+  FootstepAudioVolume: 0.467
+  alertAudioSource: {fileID: 6779124504300156587}
+  alertSound: {fileID: 8300000, guid: fb23a8a3e6282cd44b7d8ce5e64ab9cf, type: 3}
+  themeAudioSource: {fileID: 2842170108636459906}
+  chaseThemeSound: {fileID: 8300000, guid: f4b4888fd8b56ea44ad7155c6381cf51, type: 3}
+  walkSpeed: 2
+  runSpeed: 7
+  returnSpeed: 2
+  stoppingDistanceThreshold: 0.5
+  currentMovementState: 1
+  wanderRadius: 22.54
+  minIdleTime: 2
+  maxIdleTime: 5
+  scanDuration: 1
+  scanRotationSpeed: 3
+  scanAngles:
+  - -45
+  - 0
+  - 45
+  patrolPoints:
   - {fileID: 0}
   - {fileID: 0}
-  waypointLookChance: 0.25
-  waypointWaitDuration: 2
---- !u!114 &1026589475681073018
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7766913038848619475}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1f4d2db71066e141a213267c28be21f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NPCCatchPlayerTrigger
-  npcName: Guard
-  catchByDistance: 1
-  catchDistance: 0.65
-  catchOffset: {x: 0, y: 1, z: 0.2}
-  catchCooldown: 2
-  catchSound: {fileID: 0}
-  audioSource: {fileID: 0}
---- !u!114 &768691033362227812
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7766913038848619475}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3cbee28ea0957134eae7cefd1aba4605, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NPCSensorySystem
-  fovAngle: 40
-  viewDistance: 18
+  fovAngle: 46.1
+  visionRange: 14
   crouchDistanceMultiplier: 0.5
-  eyeTransform: {fileID: 2494329913487503687}
-  eyeHeightOffset: 1.6
   obstacleMask:
     serializedVersion: 2
     m_Bits: 512
-  playerLayer:
+  flashlightNormalRange: 16
+  flashlightCrouchRange: 8
+  minChaseDuration: 5
+  maxChaseDuration: 10
+  targetDetected: 0
+  chaseDuration: 0
+  maxChaseRadius: 30.35
+  targetSwitchDistanceThreshold: 2.5
+  showDebugLogs: 1
+  showGizmos: 1
+  catchDistance: 0.65
+  catchOffset: {x: 0, y: 1, z: 0.2}
+  catchCooldown: 1
+  doorInvestigateDuration: 2.5
+  customStaySpot: {fileID: 0}
+  returnRotationSpeed: 5
+  returnAngleThreshold: 1
+  initialPosition: {x: 0, y: 0, z: 0}
+  initialRotation: {x: 0, y: 0, z: 0, w: 0}
+  isReturningToStayArea: 0
+  _NetworkSpeed: 0
+  _NetworkMotionSpeed: 1
+--- !u!136 &8072253623230389928
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7766913038848619475}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 8
-  sprintNoiseRadius: 6
-  walkNoiseRadius: 2.5
-  crouchNoiseRadius: 0
-  scanInterval: 0.25
-  currentPrimaryTarget: {fileID: 0}
-  visiblePlayers: []
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.26497468
+  m_Height: 1.8693916
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.9344248, z: 0}
 --- !u!1 &7873551698903332348
 GameObject:
   m_ObjectHideFlags: 0

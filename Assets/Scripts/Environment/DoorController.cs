@@ -127,9 +127,41 @@ public class DoorController : MonoBehaviour, IInteractable
             {
                 isPlayerNearby = true;
             }
-            else if (col.GetComponentInParent<BaseNPC>() != null || col.gameObject.layer == LayerMask.NameToLayer("Npc"))
+            else if (col.GetComponentInParent<AdultGuardNPC>() != null || col.GetComponentInParent<KidRunnerNPC>() != null || col.CompareTag("adult") || col.CompareTag("kid") || col.gameObject.layer == LayerMask.NameToLayer("Npc"))
             {
                 isNpcNearby = true;
+            }
+        }
+
+        // Bổ sung kiểm tra khoảng cách trực tiếp tới NPC (Đảm bảo 100% mở cửa cho NPC không phụ thuộc Collider)
+        if (!isNpcNearby)
+        {
+            AdultGuardNPC[] allAdults = FindObjectsByType<AdultGuardNPC>(FindObjectsSortMode.None);
+            for (int i = 0; i < allAdults.Length; i++)
+            {
+                if (allAdults[i] != null && allAdults[i].gameObject.activeInHierarchy)
+                {
+                    if (Vector3.Distance(allAdults[i].transform.position, centerPos) <= currentRadius + 0.8f)
+                    {
+                        isNpcNearby = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!isNpcNearby)
+        {
+            KidRunnerNPC[] allKids = FindObjectsByType<KidRunnerNPC>(FindObjectsSortMode.None);
+            for (int i = 0; i < allKids.Length; i++)
+            {
+                if (allKids[i] != null && allKids[i].gameObject.activeInHierarchy)
+                {
+                    if (Vector3.Distance(allKids[i].transform.position, centerPos) <= currentRadius + 0.8f)
+                    {
+                        isNpcNearby = true;
+                        break;
+                    }
+                }
             }
         }
 
@@ -168,6 +200,12 @@ public class DoorController : MonoBehaviour, IInteractable
         {
             isLocalPlayerInsideZone = someoneNearby;
             netSync.RpcUpdatePlayerPresence(netSync.Runner.LocalPlayer, isLocalPlayerInsideZone);
+        }
+
+        // Nếu NPC đến gần -> Lập tức gửi yêu cầu mở cửa qua RPC
+        if (isNpcNearby && !isOpen)
+        {
+            RequestSetDoorOpen(true);
         }
 
         // 3. Logic Đóng/Mở CHỈ chạy trên máy nắm StateAuthority (Host)
@@ -217,7 +255,7 @@ public class DoorController : MonoBehaviour, IInteractable
         for (int i = 0; i < count; i++)
         {
             if (overlapBuffer[i] == null) continue;
-            if (overlapBuffer[i].GetComponentInParent<BaseNPC>() != null || overlapBuffer[i].gameObject.layer == LayerMask.NameToLayer("Npc")) return true;
+            if (overlapBuffer[i].GetComponentInParent<AdultGuardNPC>() != null || overlapBuffer[i].GetComponentInParent<KidRunnerNPC>() != null || overlapBuffer[i].gameObject.layer == LayerMask.NameToLayer("Npc")) return true;
         }
         return false;
     }
@@ -350,11 +388,11 @@ public class DoorController : MonoBehaviour, IInteractable
     }
 
     /// <summary>
-    /// Khi bẻ khóa thất bại: Phát ra tiếng động tại cửa để các NPC gần đó điều tra bằng hệ thống giác quan
+    /// Khi bẻ khóa thất bại: Báo động cho các NPC gần đó chạy tới kiểm tra khu vực cửa bị phá rồi quay về tuần tra
     /// </summary>
     public void AlertNearbyNPCs()
     {
-        NPCSensorySystem.EmitNoiseAtPosition(transform.position, callRange);
+        AdultGuardNPC.AlertDoorTampered(transform.position, callRange);
     }
 
     public void CancelLockpicking()

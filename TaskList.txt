@@ -68,52 +68,46 @@ LadderController.cs
 
 
 
-🔹 GIAI ĐOẠN 3: Rework AI (Network Synchronized AI)
-Mục tiêu: AI tuần tra đa chế độ, hệ thống giác quan ưu tiên thính giác/thị giác, tương tác báo tin giữa các NPC và săn đuổi người chơi đồng bộ mạng Photon Fusion.
+[DONE] 🔹 GIAI ĐOẠN 3: Rework AI (Network Synchronized AI - Standalone Architecture)
+Mục tiêu: Tối ưu 2 script độc lập hoàn chỉnh AdultGuardNPC & KidRunnerNPC, đồng bộ mạng Photon Fusion Shared Mode, hệ thống thị giác FOV + thích ứng đèn pin cục bộ, âm thanh 3 tầng và tương tác với môi trường/người chơi.
 
- 1. Ba Chế Độ Tuần Tra (Patrol Modes):
-  - Mode 1: Stationary (Đứng im) -> Quay random 3 góc (Chéo trái, Giữa, Chéo phải), có cooldown ngẫu nhiên trước khi đổi góc quay tiếp theo.
-  - Mode 2: Wander (Di chuyển tự do) -> Đi tự do full map hoặc giới hạn trong Box/Zone. Khi đến đích có cơ hội ngó nhìn trái/phải rồi đi tiếp, hoặc đứng nghỉ tại chỗ (không quay mặt) rồi đi tiếp.
-  - Mode 3: Waypoint Patrol (Đi qua lại các điểm cố định) -> Tuần tra qua lại các điểm waypoints, khi đến 1 điểm cũng có cơ hội ngó nhìn trái/phải (tỉ lệ thấp hơn 2 mode trước).
+ 1. Ba Chế Độ Tuần Tra AdultGuardNPC:
+  - Mode 1: Stationary (Đứng im) -> Quét tuần hoàn các góc (-45°, 0°, +45°, 0°), tự động xoay về chuẩn góc và vị trí chỉ định (customStaySpot).
+  - Mode 2: RandomMove (Di chuyển tự do) -> Đi dạo trong bán kính wanderRadius, dừng nghỉ Idle ngẫu nhiên và ngó nghiêng xung quanh.
+  - Mode 3: Patrol (Đi qua lại các điểm cố định) -> Tuần tra qua lại các điểm waypoints, dừng nghỉ theo cấu hình minIdleTime/maxIdleTime.
 
- 2. Hệ Thống Đa Giác Quan (Sensory System):
-  - Thị giác (FOV Vision): Quét nón tầm nhìn phía trước, chỉ giảm tầm quét/bán kính phát hiện nếu Player đang cúi (Crouch).
-  - Thính giác (Sound/Footsteps Hearing): Sprint (bán kính ồn lớn nhất) > Walk (bán kính ồn vừa) > Crouch (bán kính = 0).
-  - Ưu tiên Thính giác lên đầu: Khi nghe tiếng động, NPC phản ứng theo 1 trong 2 cơ chế:
-    + Cơ chế 1: Đứng tại chỗ quay thẳng mặt về hướng tiếng động.
-    + Cơ chế 2: Di chuyển đến gần vị trí tiếng động phát ra lần cuối.
-    -> Đều soi 1-3s (hoặc thời gian cấu hình), trước khi kết thúc thì quay trái/phải 1 lần để kiểm tra rồi quay về tuần tra.
+ 2. Hệ Thống Thị Giác & Thích Ứng Đèn Pin (Sensory & Flashlight):
+  - FOV Cone 100° + Line of sight Raycast: Tầm phát hiện bình thường 16m (Adult) / 15m (Kid).
+  - Khi Player Cúi (Crouch): Tầm phát hiện giảm 50% (crouchDistanceMultiplier = 0.5f).
+  - Local Flashlight Scaling: Đèn pin trên màn hình cục bộ tự động co từ 27m về 8m khi người chơi trên máy đó cúi, không làm ảnh hưởng tầm nhìn của người chơi khác trong phòng.
 
- 3. Cơ Chế Đổi Mục Tiêu (Smart Target Switching):
-  - Khi đang Chase, nếu phát hiện bất kỳ Player nào khác ở gần hơn thì tự động chuyển sang ưu tiên đuổi Player gần nhất đó.
+ 3. Hệ Thống Âm Thanh 3 Tầng Độc Lập:
+  - 1. footstepAudioSource: Phát âm thanh bước chân 3D (hỗ trợ mảng 10 clips ngẫu nhiên + bắt animation event).
+  - 2. alertAudioSource: Phát 1 lần alertSound khi phát hiện trộm, khi cửa bị phá/bẻ khóa thất bại, hoặc khi nhận tin báo từ Kid.
+  - 3. themeAudioSource: Phát loop chaseThemeSound / panicThemeSound (quản lý bởi cờ static chống trùng lặp âm thanh).
 
- 4. Cơ Chế Báo Động & Kéo Đồng Đội (Alert & Proximity Chain Chase):
-  - Khi NPC Lớn đang Chase Player: Quét phạm vi xung quanh, nếu chạm trúng NPC khác thì NPC đó cũng lập tức tham gia đuổi theo Player.
+ 4. Cơ Chế Báo Tin & Phối Hợp Giữa Kid và Adult:
+  - Kid phát hiện trộm -> Chạy hoảng loạn (Panic Run) theo minCallDuration/maxCallDuration.
+  - Kid quét gọi Adult gần đó: Gửi tọa độ tức thời của Player -> Adult phát âm thanh cảnh báo, chạy nhanh đến vị trí khả nghi đó kiểm tra vài giây rồi quay về vị trí gốc (không đuổi liên tục trừ khi tự mình nhìn thấy trộm).
 
- 5. Cấu Trúc 2 Loại NPC Kế Thừa Từ BaseNPC:
-  - BaseNPC: Quản lý cốt lõi mạng Fusion (MasterClient StateAuthority), NavMeshAgent, Giác quan FOV/Hearing, Animation/Transform Sync, xử lý tiếng ồn & ngó nghiêng.
-  - NPC Loại 1: Người Lớn / Bảo Vệ (Adult / Guard NPC): Nhìn thấy Player hoặc nhận tin báo -> Hô hoán, Chase Player, kích hoạt NPCCatchPlayerTrigger bắt chết Player và lôi kéo NPC lớn khác cùng đuổi trong phạm vi check được xung quanh mình.
-  - NPC Loại 2: Trẻ Con / Người Báo Tin (Kid / Runner NPC): Nhìn thấy Player -> Không bắt Player mà sợ hãi chạy hoảng loạn (Flee/Run Random) quanh map trong thời gian set trong Inspector. Nếu trên đường chạy quét trúng NPC Người Lớn -> Báo tin khiến NPC Người Lớn lập tức đuổi theo Player đứa trẻ đã nhìn thấy. Nếu trúng NPC Trẻ Con khác -> Cả hai tiếp tục chạy hoảng loạn.
+ 5. Tương Tác Môi Trường & Chống Lỗi NavMesh:
+  - DoorController: Tự động nhận diện khoảng cách mở cửa cho cả Adult và Kid.
+  - EnsureOnNavMesh & HasReachedDestination: Kiểm tra an toàn trước khi truy cập remainingDistance, hỗ trợ query filter theo agentTypeID.
 
- 6. Task Triển Khai:
-  - Task 3.1: Viết BaseNPC.cs & NPCSensorySystem.cs (MasterClient Authority, NavMesh, FOV, Thính giác ưu tiên 2 cơ chế phản ứng, Sync Fusion).
-  - Task 3.2: Viết NPCPatrolController.cs tích hợp 3 chế độ (Đứng 3 góc cooldown random, Wander giới hạn Box/Zone + chance ngó/nghỉ, Waypoints + chance ngó thấp).
-  - Task 3.3: Viết AdultGuardNPC.cs (Chase, Smart Target Switch, Proximity Chain Chase, NPCCatchPlayerTrigger bắt chết Player).
-  - Task 3.4: Viết KidRunnerNPC.cs (Panic Run hoảng loạn theo timer, quét va chạm báo tin cho Adult NPC đi bắt trộm).
-Tạo NPC Người Lớn (Adult Guard NPC):
+--------------------------------------------------------------------------------
+📝 CHANGELOG (Lịch Sử Cập Nhật):
+--------------------------------------------------------------------------------
+[v2.1.0] - AI & Network System Optimization:
+- [REFACTOR] Rút gọn toàn bộ hệ thống AI thành 2 file độc lập duy nhất: AdultGuardNPC.cs và KidRunnerNPC.cs (xóa bỏ BaseNPC, NPCSensorySystem, NPCPatrolController, NPCCatchPlayerTrigger).
+- [NETWORK] Hỗ trợ Photon Fusion Shared Mode: Master Authority điều khiển NavMeshAgent, đồng bộ [Networked] NetworkSpeed & NetworkMotionSpeed. Hoạt động an toàn cả chế độ Offline lẫn Multiplayer Online.
+- [AI] Cập nhật Stand Mode: Thêm customStaySpot, tự động snap 100% góc xoay ban đầu khi quay về, quét ngó nghiêng mượt mà (-45°, 0°, +45°, 0°).
+- [AI] Tinh chỉnh Kid Alert: Adult chỉ chạy đến vị trí cuối cùng của Player lúc Kid gọi, quan sát rồi quay về thay vì đuổi Player liên tục.
+- [AUDIO] Phân chia 3 AudioSource riêng biệt (Footstep, Alert, Theme) cho cả Adult và Kid.
+- [ENVIRONMENT] Cập nhật DoorController tự động mở cửa cho mọi NPC khi lại gần.
+- [NAV] Tích hợp HasReachedDestination() và EnsureOnNavMesh(NavMeshQueryFilter) chống lỗi GetRemainingDistance và Warp khi chuyển đổi Agent Types.
+- [UI/ITEMS] Tối ưu cơ chế kiểm tra tia raycast Đặt Thang (Place Ladder) và Leo Thang (Climb) trên Mobile & PC.
 
-Gắn component: NavMeshAgent, NetworkObject, NetworkTransform, NPCSensorySystem, NPCPatrolController, AdultGuardNPC, NPCCatchPlayerTrigger.
-Chọn chế độ tuần tra mong muốn trong NPCPatrolController (Stationary / Wander / Waypoints).
-Đặt Tag của GameObject là adult và Layer là Npc.
-Tạo NPC Trẻ Con (Kid Runner NPC):
-
-Gắn component: NavMeshAgent, NetworkObject, NetworkTransform, NPCSensorySystem, NPCPatrolController, KidRunnerNPC.
-Đặt panicDuration (ví dụ 10s).
-Đặt Tag của GameObject là kid và Layer là Npc.
-
-
-
-
+--------------------------------------------------------------------------------
 🔹 GIAI ĐOẠN 4: Rework Intro & Chapter 1 (Hoàn thiện nội dung)
 Mục tiêu: Đưa người chơi qua cốt truyện, intro và màn chơi trộm đồ co-op hoàn chỉnh.
 
