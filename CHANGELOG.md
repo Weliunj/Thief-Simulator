@@ -1886,8 +1886,29 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/Environment/DoorController.cs` (Modified)
   - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
   - `TaskList.txt` (Modified)
+### [2026-09-26 21:05] — refactor(ai): base npc hierarchy, 9-directional multi-raycast detection, alert audio debounce flag & robust chase mechanics
+- **Tác vụ**:
+  - **Kiến trúc Kế thừa BaseNPC (Hierarchical AI Architecture)**:
+    - Tạo [BaseNPC.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/BaseNPC.cs) làm lớp cơ sở quản lý chung 3 chế độ di chuyển (`Stationary`, `Wander`, `Patrol`), đồng bộ Animator mạng Fusion, tự động hạ tầm đèn pin khi Player cúi, và an toàn NavMesh (`EnsureOnNavMesh`, `HasReachedDestination`).
+    - [AdultGuardNPC.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/AdultGuardNPC.cs) và [KidRunnerNPC.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/AI/KidRunnerNPC.cs) kế thừa từ `BaseNPC`.
+  - **Hệ thống Quét 9 Hướng Multi-Raycast (`DetectPlayerMultiRays`)**:
+    - Thiết lập ma trận 9 tia raycast phủ kín không gian phía trước (Chính diện, Trái, Phải, Trên, Dưới, 4 góc chéo), bỏ qua trigger (`QueryTriggerInteraction.Ignore`).
+    - Tự động chia đôi khoảng cách phát hiện khi người chơi cúi người (`crouchVisionMultiplier = 0.5f`).
+  - **Chốt Chặn Âm Thanh Cảnh Báo (`_hasPlayedAlertSound`) & Sửa Lỗi Giật Khựng Chase**:
+    - Bổ sung cờ `_hasPlayedAlertSound` trên cả `AdultGuardNPC` và `KidRunnerNPC` để đảm bảo âm thanh cảnh báo (`PlayAlertSound()`) chỉ phát duy nhất 1 lần khi bắt đầu phát hiện / hoảng loạn, không bị lặp liên tục qua từng frame.
+    - Cải tiến State Machine rượt đuổi: Khi đã kích hoạt Chase (`targetDetected = true`), Adult bám sát mục tiêu liên tục và duy trì timer nếu vẫn quét thấy Player, loại bỏ hoàn toàn hiện tượng hủy đuổi sớm gây giật khựng.
+    - Cơ chế Catch Player mở rộng hỗ trợ cả khoảng cách tâm NPC và vùng `catchOffset`, đồng thời kích hoạt `PlayerDeathHandler` an toàn.
+  - **Cơ chế Kid Anti-Loop Networked Chain Call**:
+    - Sử dụng `SafeIsCalling` bọc quanh `NetworkIsCalling` để an toàn trong cả môi trường Offline lẫn Online.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/AI/BaseNPC.cs` (New & Refactored)
+  - `Assets/Scripts/AI/AdultGuardNPC.cs` (Modified)
+  - `Assets/Scripts/AI/KidRunnerNPC.cs` (Modified)
+  - `Assets/Scripts/Environment/DoorController.cs` (Modified)
 - **Ảnh hưởng**:
-  - Hệ thống AI chạy mượt mà, đồng bộ mạng ổn định, không còn bất kỳ lỗi compile hay runtime nào trong cả Offline và Online.
+  - Loại bỏ hoàn toàn lỗi spam âm thanh và giật khựng khi NPC nhìn thấy Player.
+  - Hệ thống AI hoạt động ổn định, bắt người chơi chuẩn xác và quét tìm 9 hướng mượt mà.
+
 
 
 

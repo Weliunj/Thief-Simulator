@@ -392,7 +392,19 @@ public class DoorController : MonoBehaviour, IInteractable
     /// </summary>
     public void AlertNearbyNPCs()
     {
+        // 1. Adult chạy tới kiểm tra quanh cửa rồi cooldown
         AdultGuardNPC.AlertDoorTampered(transform.position, callRange);
+
+        // 2. Kid gần cửa hoảng loạn chạy và kích hoạt Call Chain
+        Collider[] kids = Physics.OverlapSphere(transform.position, callRange);
+        foreach (var col in kids)
+        {
+            var kid = col.GetComponent<KidRunnerNPC>() ?? col.GetComponentInParent<KidRunnerNPC>();
+            if (kid != null)
+            {
+                kid.OnDoorBrokenPanic(transform.position);
+            }
+        }
     }
 
     public void CancelLockpicking()
