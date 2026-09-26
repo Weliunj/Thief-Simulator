@@ -57,18 +57,59 @@ LadderController.cs
 [DONE] tinh so value item spawn trong ham cho chi tieu dat duoc (Target Point = Total Spawned Value - 25%) -> neu hoan thanh se check map cua local map tiep chua mo thi unlock map tiep
 ---------------------------------------
 
+
+
+
+
+
+
+
+
+
+
+
 🔹 GIAI ĐOẠN 3: Rework AI (Network Synchronized AI)
-Mục tiêu: AI tuần tra, phát hiện và săn đuổi bất kỳ người chơi nào trong phòng.
+Mục tiêu: AI tuần tra đa chế độ, hệ thống giác quan ưu tiên thính giác/thị giác, tương tác báo tin giữa các NPC và săn đuổi người chơi đồng bộ mạng Photon Fusion.
 
- Task 3.1 — MasterClient AI Authority:
-Cấu trúc AI chỉ tính toán NavMesh / Logic truy đuổi trên máy của Host (MasterClient) để tránh xung đột desync, các Client khác chỉ nhận vị trí và animation qua PhotonView.
- Task 3.2 — Multi-Target Detection & Alert:
-Nâng cấp tầm nhìn FOV và thính giác (Hearing footsteps/sound): Phát hiện bất kỳ tên trộm nào gây ồn gần nhất.
-Cơ chế báo động (Alarm/Siren) sync cho cả phòng.
- Task 3.3 — Bắt giữ & Cứu đồng đội (Downed & Revive State):
-Khi bị AI bắt: Chuyển player sang trạng thái Bị Bắt / Còng Tay (IsCuffed), cho phép đồng đội khác lại gần bấm nút tương tác để giải cứu.
+ 1. Ba Chế Độ Tuần Tra (Patrol Modes):
+  - Mode 1: Stationary (Đứng im) -> Quay random 3 góc (Chéo trái, Giữa, Chéo phải), có cooldown ngẫu nhiên trước khi đổi góc quay tiếp theo.
+  - Mode 2: Wander (Di chuyển tự do) -> Đi tự do full map hoặc giới hạn trong Box/Zone. Khi đến đích có cơ hội ngó nhìn trái/phải rồi đi tiếp, hoặc đứng nghỉ tại chỗ (không quay mặt) rồi đi tiếp.
+  - Mode 3: Waypoint Patrol (Đi qua lại các điểm cố định) -> Tuần tra qua lại các điểm waypoints, khi đến 1 điểm cũng có cơ hội ngó nhìn trái/phải (tỉ lệ thấp hơn 2 mode trước).
 
+ 2. Hệ Thống Đa Giác Quan (Sensory System):
+  - Thị giác (FOV Vision): Quét nón tầm nhìn phía trước, chỉ giảm tầm quét/bán kính phát hiện nếu Player đang cúi (Crouch).
+  - Thính giác (Sound/Footsteps Hearing): Sprint (bán kính ồn lớn nhất) > Walk (bán kính ồn vừa) > Crouch (bán kính = 0).
+  - Ưu tiên Thính giác lên đầu: Khi nghe tiếng động, NPC phản ứng theo 1 trong 2 cơ chế:
+    + Cơ chế 1: Đứng tại chỗ quay thẳng mặt về hướng tiếng động.
+    + Cơ chế 2: Di chuyển đến gần vị trí tiếng động phát ra lần cuối.
+    -> Đều soi 1-3s (hoặc thời gian cấu hình), trước khi kết thúc thì quay trái/phải 1 lần để kiểm tra rồi quay về tuần tra.
 
+ 3. Cơ Chế Đổi Mục Tiêu (Smart Target Switching):
+  - Khi đang Chase, nếu phát hiện bất kỳ Player nào khác ở gần hơn thì tự động chuyển sang ưu tiên đuổi Player gần nhất đó.
+
+ 4. Cơ Chế Báo Động & Kéo Đồng Đội (Alert & Proximity Chain Chase):
+  - Khi NPC Lớn đang Chase Player: Quét phạm vi xung quanh, nếu chạm trúng NPC khác thì NPC đó cũng lập tức tham gia đuổi theo Player.
+
+ 5. Cấu Trúc 2 Loại NPC Kế Thừa Từ BaseNPC:
+  - BaseNPC: Quản lý cốt lõi mạng Fusion (MasterClient StateAuthority), NavMeshAgent, Giác quan FOV/Hearing, Animation/Transform Sync, xử lý tiếng ồn & ngó nghiêng.
+  - NPC Loại 1: Người Lớn / Bảo Vệ (Adult / Guard NPC): Nhìn thấy Player hoặc nhận tin báo -> Hô hoán, Chase Player, kích hoạt NPCCatchPlayerTrigger bắt chết Player và lôi kéo NPC lớn khác cùng đuổi trong phạm vi check được xung quanh mình.
+  - NPC Loại 2: Trẻ Con / Người Báo Tin (Kid / Runner NPC): Nhìn thấy Player -> Không bắt Player mà sợ hãi chạy hoảng loạn (Flee/Run Random) quanh map trong thời gian set trong Inspector. Nếu trên đường chạy quét trúng NPC Người Lớn -> Báo tin khiến NPC Người Lớn lập tức đuổi theo Player đứa trẻ đã nhìn thấy. Nếu trúng NPC Trẻ Con khác -> Cả hai tiếp tục chạy hoảng loạn.
+
+ 6. Task Triển Khai:
+  - Task 3.1: Viết BaseNPC.cs & NPCSensorySystem.cs (MasterClient Authority, NavMesh, FOV, Thính giác ưu tiên 2 cơ chế phản ứng, Sync Fusion).
+  - Task 3.2: Viết NPCPatrolController.cs tích hợp 3 chế độ (Đứng 3 góc cooldown random, Wander giới hạn Box/Zone + chance ngó/nghỉ, Waypoints + chance ngó thấp).
+  - Task 3.3: Viết AdultGuardNPC.cs (Chase, Smart Target Switch, Proximity Chain Chase, NPCCatchPlayerTrigger bắt chết Player).
+  - Task 3.4: Viết KidRunnerNPC.cs (Panic Run hoảng loạn theo timer, quét va chạm báo tin cho Adult NPC đi bắt trộm).
+Tạo NPC Người Lớn (Adult Guard NPC):
+
+Gắn component: NavMeshAgent, NetworkObject, NetworkTransform, NPCSensorySystem, NPCPatrolController, AdultGuardNPC, NPCCatchPlayerTrigger.
+Chọn chế độ tuần tra mong muốn trong NPCPatrolController (Stationary / Wander / Waypoints).
+Đặt Tag của GameObject là adult và Layer là Npc.
+Tạo NPC Trẻ Con (Kid Runner NPC):
+
+Gắn component: NavMeshAgent, NetworkObject, NetworkTransform, NPCSensorySystem, NPCPatrolController, KidRunnerNPC.
+Đặt panicDuration (ví dụ 10s).
+Đặt Tag của GameObject là kid và Layer là Npc.
 
 
 

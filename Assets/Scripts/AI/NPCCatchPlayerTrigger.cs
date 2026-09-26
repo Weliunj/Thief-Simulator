@@ -22,6 +22,9 @@ public class NPCCatchPlayerTrigger : MonoBehaviour
     [Tooltip("Khoảng cách bắt khi lại gần Player (mét)")]
     public float catchDistance = 1.6f;
 
+    [Tooltip("Độ lệch tâm điểm bắt Player (X, Y, Z) so với NPC")]
+    public Vector3 catchOffset = new Vector3(0f, 1.0f, 0.4f);
+
     [Tooltip("Thời gian chờ giữa các lần bắt")]
     public float catchCooldown = 2.0f;
 
@@ -44,8 +47,9 @@ public class NPCCatchPlayerTrigger : MonoBehaviour
         if (!catchByDistance) return;
         if (Time.time - _lastCatchTime < catchCooldown) return;
 
-        // Quét tìm tất cả Player trong bán kính catchDistance
-        Collider[] hits = Physics.OverlapSphere(transform.position, catchDistance, LayerMask.GetMask("Player", "Default"));
+        // Quét tìm tất cả Player trong bán kính catchDistance từ tâm catchOffset
+        Vector3 catchOrigin = transform.TransformPoint(catchOffset);
+        Collider[] hits = Physics.OverlapSphere(catchOrigin, catchDistance, LayerMask.GetMask("Player", "Default"));
         foreach (var hit in hits)
         {
             if (hit == null || hit.gameObject == gameObject) continue;
@@ -84,12 +88,12 @@ public class NPCCatchPlayerTrigger : MonoBehaviour
         if (playerObj == null) return;
         if (Time.time - _lastCatchTime < catchCooldown) return;
 
-        // Trong chế độ Online: Chỉ máy đang điều khiển nhân vật đó (IsLocalPlayer) mới xử lý va chạm với NPC
-        // Giúp cả Host lẫn Guest đều chết chính xác khi chạm NPC và tránh gửi RPC trùng lặp
+        // Trong chế độ Online: Xử lý va chạm nếu là Local Player HOẶC nếu máy này là MasterClient (Host quản lý AI)
         var netSync = playerObj.GetComponent<NetworkPlayerSync>() ?? playerObj.GetComponentInParent<NetworkPlayerSync>();
         if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)
         {
-            if (!netSync.IsLocalPlayer) return;
+            bool isMaster = netSync.Runner.IsServer || netSync.Runner.IsSharedModeMasterClient;
+            if (!netSync.IsLocalPlayer && !isMaster) return;
         }
 
         // 1. Tìm các component chính của Player
@@ -154,7 +158,8 @@ public class NPCCatchPlayerTrigger : MonoBehaviour
         if (catchByDistance)
         {
             Gizmos.color = new Color(1f, 0.2f, 0.2f, 0.35f);
-            Gizmos.DrawWireSphere(transform.position, catchDistance);
+            Vector3 catchOrigin = transform.TransformPoint(catchOffset);
+            Gizmos.DrawWireSphere(catchOrigin, catchDistance);
         }
     }
 }

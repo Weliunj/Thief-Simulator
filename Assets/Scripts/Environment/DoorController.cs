@@ -113,27 +113,38 @@ public class DoorController : MonoBehaviour, IInteractable
         Vector3 centerPos = transform.position + detectionCenterOffset;
         float currentRadius = isOpen ? autoCloseRadius : autoOpenRadius;
 
-        // Quét tìm Player
+        // Quét tìm Player và NPC
         int hitCount = Physics.OverlapSphereNonAlloc(centerPos, currentRadius, overlapBuffer, detectionLayerMask, QueryTriggerInteraction.Ignore);
-        bool amINearby = false;
+        bool isPlayerNearby = false;
+        bool isNpcNearby = false;
 
         for (int i = 0; i < hitCount; i++)
         {
             Collider col = overlapBuffer[i];
             if (col == null || col.transform.IsChildOf(transform) || col.transform == transform) continue;
 
-            // Tìm thấy tag Player hoặc NPC
-            if (col.CompareTag("Player") || col.CompareTag("kid") || col.CompareTag("adult") || col.CompareTag("Npc"))
+            if (col.GetComponentInParent<PlayerController>() != null || col.CompareTag("Player"))
             {
-                amINearby = true;
-                break;
+                isPlayerNearby = true;
+            }
+            else if (col.GetComponentInParent<BaseNPC>() != null || col.gameObject.layer == LayerMask.NameToLayer("Npc"))
+            {
+                isNpcNearby = true;
             }
         }
+
+        bool someoneNearby = isPlayerNearby || isNpcNearby;
 
         // Nếu chơi Offline / Singleplayer (Chưa Spawn qua Fusion):
         if (!isNetworkActive)
         {
-            if (amINearby && isUnlocked)
+            // Điều kiện mở cửa:
+            // 1. NPC đến gần -> Luôn tự mở (Chủ nhà/Bảo vệ có chìa khóa)
+            // 2. Cửa đã mở khóa và có Player đến gần
+            // 3. Cửa đang mở và Player đang bám đuôi đi ngay sau NPC
+            bool shouldOpenOffline = isNpcNearby || (isPlayerNearby && isUnlocked) || (isOpen && someoneNearby);
+
+            if (shouldOpenOffline)
             {
                 closeTimer = closeDelayDuration;
                 if (!isOpen)
@@ -153,9 +164,9 @@ public class DoorController : MonoBehaviour, IInteractable
         }
 
         // 2. Nếu chơi Online: Trạng thái vào/ra của máy này thay đổi -> Gửi báo hiệu lên Host
-        if (amINearby != isLocalPlayerInsideZone)
+        if (someoneNearby != isLocalPlayerInsideZone)
         {
-            isLocalPlayerInsideZone = amINearby;
+            isLocalPlayerInsideZone = someoneNearby;
             netSync.RpcUpdatePlayerPresence(netSync.Runner.LocalPlayer, isLocalPlayerInsideZone);
         }
 
@@ -163,9 +174,12 @@ public class DoorController : MonoBehaviour, IInteractable
         if (netObj != null && netObj.HasStateAuthority)
         {
             bool effectiveUnlocked = netSync.NetworkIsUnlocked;
-            bool someoneIsInside = (netSync.PlayersNearbyCount > 0) || amINearby;
+            bool someoneIsInside = (netSync.PlayersNearbyCount > 0) || someoneNearby;
 
-            if (someoneIsInside && effectiveUnlocked)
+            // Online: NPC mở được cửa khóa, Player mở được cửa đã unlock, hoặc Player bám đuôi khi cửa đang mở
+            bool shouldOpenOnline = isNpcNearby || (someoneIsInside && effectiveUnlocked) || (isOpen && someoneIsInside);
+
+            if (shouldOpenOnline)
             {
                 closeTimer = closeDelayDuration;
                 if (!isOpen)
@@ -203,7 +217,7 @@ public class DoorController : MonoBehaviour, IInteractable
         for (int i = 0; i < count; i++)
         {
             if (overlapBuffer[i] == null) continue;
-            if (overlapBuffer[i].CompareTag("Npc")) return true;
+            if (overlapBuffer[i].GetComponentInParent<BaseNPC>() != null || overlapBuffer[i].gameObject.layer == LayerMask.NameToLayer("Npc")) return true;
         }
         return false;
     }
@@ -335,7 +349,13 @@ public class DoorController : MonoBehaviour, IInteractable
         AlertNearbyNPCs();
     }
 
-    public void AlertNearbyNPCs() { }
+    /// <summary>
+    /// Khi bẻ khóa thất bại: Phát ra tiếng động tại cửa để các NPC gần đó điều tra bằng hệ thống giác quan
+    /// </summary>
+    public void AlertNearbyNPCs()
+    {
+        NPCSensorySystem.EmitNoiseAtPosition(transform.position, callRange);
+    }
 
     public void CancelLockpicking()
     {

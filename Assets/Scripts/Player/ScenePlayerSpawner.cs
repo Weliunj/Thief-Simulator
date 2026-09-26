@@ -261,9 +261,13 @@ public class ScenePlayerSpawner : MonoBehaviour
         spawnedPlayerInstance.transform.rotation = spawnRot;
 
         var ntNew = spawnedPlayerInstance.GetComponent<NetworkTransform>();
-        if (ntNew != null)
+        if (ntNew != null && ntNew.Object != null && ntNew.Object.IsValid && ntNew.Runner != null && ntNew.Runner.IsRunning)
         {
-            ntNew.Teleport(spawnPos, spawnRot);
+            try
+            {
+                ntNew.Teleport(spawnPos, spawnRot);
+            }
+            catch { }
         }
 
         Physics.SyncTransforms();

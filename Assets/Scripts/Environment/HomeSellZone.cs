@@ -120,9 +120,17 @@ public class HomeSellZone : MonoBehaviour
     {
         if (other == null) return;
 
-        // 1. Kiểm tra theo Tag hoặc component Item
-        bool isItem = other.CompareTag(targetItemTag) || other.CompareTag("item");
+        // 1. Kiểm tra ưu tiên theo component Item hoặc tag
         Item itemComp = other.GetComponent<Item>() ?? other.GetComponentInParent<Item>();
+        bool isItem = itemComp != null;
+        if (!isItem)
+        {
+            try
+            {
+                isItem = (!string.IsNullOrEmpty(targetItemTag) && other.gameObject.tag == targetItemTag) || other.gameObject.tag == "item";
+            }
+            catch { }
+        }
 
         if (itemComp != null || isItem)
         {
@@ -144,8 +152,16 @@ public class HomeSellZone : MonoBehaviour
     {
         if (collision == null || collision.gameObject == null) return;
 
-        bool isItem = collision.gameObject.CompareTag(targetItemTag) || collision.gameObject.CompareTag("item");
         Item itemComp = collision.gameObject.GetComponent<Item>() ?? collision.gameObject.GetComponentInParent<Item>();
+        bool isItem = itemComp != null;
+        if (!isItem)
+        {
+            try
+            {
+                isItem = (!string.IsNullOrEmpty(targetItemTag) && collision.gameObject.tag == targetItemTag) || collision.gameObject.tag == "item";
+            }
+            catch { }
+        }
 
         if (itemComp != null && !itemComp.IsSold)
         {

@@ -232,6 +232,7 @@ GameObject:
   - component: {fileID: 4201365758413010162}
   - component: {fileID: 5647530236124511503}
   - component: {fileID: 3219860202244366861}
+  - component: {fileID: 1051583521323845628}
   m_Layer: 0
   m_Name: Door
   m_TagString: Untagged
@@ -317,7 +318,7 @@ MonoBehaviour:
   victorySound: {fileID: 8300000, guid: f64beb6fcd359c94d82cf48ac3834960, type: 3}
   openDoorSound: {fileID: 8300000, guid: d27f6616460b2f341b547fd2857851bf, type: 3}
   closeDoorSound: {fileID: 8300000, guid: 3562293cd975d12498a0ff02cb3e8a8d, type: 3}
-  callRange: 13
+  callRange: 13.1
 --- !u!114 &5647530236124511503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -336,6 +337,7 @@ MonoBehaviour:
     _value: 0
   _NetworkIsBeingLockpicked:
     _value: 0
+  _PlayersNearbyCount: 0
   doorController: {fileID: 4201365758413010162}
 --- !u!114 &3219860202244366861
 MonoBehaviour:
@@ -351,8 +353,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
   SortKey: 731628192
   ObjectInterest: 1
-  Flags: 524289
+  Flags: 131073
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 5647530236124511503}
   ForceRemoteRenderTimeframe: 0
+--- !u!114 &1051583521323845628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8577628722364368169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 0
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 1
+  m_ApplyToChildren: 1
+  m_AffectedAgents: a98c17ec

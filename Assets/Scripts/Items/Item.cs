@@ -1,7 +1,8 @@
 using StarterAssets;
 using UnityEngine;
+using Fusion;
 
-public class Item : MonoBehaviour, IInteractable
+public class Item : NetworkBehaviour, IInteractable
 {
     [Header("📦 ScriptableObject Data")]
     public ItemSO itemData;
@@ -98,8 +99,8 @@ public class Item : MonoBehaviour, IInteractable
 
     public void OnTriggerEnter(Collider other)
     {
-        if (_isSold) return;
-        if (other != null && other.CompareTag("home"))
+        if (_isSold || other == null) return;
+        if (other.GetComponent<HomeSellZone>() != null || other.GetComponentInParent<HomeSellZone>() != null)
         {
             SellItem();
         }
@@ -107,8 +108,8 @@ public class Item : MonoBehaviour, IInteractable
 
     public void OnCollisionEnter(Collision collision)
     {
-        if (_isSold) return;
-        if (collision != null && collision.gameObject != null && collision.gameObject.CompareTag("home"))
+        if (_isSold || collision == null || collision.gameObject == null) return;
+        if (collision.gameObject.GetComponent<HomeSellZone>() != null || collision.gameObject.GetComponentInParent<HomeSellZone>() != null)
         {
             SellItem();
         }

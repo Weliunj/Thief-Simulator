@@ -440,7 +440,7 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
     {
         get
         {
-            if (Runner == null || !Runner.IsRunning) return true;
+            if (Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid) return true;
             return Object.HasStateAuthority || Object.HasInputAuthority;
         }
     }
@@ -551,9 +551,13 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
                     transform.position = targetPos;
                     transform.rotation = targetRot;
 
-                    if (nt != null)
+                    if (nt != null && nt.Object != null && nt.Object.IsValid && nt.Runner != null && nt.Runner.IsRunning)
                     {
-                        nt.Teleport(targetPos, targetRot);
+                        try
+                        {
+                            nt.Teleport(targetPos, targetRot);
+                        }
+                        catch { }
                     }
 
                     Physics.SyncTransforms();
