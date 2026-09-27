@@ -15,7 +15,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &6410275141777627212
 Transform:
@@ -54,7 +54,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 13.13
+  MaxDistance: 13
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -145,7 +145,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &79521046628339591
 Transform:
@@ -233,12 +233,13 @@ GameObject:
   - component: {fileID: 5647530236124511503}
   - component: {fileID: 3219860202244366861}
   - component: {fileID: 1051583521323845628}
+  - component: {fileID: 1081105176731061552}
   m_Layer: 0
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &4949934326902249424
 Transform:
@@ -249,8 +250,8 @@ Transform:
   m_GameObject: {fileID: 8577628722364368169}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.53739077, y: 0.1376972, z: 0.5813994}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1.0103, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 79521046628339591}
@@ -318,7 +319,6 @@ MonoBehaviour:
   victorySound: {fileID: 8300000, guid: f64beb6fcd359c94d82cf48ac3834960, type: 3}
   openDoorSound: {fileID: 8300000, guid: d27f6616460b2f341b547fd2857851bf, type: 3}
   closeDoorSound: {fileID: 8300000, guid: 3562293cd975d12498a0ff02cb3e8a8d, type: 3}
-  callRange: 16
 --- !u!114 &5647530236124511503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -377,4 +377,29 @@ MonoBehaviour:
   m_GenerateLinks: 0
   m_IgnoreFromBuild: 1
   m_ApplyToChildren: 1
-  m_AffectedAgents: a98c17ec
+  m_AffectedAgents: a98c17ecf46d2d58
+--- !u!114 &1081105176731061552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8577628722364368169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac8d1296c5e690d4f9b4af63dafdb7cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NPCAlertEmitter
+  alertAdults: 1
+  alertKids: 1
+  isPlayerNoise: 0
+  noiseRadius: 2
+  alertCooldown: 0.5
+  triggerOnCollision: 0
+  minImpactVelocity: 2.5
+  impactLayers:
+    serializedVersion: 2
+    m_Bits: 256
+  audioSource: {fileID: 0}
+  soundEffect: {fileID: 0}
+  soundVolume: 1

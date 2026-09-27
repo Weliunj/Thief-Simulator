@@ -444,14 +444,10 @@ public class FirebaseAuthService : MonoBehaviour
         string persistentGuestId = GetPersistentGuestId();
         string guestName = persistentGuestId;
 
-        // Nếu offline -> Cho vào chơi Offline cục bộ ngay lập tức
+        // Chặn không cho đăng nhập khi không có kết nối mạng
         if (!IsNetworkAvailable)
         {
-            if (FirebaseDataService.Instance != null)
-            {
-                await FirebaseDataService.Instance.LoadOrCreateUserProfileAsync(persistentGuestId, guestName, "");
-            }
-            callback?.Invoke(true, "Guest login (Offline Mode) successful!");
+            callback?.Invoke(false, "No internet connection! Please check your network.");
             return;
         }
 
@@ -460,12 +456,7 @@ public class FirebaseAuthService : MonoBehaviour
             bool ready = await EnsureInitializedAsync();
             if (!ready || Auth == null)
             {
-                // Fallback nếu không kết nối được Firebase
-                if (FirebaseDataService.Instance != null)
-                {
-                    await FirebaseDataService.Instance.LoadOrCreateUserProfileAsync(persistentGuestId, guestName, "");
-                }
-                callback?.Invoke(true, "Guest login (Offline Mode) successful!");
+                callback?.Invoke(false, "Could not connect to authentication service. Please check your network!");
                 return;
             }
         }

@@ -26,11 +26,12 @@ public class ChapterSelectManager : MonoBehaviour
     public Button startChapterButton;
     public Button backButton;
 
-    [Header("🚪 Panels Reference")]
+    [Header("🚪 Panels & Lobby Reference")]
     public GameObject chapterSelectPanel; // Panel chọn Chapter này
-    public GameObject mainMenuPanel;      // Panel Main Menu chính (để hiện lại khi bấm Back)
+    public GameObject mainMenuPanel;      // Panel Main Menu chính (fallback)
+    public NetworkLobbyHUD networkLobbyHUD; // Tham chiếu tới Sảnh Multiplayer khi tạo phòng
 
-    [Header("👤 Default Player Data (Tạm thời hardcode khi chưa có UI chọn nhân vật)")]
+    [Header("👤 Default Player Data")]
     public PlayerSO defaultPlayerData;
 
     [Header("🔊 Audio")]
@@ -62,16 +63,27 @@ public class ChapterSelectManager : MonoBehaviour
 
         if (leftArrowButton != null) leftArrowButton.onClick.AddListener(PreviousChapter);
         if (rightArrowButton != null) rightArrowButton.onClick.AddListener(NextChapter);
-        if (startChapterButton != null) startChapterButton.onClick.AddListener(PlayCurrentChapter);
+        if (startChapterButton != null) startChapterButton.onClick.AddListener(SelectCurrentChapter);
         if (backButton != null) backButton.onClick.AddListener(OnBackButtonClicked);
 
         UpdateChapterUI();
     }
 
-    public void OpenChapterSelect()
+    /// <summary>
+    /// Mở panel chọn Chapter từ Modal Tạo phòng (Create Room) trong Multiplayer
+    /// </summary>
+    public void OpenForRoomCreation(NetworkLobbyHUD lobbyHUD, int initialIndex = 0)
     {
+        networkLobbyHUD = lobbyHUD;
+        if (chapterList != null && initialIndex >= 0 && initialIndex < chapterList.Count)
+        {
+            currentChapterIndex = initialIndex;
+        }
+
         PlayClickSound();
         if (chapterSelectPanel != null) chapterSelectPanel.SetActive(true);
+        else gameObject.SetActive(true);
+
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
 
         // Ẩn 3D model ngoài sảnh khi vào màn hình chọn Chapter
@@ -84,17 +96,46 @@ public class ChapterSelectManager : MonoBehaviour
         UpdateChapterUI();
     }
 
-    public void OnBackButtonClicked()
+    public void OpenChapterSelect()
     {
         PlayClickSound();
-        if (chapterSelectPanel != null) chapterSelectPanel.SetActive(false);
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+        if (chapterSelectPanel != null) chapterSelectPanel.SetActive(true);
+        else gameObject.SetActive(true);
 
-        // Hiện lại 3D model ngoài sảnh chính
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+
         CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
         if (charHud != null)
         {
-            charHud.ApplyLobbyModelVisuals();
+            charHud.SetLobbyModelVisible(false);
+        }
+
+        UpdateChapterUI();
+    }
+
+    public void OnBackButtonClicked()
+    {
+        PlayClickSound();
+        ClosePanel();
+    }
+
+    public void ClosePanel()
+    {
+        if (chapterSelectPanel != null) chapterSelectPanel.SetActive(false);
+        else gameObject.SetActive(false);
+
+        if (networkLobbyHUD != null)
+        {
+            networkLobbyHUD.ShowCreateModal();
+        }
+        else if (mainMenuPanel != null)
+        {
+            mainMenuPanel.SetActive(true);
+            CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
+            if (charHud != null)
+            {
+                charHud.ApplyLobbyModelVisuals();
+            }
         }
     }
 
@@ -114,7 +155,10 @@ public class ChapterSelectManager : MonoBehaviour
         UpdateChapterUI();
     }
 
-    public void PlayCurrentChapter()
+    /// <summary>
+    /// Xác nhận chọn Chapter hiện tại cho Phòng chơi Multiplayer
+    /// </summary>
+    public void SelectCurrentChapter()
     {
         if (chapterList == null || chapterList.Count == 0) return;
 
@@ -133,25 +177,13 @@ public class ChapterSelectManager : MonoBehaviour
         int nextIndex = currentChapterIndex + 1;
         GameSession.NextChapter = (nextIndex < chapterList.Count) ? chapterList[nextIndex] : null;
 
-        // Đồng bộ nhân vật đã lưu vào GameSession
-        if (GameSession.SelectedPlayer == null)
+        // Trả kết quả đã chọn về cho Sảnh Tạo Phòng
+        if (networkLobbyHUD != null)
         {
-            CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
-            if (hud != null)
-            {
-                hud.LoadSavedSelection();
-            }
+            networkLobbyHUD.OnChapterSelectedFromPanel(currentChapterIndex);
         }
 
-        if (GameSession.SelectedPlayer == null && defaultPlayerData != null)
-        {
-            GameSession.SelectedPlayer = defaultPlayerData;
-        }
-
-        if (!string.IsNullOrEmpty(currentChapter.sceneName))
-        {
-            StartCoroutine(LoadSceneByNameAfterDelay(currentChapter.sceneName, 0.4f));
-        }
+        ClosePanel();
     }
 
     private void UpdateChapterUI()
@@ -205,11 +237,5 @@ public class ChapterSelectManager : MonoBehaviour
                 audioSource.Play();
             }
         }
-    }
-
-    private IEnumerator LoadSceneByNameAfterDelay(string sceneName, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        ScreenFader.LoadSceneWithFade(sceneName, 0.5f);
     }
 }

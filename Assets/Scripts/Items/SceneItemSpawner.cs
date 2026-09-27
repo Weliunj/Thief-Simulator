@@ -45,6 +45,12 @@ public class SceneItemSpawner : MonoBehaviour
     [Tooltip("Độ lệch vị trí nhỏ khi spawn để tránh chìm vật phẩm vào bề mặt")]
     public Vector3 spawnOffset = new Vector3(0f, 0.05f, 0f);
 
+    [Tooltip("Tự động chiếu tia Raycast xuống dưới để đặt Item nằm sát trên mặt sàn / mặt bàn thay vì để rơi tự do")]
+    public bool snapToGroundWithRaycast = true;
+
+    [Tooltip("Layer mặt sàn, mặt bàn, đồ vật cần bám dính khi Raycast")]
+    public LayerMask groundLayers = ~0;
+
     [Header("🎲 Default Rarity Weights (Nếu Chapter không cấu hình riêng)")]
     public List<RarityWeightConfig> defaultRarityWeights = new List<RarityWeightConfig>()
     {
@@ -126,16 +132,19 @@ public class SceneItemSpawner : MonoBehaviour
         }
 
         // 1. Đồng bộ Random Seed:
-        // - Khi chơi Online: Seed lấy theo Tên phòng để tất cả người chơi trong cùng phòng sinh đồ giống hệt nhau 100%.
-        // - Khi chơi Offline: Tạo seed ngẫu nhiên theo thời gian thực để mỗi ván chơi sinh đồ mới mẻ khác nhau.
+        // - Khi chơi Online: Lấy seed từ Session Properties (do Host tạo khi lập phòng) để mọi người chơi trong phòng thấy đồ giống nhau 100%.
+        // - Khi test Play Mode / Offline: Tạo seed ngẫu nhiên mới mỗi lần bấm Play.
         int seed = System.Environment.TickCount ^ System.Guid.NewGuid().GetHashCode();
         if (FusionConnectionManager.Instance != null &&
             FusionConnectionManager.Instance.IsInGameplaySession &&
             FusionConnectionManager.Instance.currentRunner != null &&
-            FusionConnectionManager.Instance.currentRunner.SessionInfo != null &&
-            !string.IsNullOrEmpty(FusionConnectionManager.Instance.currentRunner.SessionInfo.Name))
+            FusionConnectionManager.Instance.currentRunner.SessionInfo != null)
         {
-            seed = FusionConnectionManager.Instance.currentRunner.SessionInfo.Name.GetHashCode();
+            var session = FusionConnectionManager.Instance.currentRunner.SessionInfo;
+            if (session.Properties != null && session.Properties.TryGetValue("seed", out var seedProp))
+            {
+                seed = (int)seedProp;
+            }
         }
         Random.InitState(seed);
 
@@ -173,13 +182,45 @@ public class SceneItemSpawner : MonoBehaviour
         int totalValue = 0;
         for (int i = 0; i < targetPositions.Count; i++)
         {
-            Vector3 pos = targetPositions[i] + spawnOffset;
+            Vector3 basePos = targetPositions[i];
             GameObject prefabToSpawn = PickItemPrefabByRarity();
 
             if (prefabToSpawn != null)
             {
                 Quaternion rot = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
-                GameObject instance = Instantiate(prefabToSpawn, pos, rot, transform);
+                Vector3 spawnPos = basePos + spawnOffset;
+
+                // 🌟 Chiếu tia Raycast xuống dưới để tìm bề mặt bàn / sàn
+                if (snapToGroundWithRaycast)
+                {
+                    Vector3 rayOrigin = basePos + Vector3.up * 0.5f;
+                    if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 3.0f, groundLayers, QueryTriggerInteraction.Ignore))
+                    {
+                        spawnPos = hit.point;
+                    }
+                }
+
+                GameObject instance = Instantiate(prefabToSpawn, spawnPos, rot, transform);
+
+                // Nếu có Collider, cân chỉnh lại để đáy của Item vừa khít chạm mặt phẳng (không bị lún)
+                if (snapToGroundWithRaycast)
+                {
+                    Collider col = instance.GetComponentInChildren<Collider>();
+                    if (col != null)
+                    {
+                        float bottomOffset = instance.transform.position.y - col.bounds.min.y;
+                        instance.transform.position += Vector3.up * (bottomOffset + 0.005f);
+                    }
+
+                    // Đưa Rigidbody vào trạng thái nghỉ, triệt tiêu gia tốc rơi ban đầu
+                    Rigidbody rb = instance.GetComponent<Rigidbody>();
+                    if (rb != null)
+                    {
+                        rb.linearVelocity = Vector3.zero;
+                        rb.angularVelocity = Vector3.zero;
+                        rb.Sleep();
+                    }
+                }
                 
                 // Đặt tên định danh duy nhất và nhất quán giữa các máy để đồng bộ RPC đường dẫn
                 instance.name = $"Item_{i}_{prefabToSpawn.name}";

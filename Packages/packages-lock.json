@@ -6,6 +6,15 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.siccity.gltfutility": {
+      "version": "https://github.com/Siccity/GLTFUtility.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "2.0.0"
+      },
+      "hash": "dfdc50830c201c53306fba4ab57ced763d2930c8"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
@@ -112,6 +121,13 @@
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.6",
       "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.2",
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

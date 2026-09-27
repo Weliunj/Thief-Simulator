@@ -44,9 +44,6 @@ public class DoorController : MonoBehaviour, IInteractable
     public AudioClip openDoorSound;
     public AudioClip closeDoorSound;
 
-    [Header("⚠️ Alarm & NPC Alert Settings")]
-    public float callRange = 20f;
-
     private UI_Manager uiManager;
     private Quaternion closedLocalRotation;
     private Coroutine doorCoroutine;
@@ -60,24 +57,21 @@ public class DoorController : MonoBehaviour, IInteractable
 
         if (doorChildModel == null && transform.childCount > 0)
         {
-            doorChildModel = transform.GetChild(0);
+            doorChildModel = transform.Find("Model") ?? transform.GetChild(0);
         }
 
         closedLocalRotation = (doorChildModel != null) ? doorChildModel.localRotation : transform.localRotation;
 
-        if (detectionLayerMask == ~0)
-        {
-            int playerLayer = LayerMask.NameToLayer("Player");
-            int npcLayer = LayerMask.NameToLayer("Npc");
-            int defaultLayer = LayerMask.NameToLayer("Default");
+        int playerLayer = LayerMask.NameToLayer("Player");
+        int npcLayer = LayerMask.NameToLayer("Npc");
+        int defaultLayer = LayerMask.NameToLayer("Default");
 
-            int mask = 0;
-            if (playerLayer != -1) mask |= (1 << playerLayer);
-            if (npcLayer != -1) mask |= (1 << npcLayer);
-            if (defaultLayer != -1) mask |= (1 << defaultLayer);
+        int mask = detectionLayerMask.value;
+        if (playerLayer != -1) mask |= (1 << playerLayer);
+        if (npcLayer != -1) mask |= (1 << npcLayer);
+        if (defaultLayer != -1) mask |= (1 << defaultLayer);
 
-            detectionLayerMask = (mask != 0) ? mask : ~0;
-        }
+        detectionLayerMask = (mask != 0) ? mask : ~0;
     }
 
     void Start()
@@ -127,9 +121,26 @@ public class DoorController : MonoBehaviour, IInteractable
             {
                 isPlayerNearby = true;
             }
-            else if (col.GetComponentInParent<AdultGuardNPC>() != null || col.GetComponentInParent<KidRunnerNPC>() != null || col.CompareTag("adult") || col.CompareTag("kid") || col.gameObject.layer == LayerMask.NameToLayer("Npc"))
+            else if (col.GetComponentInParent<AdultGuardNPC>() != null || col.CompareTag("adult") || col.gameObject.layer == LayerMask.NameToLayer("Npc"))
             {
                 isNpcNearby = true;
+            }
+        }
+
+        // Bổ sung kiểm tra khoảng cách trực tiếp tới Player (Đảm bảo 100% mở cửa cho Player)
+        if (!isPlayerNearby)
+        {
+            PlayerController[] allPlayers = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+            for (int i = 0; i < allPlayers.Length; i++)
+            {
+                if (allPlayers[i] != null && allPlayers[i].gameObject.activeInHierarchy)
+                {
+                    if (Vector3.Distance(allPlayers[i].transform.position, centerPos) <= currentRadius + 0.8f)
+                    {
+                        isPlayerNearby = true;
+                        break;
+                    }
+                }
             }
         }
 
@@ -142,21 +153,6 @@ public class DoorController : MonoBehaviour, IInteractable
                 if (allAdults[i] != null && allAdults[i].gameObject.activeInHierarchy)
                 {
                     if (Vector3.Distance(allAdults[i].transform.position, centerPos) <= currentRadius + 0.8f)
-                    {
-                        isNpcNearby = true;
-                        break;
-                    }
-                }
-            }
-        }
-        if (!isNpcNearby)
-        {
-            KidRunnerNPC[] allKids = FindObjectsByType<KidRunnerNPC>(FindObjectsSortMode.None);
-            for (int i = 0; i < allKids.Length; i++)
-            {
-                if (allKids[i] != null && allKids[i].gameObject.activeInHierarchy)
-                {
-                    if (Vector3.Distance(allKids[i].transform.position, centerPos) <= currentRadius + 0.8f)
                     {
                         isNpcNearby = true;
                         break;
@@ -255,7 +251,7 @@ public class DoorController : MonoBehaviour, IInteractable
         for (int i = 0; i < count; i++)
         {
             if (overlapBuffer[i] == null) continue;
-            if (overlapBuffer[i].GetComponentInParent<AdultGuardNPC>() != null || overlapBuffer[i].GetComponentInParent<KidRunnerNPC>() != null || overlapBuffer[i].gameObject.layer == LayerMask.NameToLayer("Npc")) return true;
+            if (overlapBuffer[i].GetComponentInParent<AdultGuardNPC>() != null || overlapBuffer[i].gameObject.layer == LayerMask.NameToLayer("Npc")) return true;
         }
         return false;
     }
@@ -276,6 +272,11 @@ public class DoorController : MonoBehaviour, IInteractable
         SetDoorCollidersActive(!open);
 
         Transform targetTrans = (doorChildModel != null) ? doorChildModel : transform;
+
+        if (closedLocalRotation == default(Quaternion))
+        {
+            closedLocalRotation = targetTrans.localRotation;
+        }
 
         if (smoothOpen && gameObject.activeInHierarchy)
         {
@@ -298,7 +299,7 @@ public class DoorController : MonoBehaviour, IInteractable
         while (t < 1f)
         {
             t += Time.deltaTime * openSpeed;
-            doorTrans.localRotation = Quaternion.Slerp(startRot, targetRot, t);
+            doorTrans.localRotation = Quaternion.Slerp(startRot, targetRot, Mathf.Clamp01(t));
             yield return null;
         }
 
@@ -362,6 +363,8 @@ public class DoorController : MonoBehaviour, IInteractable
         if (isUnlocked) return;
         isUnlocked = true;
         isBeingLockpicked = false;
+        closeTimer = closeDelayDuration + 2.0f;
+        isLocalPlayerInsideZone = true;
 
         if (uiManager != null && uiManager.playerManager != null)
         {
@@ -388,22 +391,19 @@ public class DoorController : MonoBehaviour, IInteractable
     }
 
     /// <summary>
-    /// Khi bẻ khóa thất bại: Báo động cho các NPC gần đó chạy tới kiểm tra khu vực cửa bị phá rồi quay về tuần tra
+    /// Khi bẻ khóa thất bại: Kích hoạt tiếng động báo động để các NPC trong vùng tự phát hiện và chạy tới điều tra
     /// </summary>
     public void AlertNearbyNPCs()
     {
-        // 1. Adult chạy tới kiểm tra quanh cửa rồi cooldown
-        AdultGuardNPC.AlertDoorTampered(transform.position, callRange);
-
-        // 2. Kid gần cửa hoảng loạn chạy và kích hoạt Call Chain
-        Collider[] kids = Physics.OverlapSphere(transform.position, callRange);
-        foreach (var col in kids)
+        var emitter = GetComponent<NPCAlertEmitter>();
+        if (emitter != null)
         {
-            var kid = col.GetComponent<KidRunnerNPC>() ?? col.GetComponentInParent<KidRunnerNPC>();
-            if (kid != null)
-            {
-                kid.OnDoorBrokenPanic(transform.position);
-            }
+            emitter.TriggerAlert();
+        }
+        else
+        {
+            // Fallback: phát tín hiệu trực tiếp, không cần bán kính
+            NPCAlertSystem.EmitNoise(transform.position, alertAdults: true, alertKids: true);
         }
     }
 
@@ -468,8 +468,6 @@ public class DoorController : MonoBehaviour, IInteractable
 
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, callRange);
         Gizmos.color = Color.cyan;
         Vector3 centerPos = transform.TransformPoint(detectionCenterOffset);
         Gizmos.DrawWireSphere(centerPos, autoOpenRadius);

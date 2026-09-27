@@ -215,6 +215,23 @@ public class PlayerDeathHandler : MonoBehaviour
             animator.SetTrigger("Die");
         }
 
+        // Thoát khỏi thang và cho rơi tự do nếu chết khi đang leo thang
+        if (playerController != null)
+        {
+            playerController.isClimbingLadder = false;
+            if (playerController._animator != null)
+            {
+                playerController._animator.SetBool("Climb", false);
+                playerController._animator.speed = 1.0f;
+            }
+        }
+
+        if (playerController != null && playerController.currentLadder != null)
+        {
+            playerController.currentLadder.FallOffLadder();
+            playerController.currentLadder = null;
+        }
+
         // 3. Thả toàn bộ vật phẩm đang cầm xuống đất kèm lực đẩy vật lý (Chỉ Local Player thực hiện để tránh lặp RPC)
         if (isLocal)
         {
@@ -483,12 +500,20 @@ public class PlayerDeathHandler : MonoBehaviour
             cameraTarget.localPosition = originalCameraTargetLocalPos;
         }
 
-        // 5. Khôi phục PlayerStats
+        // 5. Khôi phục PlayerStats và trạng thái PlayerController
         if (playerStats != null)
         {
             playerStats.isDied = false;
             playerStats.currentStamina = playerStats.maxStamina;
             playerStats.currweight = 0;
+        }
+
+        if (playerController != null)
+        {
+            playerController.canClimb = true;
+            playerController.isClimbingLadder = false;
+            playerController.currentLadder = null;
+            playerController.die = false;
         }
 
         // 6. Bật lại va chạm với NPC

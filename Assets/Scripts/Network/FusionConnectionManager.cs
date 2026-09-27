@@ -173,6 +173,8 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
         {
             customProps["map"] = mapName;
         }
+        // Tạo seed ngẫu nhiên cho ván chơi để mọi client đồng bộ Item giống nhau nhưng mỗi ván chơi sinh đồ khác nhau
+        customProps["seed"] = (int)(System.Environment.TickCount ^ System.Guid.NewGuid().GetHashCode());
 
         try
         {

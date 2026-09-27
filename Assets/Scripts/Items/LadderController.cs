@@ -380,7 +380,8 @@ public class LadderController : MonoBehaviour, IInteractable
         // 2. Xử lý toàn bộ quá trình tương tác khi đang leo thang
         if (isClimbing)
         {
-            if (!canClimb || (playerController != null && !playerController.canClimb))
+            bool isPlayerDead = (playerController != null && ((playerController.player != null && playerController.player.isDied) || (playerController.deathHandler != null && playerController.deathHandler.isDeadProcessed)));
+            if (!canClimb || (playerController != null && !playerController.canClimb) || isPlayerDead)
             {
                 FallOffLadder();
                 return;
@@ -431,6 +432,7 @@ public class LadderController : MonoBehaviour, IInteractable
         isOccupied = true;
         NetworkItemSync.SyncLadderOccupied(gameObject, true);
         playerController.isClimbingLadder = true;
+        playerController.currentLadder = this;
 
         if (mobileActions != null)
         {
@@ -817,6 +819,10 @@ public class LadderController : MonoBehaviour, IInteractable
 
         if (playerController != null)
         {
+            if (playerController.currentLadder == this)
+            {
+                playerController.currentLadder = null;
+            }
             playerController.isClimbingLadder = false;
             if (playerController.TryGetComponent<NetworkPlayerSync>(out var netSync) && netSync.IsLocalPlayer)
             {

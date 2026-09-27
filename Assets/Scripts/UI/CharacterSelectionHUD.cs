@@ -323,13 +323,18 @@ public class CharacterSelectionHUD : MonoBehaviour
                 (home.multiplayerLobbyPanel != null && home.multiplayerLobbyPanel.activeSelf) ||
                 (home.settingPanel != null && home.settingPanel.activeSelf) ||
                 (home.infoPanel != null && home.infoPanel.activeSelf) ||
-                (home.authPanel != null && home.authPanel.activeSelf) ||
-                (home.chapterSelectManager != null && home.chapterSelectManager.chapterSelectPanel != null && home.chapterSelectManager.chapterSelectPanel.activeSelf))
+                (home.authPanel != null && home.authPanel.activeSelf))
             {
                 shouldShow = false;
             }
         }
         else if (gameObject.activeInHierarchy)
+        {
+            shouldShow = false;
+        }
+
+        ChapterSelectManager chMgr = FindFirstObjectByType<ChapterSelectManager>(FindObjectsInactive.Include);
+        if (chMgr != null && ((chMgr.chapterSelectPanel != null && chMgr.chapterSelectPanel.activeSelf) || chMgr.gameObject.activeInHierarchy))
         {
             shouldShow = false;
         }

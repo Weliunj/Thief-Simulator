@@ -1513,6 +1513,7 @@ GameObject:
   - component: {fileID: 7691476095185942701}
   - component: {fileID: 1012188538442478628}
   - component: {fileID: 5041264002913283938}
+  - component: {fileID: 8919944379910873470}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -1706,9 +1707,11 @@ MonoBehaviour:
   - {fileID: 0}
   _animator: {fileID: 0}
   _input: {fileID: 0}
+  die: 0
   deathHandler: {fileID: 0}
   canClimb: 1
   isClimbingLadder: 0
+  currentLadder: {fileID: 0}
   ladderYawClamp: 80
   Crouching: 0
 --- !u!114 &2902521936837658228
@@ -1967,6 +1970,31 @@ MonoBehaviour:
   StateHashes: 0000000089ad04dadbf77bf359fb0af89b89cb5ab1afdc305a6c54cd1c6a54339e2518b671a7e1076b36dbed0e78689c8c37241952f6b98561459cb2aa76a6122744d93c45c1ef97179b90be7ada612028801e09
   TriggerHashes: 0000000089ad04da45c1ef9737b93501
   TotalWords: 4
+--- !u!114 &8919944379910873470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7253182190317101987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac8d1296c5e690d4f9b4af63dafdb7cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NPCAlertEmitter
+  alertAdults: 1
+  alertKids: 1
+  isPlayerNoise: 1
+  noiseRadius: 1
+  alertCooldown: 0.5
+  triggerOnCollision: 0
+  minImpactVelocity: 2.5
+  impactLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  audioSource: {fileID: 0}
+  soundEffect: {fileID: 0}
+  soundVolume: 1
 --- !u!1 &7294466694148045961
 GameObject:
   m_ObjectHideFlags: 0

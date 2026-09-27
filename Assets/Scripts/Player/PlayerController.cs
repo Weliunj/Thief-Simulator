@@ -300,7 +300,7 @@ namespace StarterAssets
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
         }
-        private bool die = false;
+        [HideInInspector] public bool die = false;
 
         [HideInInspector] public PlayerDeathHandler deathHandler;
 
@@ -316,6 +316,22 @@ namespace StarterAssets
 
             if (player.isDied)
             {
+                if (isClimbingLadder)
+                {
+                    isClimbingLadder = false;
+                    if (_animator != null)
+                    {
+                        _animator.SetBool("Climb", false);
+                        _animator.speed = 1.0f;
+                    }
+
+                    if (currentLadder != null)
+                    {
+                        currentLadder.FallOffLadder();
+                        currentLadder = null;
+                    }
+                }
+
                 if (deathHandler != null)
                 {
                     deathHandler.TriggerDeath();
@@ -423,6 +439,7 @@ namespace StarterAssets
         [Tooltip("Cho phép leo thang hay không (canClimb). Nếu bị tắt (ví dụ do stun, online sync, mất quyền leo), người chơi sẽ lập tức buông tay rơi khỏi thang")]
         public bool canClimb = true;
         public bool isClimbingLadder = false;
+        [HideInInspector] public LadderController currentLadder;
         public void LadderClimb()
         {
             if (_animator == null) return;
@@ -793,23 +810,27 @@ namespace StarterAssets
 
         private float _footstepTimer = 0.2f;
         private bool _hasReceivedAnimFootstepEvent = false;
+        private NPCAlertEmitter _npcNoiseEmitter;   // ← THÊM MỚI
+        private bool _npcEmitterChecked = false;
 
         /// <summary>
         /// Xử lý phát tiếng bước chân theo nhịp di chuyển (hoạt động kể cả khi animation clip không có Animation Event)
         /// </summary>
         private void HandleProceduralFootsteps()
         {
-            if (_hasReceivedAnimFootstepEvent) return; // Ưu tiên Animation Event nếu clip đã có
+            if (_hasReceivedAnimFootstepEvent) return;
 
-            if (Grounded && _input != null && _input.move.sqrMagnitude > 0.01f && _speed > 0.4f)
+            if (Grounded && _input != null && _input.move.sqrMagnitude > 0.01f
+                && _speed > 0.4f && !Crouching)
             {
                 _footstepTimer -= Time.deltaTime;
-                float stepInterval = _input.sprint ? 0.32f : (Crouching ? 0.58f : 0.44f);
+                float stepInterval = _input.sprint ? 0.32f : 0.44f;
 
                 if (_footstepTimer <= 0f)
                 {
                     _footstepTimer = stepInterval;
                     PlayFootstepSound();
+                    TriggerNPCAwareness();
                 }
             }
             else
@@ -817,13 +838,15 @@ namespace StarterAssets
                 _footstepTimer = 0.15f;
             }
         }
-
         public void OnFootstep(AnimationEvent animationEvent)
         {
             _hasReceivedAnimFootstepEvent = true;
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
                 PlayFootstepSound();
+
+                if (!Crouching && _speed > 0.4f)
+                    TriggerNPCAwareness();
             }
         }
 
@@ -831,6 +854,9 @@ namespace StarterAssets
         {
             _hasReceivedAnimFootstepEvent = true;
             PlayFootstepSound();
+
+            if (!Crouching && _speed > 0.4f)
+                TriggerNPCAwareness();
         }
 
         private void PlayFootstepSound()
@@ -865,7 +891,23 @@ namespace StarterAssets
                 }
             }
         }
+        private void TriggerNPCAwareness()
+        {
+            // Lazy cache — chỉ tìm 1 lần
+            if (!_npcEmitterChecked)
+            {
+                _npcEmitterChecked = true;
+                _npcNoiseEmitter = GetComponent<NPCAlertEmitter>();
+            }
 
+            if (_npcNoiseEmitter == null) return;
+
+            // Bỏ qua cooldown của emitter — để mỗi bước đều trigger
+            _npcNoiseEmitter.alertCooldown = 0f;
+
+            // Trigger tại đúng vị trí Player hiện tại
+            _npcNoiseEmitter.TriggerAlert(transform.position);
+        }
         public void OnLand(AnimationEvent animationEvent)
         {
             if (animationEvent.animatorClipInfo.weight > 0.5f)

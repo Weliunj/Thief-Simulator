@@ -124,6 +124,33 @@ public class AuthHUD : MonoBehaviour
         autoLoginCoroutine = StartCoroutine(AutoLoginRoutine());
     }
 
+    private float _networkCheckTimer = 0f;
+    private bool _lastNetworkState = true;
+
+    private void Update()
+    {
+        // Kiểm tra trạng thái mạng định kỳ mỗi 0.5s để làm mờ/sáng toàn bộ nút
+        _networkCheckTimer += Time.unscaledDeltaTime;
+        if (_networkCheckTimer >= 0.5f)
+        {
+            _networkCheckTimer = 0f;
+            bool isOnline = FirebaseAuthService.IsNetworkAvailable;
+            if (isOnline != _lastNetworkState)
+            {
+                _lastNetworkState = isOnline;
+                UpdateNetworkButtonStates(isOnline);
+                if (!isOnline)
+                {
+                    ShowStatus("No Internet Connection! Please connect to the internet to login.", true, permanent: true);
+                }
+                else
+                {
+                    ClearStatus();
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// Giả lập tự động đăng nhập khi mở lại APK kèm thanh Loading Slider:
     /// - TH1: Đăng nhập thành công -> Slider chạy lên mốc 100%, vào Main Menu.
@@ -261,8 +288,7 @@ public class AuthHUD : MonoBehaviour
     /// Xử lý trạng thái Ngoại tuyến (TH2):
     /// - Xóa 2 ô Input Email và Password.
     /// - Hiển thị thông báo 'No Internet Connection!' vĩnh viễn.
-    /// - Làm mờ / Vô hiệu hóa cả nút lẫn chữ bên trong (Login, Register, Forgot...).
-    /// - Nút Chơi Khách vẫn sáng để vào chơi Offline.
+    /// - Làm mờ / Vô hiệu hóa toàn bộ nút (Login, Register, Forgot, Guest...).
     /// </summary>
     private void HandleOfflineState()
     {
@@ -271,9 +297,9 @@ public class AuthHUD : MonoBehaviour
         if (loginPasswordInput != null) loginPasswordInput.text = "";
 
         // 2. Status 'No Internet Connection!' hiển thị vĩnh viễn
-        ShowStatus("No Internet Connection!", true, permanent: true);
+        ShowStatus("No Internet Connection! Please connect to the internet to login.", true, permanent: true);
 
-        // 3. Làm mờ / vô hiệu hóa các nút và chữ bên trong
+        // 3. Làm mờ / vô hiệu hóa toàn bộ các nút
         UpdateNetworkButtonStates(false);
 
         // 4. Mở LoginPanel nhưng giữ nguyên dòng Status
@@ -290,9 +316,7 @@ public class AuthHUD : MonoBehaviour
         SetButtonInteractable(switchToForgotPassBtn, isOnline);
         SetButtonInteractable(registerSubmitBtn, isOnline);
         SetButtonInteractable(forgotSubmitBtn, isOnline);
-
-        // Nút Khách luôn luôn hoạt động bình thường
-        SetButtonInteractable(loginGuestBtn, true);
+        SetButtonInteractable(loginGuestBtn, isOnline);
     }
 
     /// <summary>
@@ -411,6 +435,13 @@ public class AuthHUD : MonoBehaviour
     {
         PlayClickSound();
 
+        if (!FirebaseAuthService.IsNetworkAvailable)
+        {
+            ShowStatus("No Internet Connection! Please connect to the internet to login.", true, permanent: true);
+            UpdateNetworkButtonStates(false);
+            return;
+        }
+
         string email = loginEmailInput != null ? loginEmailInput.text.Trim() : "";
         string password = loginPasswordInput != null ? loginPasswordInput.text : "";
 
@@ -447,6 +478,13 @@ public class AuthHUD : MonoBehaviour
     private void OnRegisterClicked()
     {
         PlayClickSound();
+
+        if (!FirebaseAuthService.IsNetworkAvailable)
+        {
+            ShowStatus("No Internet Connection! Please connect to the internet to register.", true, permanent: true);
+            UpdateNetworkButtonStates(false);
+            return;
+        }
 
         string username = registerUsernameInput != null ? registerUsernameInput.text.Trim() : "Thief";
         string email = registerEmailInput != null ? registerEmailInput.text.Trim() : "";
@@ -510,6 +548,13 @@ public class AuthHUD : MonoBehaviour
     {
         PlayClickSound();
 
+        if (!FirebaseAuthService.IsNetworkAvailable)
+        {
+            ShowStatus("No Internet Connection! Guest login requires internet.", true, permanent: true);
+            UpdateNetworkButtonStates(false);
+            return;
+        }
+
         SetLoading(true);
         ShowStatus("Initializing Guest account...", false);
 
@@ -531,6 +576,13 @@ public class AuthHUD : MonoBehaviour
     private void OnForgotPassClicked()
     {
         PlayClickSound();
+
+        if (!FirebaseAuthService.IsNetworkAvailable)
+        {
+            ShowStatus("No Internet Connection! Please connect to the internet.", true, permanent: true);
+            UpdateNetworkButtonStates(false);
+            return;
+        }
 
         string email = forgotEmailInput != null ? forgotEmailInput.text.Trim() : "";
         if (string.IsNullOrEmpty(email))

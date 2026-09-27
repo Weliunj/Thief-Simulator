@@ -10,11 +10,10 @@ public class HomeScreen : MonoBehaviour
     public AudioSource[] audioSources; // audioSources[0]: Hover, audioSources[1]: Click
 
     [Header("🔘 Main Menu Buttons")]
-    public Button playButton;
-    public Button exitButton;
-    public Button optionsButton;
-    public Button characterButton;
-    public Button multiplayerButton; // Nút Chơi mạng (Multiplayer)
+    public Button multiplayerButton; // Nút Chơi mạng (Multiplayer / Play Online)
+    public Button characterButton;   // Nút Chọn nhân vật (Character)
+    public Button optionsButton;     // Nút Cài đặt (Options)
+    public Button exitButton;        // Nút Thoát (Exit)
     public Button infoButton;        // Nút mở Hồ sơ / InfoPanel (Avatar hoặc Profile Icon)
 
     [Header("👤 Player Info Display (Lobby)")]
@@ -36,7 +35,6 @@ public class HomeScreen : MonoBehaviour
     public GameObject characterSelectPanel;
     public GameObject infoPanel; // Panel Hồ sơ / Thông tin người chơi (InfoPanel)
     public GameObject multiplayerLobbyPanel; // Panel Sảnh chờ Multiplayer Online (NetworkLobbyHUD)
-    public ChapterSelectManager chapterSelectManager;
 
     private float networkCheckTimer = 0f;
 
@@ -83,10 +81,6 @@ public class HomeScreen : MonoBehaviour
         if (infoPanel != null) infoPanel.SetActive(false);
         if (characterSelectPanel != null) characterSelectPanel.SetActive(false);
         if (settingPanel != null) settingPanel.SetActive(false);
-        if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
-        {
-            chapterSelectManager.chapterSelectPanel.SetActive(false);
-        }
 
         // Tắt 3D Lobby Model
         CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
@@ -176,38 +170,27 @@ public class HomeScreen : MonoBehaviour
         if (settingPanel != null) settingPanel.SetActive(false);
         if (characterSelectPanel != null) characterSelectPanel.SetActive(false);
         if (infoPanel != null) infoPanel.SetActive(false);
-        if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
-        {
-            chapterSelectManager.chapterSelectPanel.SetActive(false);
-        }
-
-
 
         // Tự động tìm các Buttons nếu chưa gán
-        if (playButton == null)
+        if (multiplayerButton == null)
         {
-            Transform p = transform.Find("PlayButton") ?? transform.Find("PlayBtn");
-            if (p != null) playButton = p.GetComponent<Button>();
-        }
-        if (exitButton == null)
-        {
-            Transform e = transform.Find("ExitButton") ?? transform.Find("ExitBtn");
-            if (e != null) exitButton = e.GetComponent<Button>();
-        }
-        if (optionsButton == null)
-        {
-            Transform o = transform.Find("OptionsButton") ?? transform.Find("OptionButton") ?? transform.Find("SettingButton") ?? transform.Find("SettingsBtn");
-            if (o != null) optionsButton = o.GetComponent<Button>();
+            Transform m = transform.Find("MultiplayerButton") ?? transform.Find("MultiplayerBtn") ?? transform.Find("OnlineButton") ?? transform.Find("OnlineBtn") ?? transform.Find("PlayButton") ?? transform.Find("PlayBtn");
+            if (m != null) multiplayerButton = m.GetComponent<Button>();
         }
         if (characterButton == null)
         {
             Transform c = transform.Find("CharacterButton") ?? transform.Find("CharacterBtn") ?? transform.Find("CharBtn") ?? transform.Find("SkinBtn");
             if (c != null) characterButton = c.GetComponent<Button>();
         }
-        if (multiplayerButton == null)
+        if (optionsButton == null)
         {
-            Transform m = transform.Find("MultiplayerButton") ?? transform.Find("MultiplayerBtn") ?? transform.Find("OnlineButton") ?? transform.Find("OnlineBtn") ?? transform.Find("CoopBtn");
-            if (m != null) multiplayerButton = m.GetComponent<Button>();
+            Transform o = transform.Find("OptionsButton") ?? transform.Find("OptionButton") ?? transform.Find("SettingButton") ?? transform.Find("SettingsBtn");
+            if (o != null) optionsButton = o.GetComponent<Button>();
+        }
+        if (exitButton == null)
+        {
+            Transform e = transform.Find("ExitButton") ?? transform.Find("ExitBtn");
+            if (e != null) exitButton = e.GetComponent<Button>();
         }
         if (infoPanel == null)
         {
@@ -238,30 +221,25 @@ public class HomeScreen : MonoBehaviour
         }
 
         // Đăng ký sự kiện Click cho toàn bộ các nút trên HomeScreen
-        if (playButton != null)
+        if (multiplayerButton != null)
         {
-            playButton.onClick.RemoveListener(Play_Clicked);
-            playButton.onClick.AddListener(Play_Clicked);
-        }
-        if (exitButton != null)
-        {
-            exitButton.onClick.RemoveListener(Exit_Clicked);
-            exitButton.onClick.AddListener(Exit_Clicked);
-        }
-        if (optionsButton != null)
-        {
-            optionsButton.onClick.RemoveListener(Options_Clicked);
-            optionsButton.onClick.AddListener(Options_Clicked);
+            multiplayerButton.onClick.RemoveListener(Multiplayer_Clicked);
+            multiplayerButton.onClick.AddListener(Multiplayer_Clicked);
         }
         if (characterButton != null)
         {
             characterButton.onClick.RemoveListener(Character_Clicked);
             characterButton.onClick.AddListener(Character_Clicked);
         }
-        if (multiplayerButton != null)
+        if (optionsButton != null)
         {
-            multiplayerButton.onClick.RemoveListener(Multiplayer_Clicked);
-            multiplayerButton.onClick.AddListener(Multiplayer_Clicked);
+            optionsButton.onClick.RemoveListener(Options_Clicked);
+            optionsButton.onClick.AddListener(Options_Clicked);
+        }
+        if (exitButton != null)
+        {
+            exitButton.onClick.RemoveListener(Exit_Clicked);
+            exitButton.onClick.AddListener(Exit_Clicked);
         }
         if (infoButton != null)
         {
@@ -502,27 +480,6 @@ public class HomeScreen : MonoBehaviour
         UpdatePlayerProfileVisuals();
     }
 
-    public void Play_Clicked()
-    {
-        PlayClickSound();
-
-        // Ẩn 3D model ngoài sảnh khi chuyển sang màn hình Chapter Select
-        CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
-        if (hud != null)
-        {
-            hud.SetLobbyModelVisible(false);
-        }
-
-        if (chapterSelectManager != null)
-        {
-            chapterSelectManager.OpenChapterSelect();
-        }
-        else
-        {
-            StartCoroutine(LoadSceneAfterDelay(1, 0.5f));
-        }
-    }
-
     public void Exit_Clicked()
     {
         PlayClickSound();
@@ -583,12 +540,6 @@ public class HomeScreen : MonoBehaviour
                 anyAudio.Play();
             }
         }
-    }
-
-    private IEnumerator LoadSceneAfterDelay(int sceneIndex, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        ScreenFader.LoadSceneWithFade(sceneIndex, 0.5f);
     }
 
     private IEnumerator QuitAfterDelay(float delay)

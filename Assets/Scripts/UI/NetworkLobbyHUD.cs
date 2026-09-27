@@ -35,10 +35,15 @@ public class NetworkLobbyHUD : MonoBehaviour
     [Header("➕ Create Room Modal")]
     public TMP_InputField createRoomNameInput;
     public TMP_Dropdown maxPlayersDropdown;
-    public TMP_Dropdown mapSelectDropdown;
+    public TMP_Dropdown mapSelectDropdown; // Tùy chọn fallback
+    public Button openMapSelectButton;     // Nút mở panel chọn Chapter
+    public Image createRoomMapPreviewImage; // Ảnh preview Chapter được chọn
+    public TextMeshProUGUI createRoomMapTitleText; // Tiêu đề Chapter được chọn
     public Toggle privateRoomToggle;
     public Button confirmCreateButton;
     public Button cancelCreateButton;
+    public ChapterSelectManager chapterSelectManager;
+    public int selectedMapIndex = 0;
 
     [Header("🔑 Join By Code Modal")]
     public TMP_InputField joinCodeInput;
@@ -80,6 +85,15 @@ public class NetworkLobbyHUD : MonoBehaviour
 
     private void Awake()
     {
+        if (chapterSelectManager == null)
+        {
+            chapterSelectManager = FindFirstObjectByType<ChapterSelectManager>(FindObjectsInactive.Include);
+        }
+        if ((chapterList == null || chapterList.Count == 0) && chapterSelectManager != null && chapterSelectManager.chapterList != null && chapterSelectManager.chapterList.Count > 0)
+        {
+            chapterList = chapterSelectManager.chapterList;
+        }
+
         SetupButtons();
         InitializeMapDropdown();
         EnsureAudioSource();
@@ -194,8 +208,75 @@ public class NetworkLobbyHUD : MonoBehaviour
         return "Chapter1";
     }
 
+    public int GetCurrentMapIndex()
+    {
+        // 1. Kiểm tra Session Properties "map" của Fusion Runner hiện tại
+        if (FusionConnectionManager.Instance != null && FusionConnectionManager.Instance.currentRunner != null && FusionConnectionManager.Instance.currentRunner.IsRunning)
+        {
+            var session = FusionConnectionManager.Instance.currentRunner.SessionInfo;
+            if (session != null && session.IsValid && session.Properties != null && session.Properties.TryGetValue("map", out var mapProp))
+            {
+                string mapName = mapProp.PropertyValue as string;
+                if (!string.IsNullOrEmpty(mapName))
+                {
+                    if (chapterList != null)
+                    {
+                        for (int i = 0; i < chapterList.Count; i++)
+                        {
+                            var ch = chapterList[i];
+                            if (ch != null)
+                            {
+                                if ((!string.IsNullOrEmpty(ch.gameplaySceneName) && ch.gameplaySceneName.Equals(mapName, System.StringComparison.OrdinalIgnoreCase)) ||
+                                    (!string.IsNullOrEmpty(ch.sceneName) && ch.sceneName.Equals(mapName, System.StringComparison.OrdinalIgnoreCase)) ||
+                                    (!string.IsNullOrEmpty(ch.chapterTitle) && ch.chapterTitle.Equals(mapName, System.StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    return i;
+                                }
+                            }
+                        }
+                    }
+                    if (mapSceneNames != null)
+                    {
+                        for (int i = 0; i < mapSceneNames.Length; i++)
+                        {
+                            if (mapSceneNames[i].Equals(mapName, System.StringComparison.OrdinalIgnoreCase))
+                            {
+                                return i;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Kiểm tra GameSession.SelectedChapter
+        if (GameSession.SelectedChapter != null && chapterList != null)
+        {
+            int sessionIndex = chapterList.IndexOf(GameSession.SelectedChapter);
+            if (sessionIndex >= 0)
+            {
+                return sessionIndex;
+            }
+        }
+
+        // 3. Kiểm tra biến selectedMapIndex
+        if (chapterList != null && selectedMapIndex >= 0 && selectedMapIndex < chapterList.Count)
+        {
+            return selectedMapIndex;
+        }
+
+        // 4. Kiểm tra Dropdown nếu có
+        if (mapSelectDropdown != null && mapSelectDropdown.options != null && mapSelectDropdown.options.Count > 0)
+        {
+            return mapSelectDropdown.value;
+        }
+
+        return 0;
+    }
+
     private void OnMapSelectDropdownChanged(int index)
     {
+        selectedMapIndex = index;
         UpdateWaitingRoomMapPreview(index);
     }
 
@@ -203,57 +284,11 @@ public class NetworkLobbyHUD : MonoBehaviour
     {
         if (index < 0)
         {
-            if (FusionConnectionManager.Instance != null && FusionConnectionManager.Instance.currentRunner != null && FusionConnectionManager.Instance.currentRunner.IsRunning)
-            {
-                var session = FusionConnectionManager.Instance.currentRunner.SessionInfo;
-                if (session != null && session.IsValid && session.Properties != null && session.Properties.TryGetValue("map", out var mapProp))
-                {
-                    string mapName = mapProp.PropertyValue as string;
-                    if (!string.IsNullOrEmpty(mapName))
-                    {
-                        int foundIndex = -1;
-                        if (chapterList != null)
-                        {
-                            for (int i = 0; i < chapterList.Count; i++)
-                            {
-                                var ch = chapterList[i];
-                                if (ch != null)
-                                {
-                                    if ((!string.IsNullOrEmpty(ch.gameplaySceneName) && ch.gameplaySceneName.Equals(mapName, System.StringComparison.OrdinalIgnoreCase)) ||
-                                        (!string.IsNullOrEmpty(ch.sceneName) && ch.sceneName.Equals(mapName, System.StringComparison.OrdinalIgnoreCase)))
-                                    {
-                                        foundIndex = i;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (foundIndex < 0 && mapSceneNames != null)
-                        {
-                            for (int i = 0; i < mapSceneNames.Length; i++)
-                            {
-                                if (mapSceneNames[i].Equals(mapName, System.StringComparison.OrdinalIgnoreCase))
-                                {
-                                    foundIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        if (foundIndex >= 0)
-                        {
-                            index = foundIndex;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (index < 0 && mapSelectDropdown != null)
-        {
-            index = mapSelectDropdown.value;
+            index = GetCurrentMapIndex();
         }
         if (index < 0) index = 0;
+
+        selectedMapIndex = index;
 
         Sprite sprite = GetMapSprite(index);
         string title = GetMapTitle(index);
@@ -337,6 +372,7 @@ public class NetworkLobbyHUD : MonoBehaviour
 
         if (confirmCreateButton != null) confirmCreateButton.onClick.AddListener(OnConfirmCreateClicked);
         if (cancelCreateButton != null) cancelCreateButton.onClick.AddListener(ShowLobbyMain);
+        if (openMapSelectButton != null) openMapSelectButton.onClick.AddListener(OnOpenMapSelectClicked);
 
         if (confirmJoinCodeButton != null) confirmJoinCodeButton.onClick.AddListener(OnConfirmJoinCodeClicked);
         if (cancelJoinCodeButton != null) cancelJoinCodeButton.onClick.AddListener(ShowLobbyMain);
@@ -357,12 +393,21 @@ public class NetworkLobbyHUD : MonoBehaviour
         if (joinCodeModal != null) joinCodeModal.SetActive(false);
         if (waitingRoomPanel != null) waitingRoomPanel.SetActive(false);
         if (loadingSpinner != null) loadingSpinner.SetActive(false);
+        if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
+        {
+            chapterSelectManager.chapterSelectPanel.SetActive(false);
+        }
     }
 
     public void ShowCreateModal()
     {
         PlayClickSound();
         if (createRoomModal != null) createRoomModal.SetActive(true);
+        if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
+        {
+            chapterSelectManager.chapterSelectPanel.SetActive(false);
+        }
+
         if (createRoomNameInput != null)
         {
             string username = "Player";
@@ -371,6 +416,57 @@ public class NetworkLobbyHUD : MonoBehaviour
                 username = FirebaseDataService.Instance.CurrentUserProfile.username;
             }
             createRoomNameInput.text = $"{username}'s Room";
+        }
+
+        UpdateCreateRoomMapPreview(selectedMapIndex);
+    }
+
+    public void OnOpenMapSelectClicked()
+    {
+        PlayClickSound();
+        if (chapterSelectManager == null)
+        {
+            chapterSelectManager = FindFirstObjectByType<ChapterSelectManager>(FindObjectsInactive.Include);
+        }
+
+        if (chapterSelectManager != null)
+        {
+            if (createRoomModal != null) createRoomModal.SetActive(false);
+            chapterSelectManager.OpenForRoomCreation(this, selectedMapIndex);
+        }
+    }
+
+    public void OnChapterSelectedFromPanel(int index)
+    {
+        selectedMapIndex = index;
+        if (mapSelectDropdown != null && mapSelectDropdown.options != null && mapSelectDropdown.options.Count > index)
+        {
+            mapSelectDropdown.SetValueWithoutNotify(index);
+        }
+        if (chapterList != null && index >= 0 && index < chapterList.Count)
+        {
+            GameSession.SelectedChapter = chapterList[index];
+            int nextIndex = index + 1;
+            GameSession.NextChapter = (nextIndex < chapterList.Count) ? chapterList[nextIndex] : null;
+        }
+        UpdateCreateRoomMapPreview(selectedMapIndex);
+    }
+
+    public void UpdateCreateRoomMapPreview(int index)
+    {
+        if (index < 0) index = 0;
+        Sprite sprite = GetMapSprite(index);
+        string title = GetMapTitle(index);
+
+        if (createRoomMapPreviewImage != null)
+        {
+            createRoomMapPreviewImage.sprite = sprite;
+            createRoomMapPreviewImage.enabled = (sprite != null);
+        }
+
+        if (createRoomMapTitleText != null)
+        {
+            createRoomMapTitleText.text = title;
         }
     }
 
@@ -519,7 +615,12 @@ public class NetworkLobbyHUD : MonoBehaviour
 
         bool isPrivate = (privateRoomToggle != null) && privateRoomToggle.isOn;
 
-        int mapIndex = (mapSelectDropdown != null) ? mapSelectDropdown.value : 0;
+        int mapIndex = selectedMapIndex;
+        if (chapterList != null && (mapIndex < 0 || mapIndex >= chapterList.Count))
+        {
+            mapIndex = (mapSelectDropdown != null && mapSelectDropdown.options != null && mapSelectDropdown.options.Count > 0) ? mapSelectDropdown.value : 0;
+        }
+
         string selectedMap = GetMapSceneName(mapIndex);
 
         if (chapterList != null && mapIndex >= 0 && mapIndex < chapterList.Count)
@@ -633,7 +734,7 @@ public class NetworkLobbyHUD : MonoBehaviour
             }
         }
 
-        int mapIndex = (mapSelectDropdown != null) ? mapSelectDropdown.value : 0;
+        int mapIndex = GetCurrentMapIndex();
         string sceneToLoad = GetMapSceneName(mapIndex);
 
         if (chapterList != null && mapIndex >= 0 && mapIndex < chapterList.Count)
