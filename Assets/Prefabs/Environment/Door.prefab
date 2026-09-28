@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6410275141777627212}
   - component: {fileID: 3814928655061778962}
-  m_Layer: 8
+  m_Layer: 10
   m_Name: AudioSource
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -52,9 +52,9 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 0
-  MaxDistance: 13
+  MaxDistance: 20
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -119,7 +119,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1.09
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -140,7 +140,7 @@ GameObject:
   - component: {fileID: 79521046628339591}
   - component: {fileID: 6576475680876692744}
   - component: {fileID: 1546665036474868153}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -155,7 +155,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7338837150645742235}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.684, y: 0.909, z: -0.047}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -234,7 +234,7 @@ GameObject:
   - component: {fileID: 3219860202244366861}
   - component: {fileID: 1051583521323845628}
   - component: {fileID: 1081105176731061552}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -251,7 +251,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1.0103, z: 1}
+  m_LocalScale: {x: 1.3428315, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 79521046628339591}
@@ -312,7 +312,7 @@ MonoBehaviour:
   checkInterval: 0.15
   detectionLayerMask:
     serializedVersion: 2
-    m_Bits: 72
+    m_Bits: 200
   audioSource: {fileID: 3814928655061778962}
   hitSound: {fileID: 8300000, guid: 1cc422dbe6ec25246a5b0638e58424f9, type: 3}
   missSound: {fileID: 8300000, guid: ed1bd3a22e501f34bb5c8e7aebd7be37, type: 3}
@@ -377,7 +377,7 @@ MonoBehaviour:
   m_GenerateLinks: 0
   m_IgnoreFromBuild: 1
   m_ApplyToChildren: 1
-  m_AffectedAgents: a98c17ecf46d2d58
+  m_AffectedAgents: a98c17ecf46d2d58c3c0608d
 --- !u!114 &1081105176731061552
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -397,6 +397,7 @@ MonoBehaviour:
   alertCooldown: 0.5
   triggerOnCollision: 0
   minImpactVelocity: 2.5
+  spawnGracePeriod: 2
   impactLayers:
     serializedVersion: 2
     m_Bits: 256

@@ -119,7 +119,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 0
   MinDistance: 0
-  MaxDistance: 20
+  MaxDistance: 45
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -279,7 +279,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 0
   MinDistance: 0
-  MaxDistance: 20
+  MaxDistance: 45
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -399,7 +399,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.8
+  m_Volume: 0
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -408,7 +408,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 0
   MinDistance: 0
-  MaxDistance: 20
+  MaxDistance: 45
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -564,7 +564,7 @@ GameObject:
   - component: {fileID: 553770061852681180}
   - component: {fileID: 2799885792459846648}
   - component: {fileID: 5440304278830475802}
-  - component: {fileID: 1627012293291952790}
+  - component: {fileID: 1229728772758915790}
   m_Layer: 6
   m_Name: Figure
   m_TagString: Adult
@@ -621,7 +621,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 8437291931850211266}
   m_Enabled: 1
   m_AgentTypeID: -1923039037
-  m_Radius: 0.29
+  m_Radius: 0.25
   m_Speed: 3.5
   m_Acceleration: 8
   avoidancePriority: 75
@@ -630,7 +630,7 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2.36
+  m_Height: 1.86
   m_BaseOffset: 0.1
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
@@ -653,10 +653,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.31565455
-  m_Height: 2.3434713
+  m_Radius: 0.25
+  m_Height: 1.822005
   m_Direction: 1
-  m_Center: {x: 0, y: 1.075966, z: 0}
+  m_Center: {x: 0, y: 0.8152329, z: 0}
 --- !u!54 &553770061852681180
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -696,13 +696,13 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 1767706609
+  SortKey: 2383691129
   ObjectInterest: 1
   Flags: 131073
   NestedObjects: []
   NetworkedBehaviours:
   - {fileID: 5440304278830475802}
-  - {fileID: 1627012293291952790}
+  - {fileID: 0}
   ForceRemoteRenderTimeframe: 0
 --- !u!114 &5440304278830475802
 MonoBehaviour:
@@ -721,7 +721,7 @@ MonoBehaviour:
   SyncParent: 0
   _autoAOIOverride: 1
   DisableSharedModeInterpolation: 0
---- !u!114 &1627012293291952790
+--- !u!114 &1229728772758915790
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -737,11 +737,11 @@ MonoBehaviour:
   agent: {fileID: 2975934449428440873}
   animator: {fileID: 6998630125390958477}
   movementMode: 2
-  walkSpeed: 2.5
-  runSpeed: 7.5
-  returnSpeed: 2.5
-  visionRange: 5
-  raycastAngle: 18.4
+  walkSpeed: 3
+  runSpeed: 8
+  returnSpeed: 3
+  visionRange: 3
+  raycastAngle: 25
   crouchVisionMultiplier: 0.5
   eyeHeight: 0.8
   flashlight: {fileID: 881658361243640632}
@@ -749,8 +749,8 @@ MonoBehaviour:
   flashlightTransitionSpeed: 15
   canHear: 1
   canHearPlayer: 1
-  hearingRange: 20
-  loseSightGrace: 5
+  hearingRange: 30
+  loseSightGrace: 2.5
   catchDistance: 1.6
   catchOffset: {x: 0, y: 1, z: 0.4}
   catchCooldown: 1.5
@@ -762,17 +762,15 @@ MonoBehaviour:
   lookAngleSpread: 45
   stationaryRestTimeRange: {x: 2, y: 5}
   stationaryTurnSpeed: 3
-  patrolPoints:
-  - {fileID: 2883316189882384328}
-  - {fileID: 6249072893836125072}
+  patrolPoints: []
   patrolRestTimeRange: {x: 2, y: 4}
   patrolLookAngle: 40
   wanderCenterObject: {fileID: 6743725494024982334}
-  wanderRadius: 50
+  wanderRadius: 90
   wanderRestTimeRange: {x: 2, y: 5}
-  wanderLookAngle: 20
+  wanderLookAngle: 30
   wanderLookChance: 0.2
-  doorInspectRadius: 5
+  doorInspectRadius: 2.5
   doorInspectSteps: 3
   doorLookPauseRange: {x: 1, y: 2.5}
   alertSource: {fileID: 9102682920654994924}
@@ -782,12 +780,12 @@ MonoBehaviour:
   footstepSource: {fileID: 4597004422043768348}
   footstepClips:
   - {fileID: 8300000, guid: e5a4e0abbd347454fa34266376c5d5c0, type: 3}
-  footstepVolume: 0.582
+  footstepVolume: 0
   talkSource: {fileID: 428466166734306466}
   talkClips:
   - {fileID: 8300000, guid: 691b29fe4ad817a458acd016a51317b4, type: 3}
-  talkVolume: 0.878
-  talkCooldownRange: {x: 3, y: 6}
+  talkVolume: 1
+  talkCooldownRange: {x: 4, y: 8}
   debugLog: 0
   _NetworkIsChasing:
     _value: 0
@@ -820,7 +818,7 @@ Transform:
   m_GameObject: {fileID: 8465728398418178164}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.693, z: 0.38}
+  m_LocalPosition: {x: 0, y: 0, z: 0.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

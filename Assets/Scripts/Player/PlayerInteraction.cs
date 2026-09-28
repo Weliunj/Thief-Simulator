@@ -123,9 +123,17 @@ public class PlayerInteraction : MonoBehaviour
 
         // Lấy IHeldInteractable từ Item đang cầm trên Hotbar (Đèn pin...)
         currentHeldInteractable = null;
-        if (playerController != null && playerController.hotbarManager != null)
+        if (playerController != null)
         {
-            currentHeldInteractable = playerController.hotbarManager.GetHeldInteractable();
+            if (playerController.hotbarManager == null)
+            {
+                playerController.hotbarManager = FindFirstObjectByType<HotbarManager>(FindObjectsInactive.Include);
+            }
+
+            if (playerController.hotbarManager != null)
+            {
+                currentHeldInteractable = playerController.hotbarManager.GetHeldInteractable();
+            }
         }
 
         if (mainCamera == null)
@@ -319,7 +327,7 @@ public class PlayerInteraction : MonoBehaviour
     /// </summary>
     private void HandleInteractionInput()
     {
-        if (playerController == null || playerController.isClimbingLadder) return;
+        if (playerController == null || playerController.isClimbingLadder || playerController.isHiding) return;
 
         bool pickupInput = Input.GetKeyDown(KeyCode.E) || (mobileActions != null && mobileActions.pickupPressed);
         bool interactInput = Input.GetKeyDown(KeyCode.F) || (mobileActions != null && mobileActions.interactPressed);
@@ -355,6 +363,7 @@ public class PlayerInteraction : MonoBehaviour
                 if (currentSpecialInteractable.CanInteract(playerController, out string failReason))
                 {
                     currentSpecialInteractable.Interact(playerController);
+                    return;
                 }
                 else
                 {
@@ -363,12 +372,18 @@ public class PlayerInteraction : MonoBehaviour
                         itemInfoHUD.ShowWarning(failReason);
                     }
                 }
-                return;
             }
-            else if (currentHeldInteractable != null && currentHeldInteractable.CanInteractWhileHeld())
+
+            // Kích hoạt tương tác trên Item đang cầm (Bật/Tắt đèn pin)
+            IHeldInteractable held = currentHeldInteractable;
+            if (held == null && playerController != null && playerController.hotbarManager != null)
             {
-                // Kích hoạt tương tác trên Item đang cầm (Bật/Tắt đèn pin)
-                currentHeldInteractable.OnHeldInteract(playerController);
+                held = playerController.hotbarManager.GetHeldInteractable();
+            }
+
+            if (held != null && held.CanInteractWhileHeld())
+            {
+                held.OnHeldInteract(playerController);
                 return;
             }
         }

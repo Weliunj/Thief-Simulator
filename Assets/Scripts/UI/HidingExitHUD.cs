@@ -75,14 +75,6 @@ public class HidingExitHUD : MonoBehaviour
 
     private void Update()
     {
-        // Log mỗi 60 frame để không spam
-        if (Time.frameCount % 60 == 0)
-        {
-            Debug.Log($"[HidingExitHUD.Update] active={gameObject.activeInHierarchy}, " +
-                      $"spot={(currentSpot != null ? currentSpot.name : "null")}, " +
-                      $"player={(currentPlayer != null ? currentPlayer.name : "null")}");
-        }
-
         // Hỗ trợ bấm phím nóng trên bàn phím (E, Space, F) để thoát nhanh
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null)

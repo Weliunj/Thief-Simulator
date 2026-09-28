@@ -77,6 +77,12 @@ public class NetworkDoorSync : NetworkBehaviour
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RpcRequestSetLockpicking(bool isPicking)
     {
+        if (isPicking && NetworkIsBeingLockpicked)
+        {
+            Debug.LogWarning("[NetworkDoorSync] Bỏ qua RPC - đã có người lockpick!");
+            // Có thể gửi RPC về client A báo "không được" để đóng minigame
+            return;
+        }
         NetworkIsBeingLockpicked = isPicking;
     }
 

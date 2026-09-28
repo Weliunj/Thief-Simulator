@@ -115,7 +115,7 @@ Transform:
   m_GameObject: {fileID: 5754066151897182655}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.286, y: 0.296, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 5757733120706093134}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.09986997, y: 0.06232, z: 0.00209}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -211,7 +211,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -382,9 +382,10 @@ MonoBehaviour:
   alertCooldown: 0.5
   triggerOnCollision: 1
   minImpactVelocity: 3
+  spawnGracePeriod: 2
   impactLayers:
     serializedVersion: 2
     m_Bits: 512
   audioSource: {fileID: 1161423535895626896}
   soundEffect: {fileID: 8300000, guid: 175c1713694d2294f84a013cad8e6c43, type: 3}
-  soundVolume: 0.3
+  soundVolume: 0.2

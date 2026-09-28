@@ -23,9 +23,17 @@ public class MainHUD : MonoBehaviour
     [Tooltip("Text hiển thị điểm số (Đã ẩn theo yêu cầu thiết kế mới)")]
     public TextMeshProUGUI currPointText;
 
-    [Header("🚪 Escape UI")]
+    [Header("🚪 Escape UI & Audio")]
     [Tooltip("Nút Tẩu Thoát / Về Sảnh (Chỉ hiện khi đứng trong EscapeZone và đã đủ chỉ tiêu)")]
     public Button escapeButton;
+    [Tooltip("AudioSource phát tiếng xe khởi động (phát local không sync)")]
+    public AudioSource escapeAudioSource;
+    [Tooltip("AudioClip tiếng khởi động xe khi bấm Escape")]
+    public AudioClip escapeEngineClip;
+    [Tooltip("Thời gian mờ dần sang màn hình đen (giây)")]
+    public float escapeFadeDuration = 0.8f;
+    [Tooltip("Thời gian giữ màn hình đen (5 giây) trước khi chuyển Scene về sảnh")]
+    public float escapeBlackHoldDuration = 5.0f;
 
     [Header("⏰ Time UI")]
     [Tooltip("Text hiển thị thời gian đếm ngược (VD: 04:59)")]
@@ -271,10 +279,60 @@ public class MainHUD : MonoBehaviour
         }
     }
 
+    private bool isEscaping = false;
+
     private void OnEscapeButtonClicked()
     {
-        PlayClickSound();
+        if (isEscaping) return;
+        isEscaping = true;
 
+        // 1. Tắt nút Escape và khóa tương tác để tránh bấm đè nhiều lần
+        SetEscapeButtonActive(false);
+
+        // 2. Phát âm thanh tiếng xe khởi động (phát Local, không sync)
+        PlayEscapeEngineSound();
+
+        // 3. Khởi động tiến trình chuyển cảnh: Màn hình đen -> Giữ 5 giây -> Về Sảnh
+        StartCoroutine(EscapeSequenceRoutine());
+    }
+
+    private void PlayEscapeEngineSound()
+    {
+        if (escapeEngineClip == null)
+        {
+            PlayClickSound();
+            return;
+        }
+
+        if (escapeAudioSource != null)
+        {
+            escapeAudioSource.PlayOneShot(escapeEngineClip);
+        }
+        else
+        {
+            // Fallback tìm hoặc tạo AudioSource local
+            AudioSource src = GetComponent<AudioSource>();
+            if (src == null) src = gameObject.AddComponent<AudioSource>();
+            src.spatialBlend = 0f; // 2D Sound (Local)
+            src.PlayOneShot(escapeEngineClip);
+        }
+    }
+
+    private System.Collections.IEnumerator EscapeSequenceRoutine()
+    {
+        // Làm mờ dần sang màn hình đen
+        bool fadeDone = false;
+        ScreenFader.FadeToBlack(escapeFadeDuration, () => fadeDone = true);
+
+        while (!fadeDone)
+        {
+            yield return null;
+        }
+
+        // Đợi đủ 5 giây trong màn hình đen
+        yield return new WaitForSecondsRealtime(escapeBlackHoldDuration);
+
+        // Chuyển Scene về sảnh
         if (uiManager == null) uiManager = FindFirstObjectByType<UI_Manager>();
         if (uiManager != null)
         {

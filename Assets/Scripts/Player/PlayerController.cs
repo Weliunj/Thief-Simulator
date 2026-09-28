@@ -372,6 +372,15 @@ namespace StarterAssets
             LadderClimb(); if (isClimbingLadder) { return; }
             if (isHiding)
             {
+                // Giữ trạng thái Idle tuyệt đối khi đang trốn trong tủ
+                _speed = 0f;
+                _animationBlend = 0f;
+                if (_hasAnimator)
+                {
+                    _animator.SetFloat(_animIDSpeed, 0f);
+                    _animator.SetFloat(_animIDMotionSpeed, 0f);
+                }
+
                 // Cho phép người chơi nhấn nút Nhảy (Space) hoặc phím E / F để thoát khỏi tủ
                 bool exitInput = _input.jump || Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.F);
                 if (exitInput)
@@ -521,10 +530,37 @@ namespace StarterAssets
         }
 
         /// <summary>
+        /// Reset toàn bộ chuyển động, vận tốc và animation của Player về trạng thái đứng yên (Idle) tuyệt đối
+        /// </summary>
+        public void ResetMotionToIdle()
+        {
+            _speed = 0f;
+            _animationBlend = 0f;
+            _verticalVelocity = 0f;
+            _footstepTimer = 0.5f;
+
+            if (_input != null)
+            {
+                _input.move = Vector2.zero;
+                _input.sprint = false;
+                _input.jump = false;
+            }
+
+            if (_hasAnimator || TryGetComponent(out _animator))
+            {
+                _animator.SetFloat(_animIDSpeed, 0f);
+                _animator.SetFloat(_animIDMotionSpeed, 0f);
+                _animator.SetBool(_animIDJump, false);
+                _animator.SetBool(_animIDFreeFall, false);
+            }
+        }
+
+        /// <summary>
         /// Cố định hướng camera nhìn thẳng ra ngoài cửa tủ khi trốn (không cho quay)
         /// </summary>
         public void SetHidingCameraFacing(float targetYaw)
         {
+            ResetMotionToIdle();
             _cinemachineTargetYaw = targetYaw;
             _hidingBaseYaw = targetYaw;
             _cinemachineTargetPitch = 0.0f;
@@ -857,7 +893,7 @@ namespace StarterAssets
         /// </summary>
         private void HandleProceduralFootsteps()
         {
-            if (_hasReceivedAnimFootstepEvent) return;
+            if (isHiding || _hasReceivedAnimFootstepEvent) return;
 
             if (Grounded && _input != null && _input.move.sqrMagnitude > 0.01f
                 && _speed > 0.4f && !Crouching)
@@ -879,6 +915,7 @@ namespace StarterAssets
         }
         public void OnFootstep(AnimationEvent animationEvent)
         {
+            if (isHiding) return;
             _hasReceivedAnimFootstepEvent = true;
             if (animationEvent.animatorClipInfo.weight > 0.5f)
             {
@@ -891,6 +928,7 @@ namespace StarterAssets
 
         public void OnFootstep()
         {
+            if (isHiding) return;
             _hasReceivedAnimFootstepEvent = true;
             PlayFootstepSound();
 
@@ -900,6 +938,7 @@ namespace StarterAssets
 
         private void PlayFootstepSound()
         {
+            if (isHiding) return;
             AudioClip clipToPlay = null;
 
             if (FootstepAudioClips != null && FootstepAudioClips.Length > 0)
@@ -932,6 +971,8 @@ namespace StarterAssets
         }
         private void TriggerNPCAwareness()
         {
+            if (isHiding) return;
+
             // Lazy cache — chỉ tìm 1 lần
             if (!_npcEmitterChecked)
             {

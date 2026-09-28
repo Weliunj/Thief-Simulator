@@ -374,8 +374,26 @@ public class UI_Manager : MonoBehaviour
     //                       LOCKPICK MINIGAME API
     // =========================================================================
 
+    private ILockpickable currentLockpickable;
+
     public void StartLockpicking(DoorController door)
     {
+        StartLockpicking(
+            lockpickable: door,
+            onSuccess: () => { if (door != null) door.OnUnlockSuccess(); },
+            onFailed: () => { if (door != null) door.OnUnlockFailed(); }
+        );
+    }
+
+    public void StartLockpicking(ILockpickable lockpickable)
+    {
+        StartLockpicking(lockpickable, null, null);
+    }
+
+    public void StartLockpicking(ILockpickable lockpickable, System.Action onSuccess, System.Action onFailed)
+    {
+        currentLockpickable = lockpickable;
+
         if (lockpickMinigame == null)
         {
             lockpickMinigame = FindFirstObjectByType<LockpickMinigame>(FindObjectsInactive.Include);
@@ -384,6 +402,7 @@ public class UI_Manager : MonoBehaviour
         if (lockpickMinigame == null)
         {
             Debug.LogError("LockpickMinigame chưa được gán hoặc không tìm thấy trong Canvas UI!");
+            currentLockpickable = null;
             return;
         }
 
@@ -396,6 +415,9 @@ public class UI_Manager : MonoBehaviour
         lockpickMinigame.StartMinigame(
             onSuccess: () =>
             {
+                var target = currentLockpickable;
+                currentLockpickable = null;
+
                 isSolving = false;
                 if (!isPaused)
                 {
@@ -403,10 +425,17 @@ public class UI_Manager : MonoBehaviour
                     Cursor.lockState = CursorLockMode.None;
                     Cursor.visible = true;
                 }
-                if (door != null) door.OnUnlockSuccess();
+                
+                onSuccess?.Invoke();
+
+                if (target is DoorController door) door.OnUnlockSuccess();
+                else if (target is LockedContainerController container) container.OnUnlockSuccess();
             },
             onFailed: () =>
             {
+                var target = currentLockpickable;
+                currentLockpickable = null;
+
                 isSolving = false;
                 if (!isPaused)
                 {
@@ -414,14 +443,27 @@ public class UI_Manager : MonoBehaviour
                     Cursor.lockState = CursorLockMode.None;
                     Cursor.visible = true;
                 }
-                if (door != null) door.OnUnlockFailed();
+
+                onFailed?.Invoke();
+
+                if (target is DoorController door) door.OnUnlockFailed();
+                else if (target is LockedContainerController container) container.OnUnlockFailed();
             },
-            door: door
+            lockpickable: lockpickable
         );
     }
 
     public void CancelLockpicking()
     {
+        Debug.Log($"[UI_Manager.CancelLockpicking] current={currentLockpickable}");
+
+        // ⭐ QUAN TRỌNG NHẤT: Báo cho Door/Container biết để reset state
+        if (currentLockpickable != null)
+        {
+            currentLockpickable.CancelLockpicking();
+            currentLockpickable = null;
+        }
+
         isSolving = false;
         if (!isPaused)
         {
@@ -429,7 +471,7 @@ public class UI_Manager : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
-        if (lockpickMinigame != null)
+        if (lockpickMinigame != null && lockpickMinigame.isPlaying)
         {
             lockpickMinigame.CloseMinigame();
         }
@@ -471,9 +513,34 @@ public class UI_Manager : MonoBehaviour
             nextChapter.isUnlocked = true;
         }
 
-        Debug.Log($"<color=green>[UI_Manager] Người chơi đã tẩu thoát thành công về Sảnh!</color>");
+        // 2. Tính tiền thưởng = 50% số điểm (currpoint / 2) và cộng vào Cash của Player
+        int curr = 0;
+        if (playerStats != null)
+        {
+            curr = playerStats.currpoint;
+        }
+        else if (playerManager != null)
+        {
+            curr = playerManager.currpoint;
+        }
 
-        // 2. Chuyển cảnh về HomeMenu
+        int earnedCash = Mathf.Max(0, curr / 2);
+        if (earnedCash > 0)
+        {
+            if (FirebaseDataService.Instance != null)
+            {
+                FirebaseDataService.Instance.AddCash(earnedCash);
+                Debug.Log($"<color=yellow>[UI_Manager] Thưởng tẩu thoát: Điểm ${curr} / 2 = +${earnedCash} Cash đã được cộng vào tài khoản!</color>");
+            }
+            else
+            {
+                Debug.LogWarning("[UI_Manager] FirebaseDataService chưa khởi tạo, không thể lưu Cash.");
+            }
+        }
+
+        Debug.Log($"<color=green>[UI_Manager] Người chơi đã tẩu thoát thành công về Sảnh! (Earned Cash: ${earnedCash})</color>");
+
+        // 3. Chuyển cảnh về HomeMenu
         Menu();
     }
 

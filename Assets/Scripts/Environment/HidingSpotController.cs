@@ -249,6 +249,19 @@ public class HidingSpotController : MonoBehaviour, IInteractable
         float facingYaw = insidePoint.eulerAngles.y;
         player.SetHidingCameraFacing(facingYaw);
 
+        // Tắt item đang cầm trên tay (như khi leo thang) để rảnh tay và không bị bật/tắt đèn pin khi đang trốn
+        if (player.hotbarManager != null)
+        {
+            player.hotbarManager.DeselectAll();
+        }
+        else if (player.heldItem != null)
+        {
+            foreach (var item in player.heldItem)
+            {
+                if (item != null) item.SetActive(false);
+            }
+        }
+
         // Hiển thị UI nút thoát nếu đây là local player
         if (IsLocalPlayer(player))
         {

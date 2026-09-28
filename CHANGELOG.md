@@ -1947,8 +1947,38 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/AI/KidRunnerNPC.cs` (Modified)
   - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
 - **Ảnh hưởng**:
-  - Bổ sung hoàn chỉnh cơ chế ẩn nấp tương tác độc quyền tương thích toàn diện cả Offline lẫn Online Multiplayer Photon Fusion.
-  - Không ảnh hưởng tiêu cực đến các hệ thống vật phẩm hay cơ chế mở khóa cửa hiện tại.
+### [2026-09-28 10:48] — feat(container): implement lockable storage containers with minigame, bonus loot and customizable spawner ratios
+- **Tác vụ**:
+  - **Hệ thống Rương / Két Sắt / Tủ Khóa (`LockedContainerController`)**:
+    - Tạo mới [LockedContainerController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/LockedContainerController.cs) quản lý đa năng các loại thùng chứa (Chest, Safe, Cabinet, Drawer).
+    - Hỗ trợ cả 2 dạng diễn hoạt mở: `Rotate` (xoay nắp rương/cánh tủ) và `Slide` (trượt ngăn kéo bàn).
+    - Tích hợp minigame bẻ khóa độc quyền (chỉ 1 người chơi tương tác tại 1 thời điểm).
+    - Bẻ khóa sai: Phát tiếng động qua `NPCAlertSystem` / `NPCAlertEmitter` để gọi NPC tuần tra gần đó chạy tới điều tra.
+    - Bẻ khóa đúng: Mở vĩnh viễn và sinh vật phẩm (Bonus Loot) bên trong rương dựa theo bảng trọng số `rarityWeights` và danh sách vị trí `spawnPoints`.
+    - **Item sinh ra trong rương hoàn toàn là BONUS và KHÔNG bị tính vào `totalpoint` của màn chơi**.
+  - **Đồng bộ Mạng Fusion (`NetworkLockedContainerSync`)**:
+    - Tạo mới [NetworkLockedContainerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkLockedContainerSync.cs) đồng bộ trạng thái mở, bẻ khóa và âm thanh 3D giữa các Client.
+  - **Mở Rộng Minigame Bẻ Khóa (`ILockpickable`, `LockpickMinigame`, `UI_Manager`)**:
+    - Tạo mới interface [ILockpickable.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/ILockpickable.cs).
+    - Cập nhật [LockpickMinigame.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/LockpickMinigame.cs) và [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs) để nhận đối tượng `ILockpickable` tổng quát (dùng chung cho cả Cửa lẫn Rương/Tủ).
+    - Cho phép [DoorController.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Environment/DoorController.cs) kế thừa `ILockpickable`.
+  - **Nâng Cấp Bộ Sinh Vật Phẩm Màn Chơi (`SceneItemSpawner`)**:
+    - Bổ sung `spawnRatio` (tỉ lệ % số điểm spawn sẽ xuất hiện đồ, mặc định `1.0` = 100% full).
+    - Bổ sung `maxSpawnCount` để giới hạn số lượng item tối đa trong màn chơi nếu cần.
+    - Bổ sung `targetPointPercentage` (mặc định `0.75` = 75%) cho phép Level Designer tùy chỉnh tỉ lệ mục tiêu qua màn trực tiếp trên Inspector.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/ILockpickable.cs` (New)
+  - `Assets/Scripts/Environment/LockedContainerController.cs` (New)
+  - `Assets/Scripts/Network/NetworkLockedContainerSync.cs` (New)
+  - `Assets/Scripts/UI/LockpickMinigame.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/Environment/DoorController.cs` (Modified)
+  - `Assets/Scripts/Items/SceneItemSpawner.cs` (Modified)
+  - **Trải Nghiệm Tẩu Thoát & Quy Đổi Tiền Thưởng (`EscapeZone`, `MainHUD`, `UI_Manager`)**:
+    - Thêm cơ chế âm thanh tiếng xe khởi động (phát Local, không sync mạng) khi bấm nút Escape trên [MainHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MainHUD.cs).
+    - Màn hình chuyển dần sang màu đen (`FadeToBlack`), giữ nguyên màn hình đen trong đúng 5 giây (`escapeBlackHoldDuration = 5.0f`) trước khi nạp Scene sảnh (`HomeMenu`), tạo cảm giác xe nổ máy và phóng đi chân thực.
+    - **Quy đổi tiền thưởng (Cash Reward)**: Trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs), khi tẩu thoát thành công về sảnh, tự động lấy `currpoint / 2` (50% giá trị đồ cướp được) và cộng trực tiếp vào ví `Cash` của tài khoản qua [FirebaseDataService.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FirebaseDataService.cs), đồng bộ ngay lập tức lên Cloud.
+
 
 
 

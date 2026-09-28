@@ -170,7 +170,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -0.25, z: 4.02}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.4, y: 1.4, z: 1.4}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8459335253569475223}
@@ -306,12 +306,13 @@ MonoBehaviour:
   alertCooldown: 0.5
   triggerOnCollision: 0
   minImpactVelocity: 2.5
+  spawnGracePeriod: 2
   impactLayers:
     serializedVersion: 2
     m_Bits: 512
   audioSource: {fileID: 3289456313447767090}
   soundEffect: {fileID: 8300000, guid: 175c1713694d2294f84a013cad8e6c43, type: 3}
-  soundVolume: 0.3
+  soundVolume: 0.2
 --- !u!1 &8190542747888478588
 GameObject:
   m_ObjectHideFlags: 0
@@ -454,7 +455,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 0
   MaxDistance: 15
   Pan2D: 0
@@ -521,7 +522,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1.09
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -583,7 +584,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 0
   MaxDistance: 15
   Pan2D: 0
@@ -650,7 +651,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1.09
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0

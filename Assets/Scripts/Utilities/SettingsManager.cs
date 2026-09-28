@@ -252,11 +252,19 @@ public class SettingsManager : MonoBehaviour
         // 2. Khóa FPS mục tiêu (30, 60, 90, 120...)
         Application.targetFrameRate = settingsData.targetFPS;
 
-        // 3. Render Buffer Scale (Tối ưu độ phân giải 3D mà UI vẫn nét)
-        if (settingsData.renderScale > 0.1f && settingsData.renderScale <= 1.0f)
+        // 3. Render Scale / Độ phân giải 3D (Tác dụng ngay lập tức trong cả Play Mode lẫn Build EXE)
+        float targetScale = Mathf.Clamp(settingsData.renderScale, 0.3f, 1.0f);
+
+        // Hỗ trợ URP Render Scale trực tiếp (hoạt động 100% trong Editor PlayMode & Exe)
+        var urpAsset = QualitySettings.renderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset
+                       ?? UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset;
+        if (urpAsset != null)
         {
-            ScalableBufferManager.ResizeBuffers(settingsData.renderScale, settingsData.renderScale);
+            urpAsset.renderScale = targetScale;
         }
+
+        // Dự phòng ScalableBufferManager cho Built-in Pipeline / Dynamic Resolution
+        ScalableBufferManager.ResizeBuffers(targetScale, targetScale);
     }
 
     public void ApplyAudioSettings()
@@ -390,7 +398,14 @@ public class SettingsManager : MonoBehaviour
         SaveSettings();
     }
 
-    public void SetAllSettings(float sensitivity, int targetFPS, bool showFPSOnScreen, float bgmVolume = -1f, float sfxVolume = -1f)
+    public void SetRenderScale(float scale, bool save = true)
+    {
+        settingsData.renderScale = Mathf.Clamp(scale, 0.3f, 1.0f);
+        ApplyGraphicsSettings();
+        if (save) SaveSettings();
+    }
+
+    public void SetAllSettings(float sensitivity, int targetFPS, bool showFPSOnScreen, float bgmVolume = -1f, float sfxVolume = -1f, float renderScale = -1f)
     {
         float snappedValue = Mathf.Round(sensitivity * 2f) / 2f;
         settingsData.sensitivity = Mathf.Clamp(snappedValue, 1.0f, 10.0f);
@@ -399,6 +414,7 @@ public class SettingsManager : MonoBehaviour
 
         if (bgmVolume >= 0f) settingsData.bgmVolume = Mathf.Clamp01(bgmVolume);
         if (sfxVolume >= 0f) settingsData.sfxVolume = Mathf.Clamp01(sfxVolume);
+        if (renderScale >= 0.3f) settingsData.renderScale = Mathf.Clamp(renderScale, 0.3f, 1.0f);
 
         SaveSettings();
     }

@@ -127,14 +127,14 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
     /// </summary>
     public void SetFlashlightState(bool enable)
     {
+        // 1. Luôn áp dụng ngay trên máy cục bộ để phản hồi tức thì
+        ApplyFlashlightVisualAndAudio(enable);
+
+        // 2. Nếu đang trong phòng Online, gửi RPC đồng bộ cho những người chơi khác
         var localSync = NetworkItemSync.GetLocalPlayerSync();
         if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
         {
             NetworkItemSync.SyncFlashlightState(gameObject, enable);
-        }
-        else
-        {
-            ApplyFlashlightVisualAndAudio(enable);
         }
     }
 
@@ -158,6 +158,18 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
 
     private void UpdateLightState()
     {
+        if (flashlightLight == null)
+        {
+            flashlightLight = GetComponentInChildren<Light>(true);
+            if (flashlightLight != null)
+            {
+                flashlightLight.type = LightType.Spot;
+                flashlightLight.range = lightRange;
+                flashlightLight.spotAngle = spotAngle;
+                flashlightLight.color = lightColor;
+            }
+        }
+
         if (flashlightLight != null)
         {
             flashlightLight.enabled = isOn;

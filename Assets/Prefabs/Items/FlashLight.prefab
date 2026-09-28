@@ -129,8 +129,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlashlightController
   flashlightLight: {fileID: 1297710822342574332}
-  lightIntensity: 10
-  lightRange: 10
+  lightIntensity: 25
+  lightRange: 20
   spotAngle: 60
   lightColor: {r: 1, g: 0.98, b: 0.9019608, a: 1}
   isOn: 0
@@ -158,12 +158,13 @@ MonoBehaviour:
   alertCooldown: 0.5
   triggerOnCollision: 1
   minImpactVelocity: 3
+  spawnGracePeriod: 2
   impactLayers:
     serializedVersion: 2
     m_Bits: 512
   audioSource: {fileID: 3961302481423461264}
   soundEffect: {fileID: 8300000, guid: 175c1713694d2294f84a013cad8e6c43, type: 3}
-  soundVolume: 0.3
+  soundVolume: 0.2
 --- !u!1 &1492364671223459319
 GameObject:
   m_ObjectHideFlags: 0
@@ -191,7 +192,7 @@ Transform:
   m_GameObject: {fileID: 1492364671223459319}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.228}
+  m_LocalPosition: {x: 0, y: 0, z: 0.167}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -208,8 +209,8 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 0.9019608, a: 1}
-  m_Intensity: 10
-  m_Range: 10
+  m_Intensity: 25
+  m_Range: 20
   m_SpotAngle: 55
   m_InnerSpotAngle: 0
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -317,7 +318,7 @@ Transform:
   m_GameObject: {fileID: 1863639360414153293}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.6630001, y: -1.323, z: 0.018}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -447,7 +448,7 @@ Transform:
   m_GameObject: {fileID: 5331643735984189222}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0.14}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 7.5, y: 7.5, z: 7.5}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -538,7 +539,7 @@ Transform:
   m_GameObject: {fileID: 6338100905364340439}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.09986997, y: 0.06232, z: 0.00209}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -601,7 +602,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -666,7 +667,7 @@ Transform:
   m_GameObject: {fileID: 7027645958067920895}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.6630001, y: 1.323, z: -0.018}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

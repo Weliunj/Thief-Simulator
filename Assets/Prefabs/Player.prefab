@@ -84,7 +84,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 1
   MaxDistance: 30
   Pan2D: 0
@@ -151,7 +151,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -1054,7 +1054,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 0
   MaxDistance: 8.55
   Pan2D: 0
@@ -1121,7 +1121,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -1183,7 +1183,7 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 0
   MaxDistance: 13
   Pan2D: 0
@@ -1250,7 +1250,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -1688,7 +1688,7 @@ MonoBehaviour:
   GroundedRadius: 0.15
   GroundLayers:
     serializedVersion: 2
-    m_Bits: 859
+    m_Bits: 1536
   CinemachineCameraTarget: {fileID: 1404802832750369428}
   crouchCameraYOffset: -0.8
   TopClamp: 80
@@ -1713,6 +1713,8 @@ MonoBehaviour:
   isClimbingLadder: 0
   currentLadder: {fileID: 0}
   ladderYawClamp: 80
+  isHiding: 0
+  currentHidingSpot: {fileID: 0}
   Crouching: 0
 --- !u!114 &2902521936837658228
 MonoBehaviour:
@@ -1805,7 +1807,7 @@ MonoBehaviour:
   maxCameraRayDistance: 1.5
   interactLayer:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1280
   itemInfoHUD: {fileID: 0}
 --- !u!114 &3384082945129278185
 MonoBehaviour:
@@ -1882,6 +1884,8 @@ MonoBehaviour:
       Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   rightHandSocket: {fileID: 0}
   remoteHoldPosition: {x: 0, y: 1.2, z: 0.5}
+  _NetworkIsHiding:
+    _value: 0
   _NetworkSpeed: 0
   _NetworkMotionSpeed: 0
   _NetworkGrounded:
@@ -1989,6 +1993,7 @@ MonoBehaviour:
   alertCooldown: 0.5
   triggerOnCollision: 0
   minImpactVelocity: 2.5
+  spawnGracePeriod: 2
   impactLayers:
     serializedVersion: 2
     m_Bits: 4294967295

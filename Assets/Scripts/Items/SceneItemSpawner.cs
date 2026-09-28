@@ -42,6 +42,17 @@ public class SceneItemSpawner : MonoBehaviour
     [Tooltip("Ngẫu nhiên xáo trộn thứ tự các điểm spawn")]
     public bool shuffleSpawnPoints = true;
 
+    [Range(0.05f, 1f)]
+    [Tooltip("Tỉ lệ % số điểm spawn sẽ xuất hiện đồ (1 = 100% full tất cả điểm spawn, 0.7 = 70% số điểm)")]
+    public float spawnRatio = 1f;
+
+    [Tooltip("Giới hạn số lượng Item tối đa được sinh ra (để <= 0 nếu không muốn giới hạn số lượng)")]
+    public int maxSpawnCount = 0;
+
+    [Range(0.1f, 1f)]
+    [Tooltip("Tỉ lệ % tổng giá trị item cần đạt để hoàn thành màn chơi (0.75 = 75%, 1 = 100% gom sạch đồ)")]
+    public float targetPointPercentage = 0.75f;
+
     [Tooltip("Độ lệch vị trí nhỏ khi spawn để tránh chìm vật phẩm vào bề mặt")]
     public Vector3 spawnOffset = new Vector3(0f, 0.05f, 0f);
 
@@ -178,7 +189,19 @@ public class SceneItemSpawner : MonoBehaviour
             targetPositions = targetPositions.OrderBy(x => Random.value).ToList();
         }
 
-        // 5. Tiến hành chọn Item theo Rarity và Instantiate tại tất cả các vị trí
+        // 4.1. Lọc số lượng điểm spawn dựa theo spawnRatio và maxSpawnCount
+        int targetCount = Mathf.Clamp(Mathf.RoundToInt(targetPositions.Count * Mathf.Clamp01(spawnRatio)), 1, targetPositions.Count);
+        if (maxSpawnCount > 0 && targetCount > maxSpawnCount)
+        {
+            targetCount = maxSpawnCount;
+        }
+
+        if (targetPositions.Count > targetCount)
+        {
+            targetPositions = targetPositions.Take(targetCount).ToList();
+        }
+
+        // 5. Tiến hành chọn Item theo Rarity và Instantiate tại các vị trí đã chọn
         int totalValue = 0;
         for (int i = 0; i < targetPositions.Count; i++)
         {
@@ -237,9 +260,9 @@ public class SceneItemSpawner : MonoBehaviour
             }
         }
 
-        // 6. Tính toán điểm mục tiêu (Target Point = Tổng giá trị - 25% = 75% tổng giá trị, làm tròn đẹp theo bội số 50: 300, 700, 750...)
+        // 6. Tính toán điểm mục tiêu (Target Point = Tổng giá trị * targetPointPercentage, làm tròn theo bội số 50: 300, 700, 750...)
         calculatedTotalValue = totalValue;
-        float rawTarget = totalValue * 0.75f;
+        float rawTarget = totalValue * Mathf.Clamp01(targetPointPercentage);
         int roundedTarget = Mathf.RoundToInt(rawTarget / 50f) * 50;
         if (roundedTarget <= 0 && rawTarget > 0)
         {
@@ -269,7 +292,7 @@ public class SceneItemSpawner : MonoBehaviour
             }
         }
 
-        Debug.Log($"<color=cyan>[SceneItemSpawner] Đã spawn {spawnedItems.Count} vật phẩm (Seed: {seed}) cho '{chapterData.chapterTitle}'! Tổng giá trị: ${calculatedTotalValue} | Target Point (-25%): ${calculatedTargetPoint}</color>");
+        Debug.Log($"<color=cyan>[SceneItemSpawner] Đã spawn {spawnedItems.Count} vật phẩm (Seed: {seed}) cho '{chapterData.chapterTitle}'! Tổng giá trị: ${calculatedTotalValue} | Target Point ({targetPointPercentage * 100:0}%): ${calculatedTargetPoint}</color>");
 
         // 8. Chuyển cảnh mượt mà: Mở màn hình (Fade From Black) sau khi đã nạp và tính xong Target Point
         ScreenFader.FadeFromBlack(0.6f);

@@ -65,7 +65,7 @@ public class LockpickMinigame : MonoBehaviour
     private float trackWidth;
     private float indicatorWidth;
     private float lastIndicatorX;
-    private DoorController currentDoor;
+    private ILockpickable currentTarget;
 
     private Action onSuccessCallback;
     private Action onFailedCallback;
@@ -136,9 +136,9 @@ public class LockpickMinigame : MonoBehaviour
         }
     }
 
-    public void StartMinigame(Action onSuccess, Action onFailed = null, DoorController door = null)
+    public void StartMinigame(Action onSuccess, Action onFailed = null, ILockpickable lockpickable = null)
     {
-        currentDoor = door;
+        currentTarget = lockpickable;
         onSuccessCallback = onSuccess;
         onFailedCallback = onFailed;
 
@@ -168,9 +168,9 @@ public class LockpickMinigame : MonoBehaviour
         StopAllCoroutines();
         if (panelRoot != null) panelRoot.SetActive(false);
 
-        if (currentDoor != null)
+        if (currentTarget != null)
         {
-            currentDoor.CancelLockpicking();
+            currentTarget.CancelLockpicking();
         }
 
         // Chống hiện tượng click nút Close bị xuyên thấu kích hoạt lại Raycast mở cửa
@@ -290,8 +290,8 @@ public class LockpickMinigame : MonoBehaviour
 
         if (isHit)
         {
-            // Bấm trúng nấc! Phát âm thanh 3D tại cửa
-            if (currentDoor != null) currentDoor.PlayHitSound();
+            // Bấm trúng nấc! Phát âm thanh 3D tại cửa/rương
+            if (currentTarget != null) currentTarget.PlayHitSound();
 
             StartCoroutine(FlashTarget(1f));
 
@@ -343,8 +343,8 @@ public class LockpickMinigame : MonoBehaviour
     {
         isWaitingNextStage = true;
 
-        // Chỉ gọi âm thanh thất bại duy nhất tại đây (qua DoorController đã bọc RPC)
-        if (currentDoor != null) currentDoor.PlayMissSound();
+        // Chỉ gọi âm thanh thất bại duy nhất tại đây (qua đối tượng đã bọc RPC)
+        if (currentTarget != null) currentTarget.PlayMissSound();
 
         StartCoroutine(FlashTarget(0.4f));
 
@@ -356,12 +356,13 @@ public class LockpickMinigame : MonoBehaviour
         if (closeOnFail)
         {
             yield return new WaitForSeconds(failCloseDelay);
-            CloseMinigame();
 
-            if (onFailedCallback != null)
-            {
-                onFailedCallback.Invoke(); // DoorController.OnUnlockFailed sẽ KHÔNG gọi lại PlayMissSound nữa
-            }
+            // Gọi callback thất bại trước (để kích hoạt OnUnlockFailed -> AlertNearbyNPCs)
+            var failedCallback = onFailedCallback;
+            onFailedCallback = null;
+            failedCallback?.Invoke();
+
+            CloseMinigame();
         }
         else
         {
@@ -428,17 +429,16 @@ public class LockpickMinigame : MonoBehaviour
 
     private IEnumerator CompleteMinigameCoroutine(bool isWin)
     {
-        float delay = 1.0f;
-        if (isWin && currentDoor != null && currentDoor.victorySound != null)
-        {
-            delay = Mathf.Max(1.0f, currentDoor.victorySound.length);
-        }
+        float delay = 0.6f;
         yield return new WaitForSeconds(delay);
-        CloseMinigame();
 
-        if (isWin && onSuccessCallback != null)
+        if (isWin)
         {
-            onSuccessCallback.Invoke();
+            var successCallback = onSuccessCallback;
+            onSuccessCallback = null;
+            successCallback?.Invoke();
         }
+
+        CloseMinigame();
     }
 }

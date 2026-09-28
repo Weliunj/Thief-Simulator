@@ -117,7 +117,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 15
+  MaxDistance: 30
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -309,7 +309,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 15
+  MaxDistance: 30
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -503,7 +503,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 15
+  MaxDistance: 30
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -782,7 +782,7 @@ Transform:
   m_GameObject: {fileID: 2416869585193837370}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.693, z: 0.38}
+  m_LocalPosition: {x: 0, y: 0, z: 0.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1278,7 +1278,7 @@ MonoBehaviour:
   npcName: Idiot Guard
   agent: {fileID: 256829229809741413}
   animator: {fileID: 6995279246443750879}
-  movementMode: 0
+  movementMode: 2
   walkSpeed: 2
   runSpeed: 6.5
   returnSpeed: 2
@@ -1291,7 +1291,7 @@ MonoBehaviour:
   flashlightTransitionSpeed: 15
   canHear: 1
   canHearPlayer: 0
-  hearingRange: 10
+  hearingRange: 30
   loseSightGrace: 5
   catchDistance: 0.6
   catchOffset: {x: 0, y: 1, z: 0.4}
@@ -1310,7 +1310,7 @@ MonoBehaviour:
   patrolRestTimeRange: {x: 2, y: 4}
   patrolLookAngle: 40
   wanderCenterObject: {fileID: 6276114354869975992}
-  wanderRadius: 40.1
+  wanderRadius: 70
   wanderRestTimeRange: {x: 2, y: 5}
   wanderLookAngle: 35
   wanderLookChance: 0.5

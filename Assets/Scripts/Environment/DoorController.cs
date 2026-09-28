@@ -3,7 +3,7 @@ using StarterAssets;
 using UnityEngine;
 using Fusion;
 
-public class DoorController : MonoBehaviour, IInteractable
+public class DoorController : MonoBehaviour, IInteractable, ILockpickable
 {
     [Header("🚪 Display & Prompts")]
     public string doorName = "Wooden Locked Door";
@@ -347,6 +347,8 @@ public class DoorController : MonoBehaviour, IInteractable
     public void StartLockpicking()
     {
         if (isUnlocked || isBeingLockpicked) return;
+
+        isBeingLockpicked = true;
 
         var netSync = GetComponent<NetworkDoorSync>();
         if (netSync != null && netSync.Runner != null && netSync.Runner.IsRunning)

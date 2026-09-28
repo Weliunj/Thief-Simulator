@@ -26,6 +26,9 @@ public class SettingsHUD : MonoBehaviour
     public Toggle showFPSToggle;
     [Tooltip("Dropdown chọn mục tiêu FPS (30, 60, 90, 120)")]
     public TMP_Dropdown fpsDropdown;
+    [Tooltip("Slider điều chỉnh độ phân giải / Render Scale (50% -> 100%)")]
+    public Slider resolutionSlider;
+    public TextMeshProUGUI resolutionValueText;
 
     [Header("🔘 Action Buttons")]
     public Button saveButton;
@@ -47,6 +50,7 @@ public class SettingsHUD : MonoBehaviour
     private int currentPendingFPS = 60;
     private float currentPendingBGM = 0.8f;
     private float currentPendingSFX = 1.0f;
+    private float currentPendingResolution = 1.0f;
     private Coroutine saveFeedbackCoroutine;
     private string originalSaveText = "Save";
 
@@ -70,6 +74,15 @@ public class SettingsHUD : MonoBehaviour
 
         // Tự động tìm Sliders nếu chưa gán
         AutoFindAudioSliders();
+
+        // Cấu hình Resolution Slider (30% -> 100%)
+        if (resolutionSlider != null)
+        {
+            resolutionSlider.minValue = 0.3f;
+            resolutionSlider.maxValue = 1.0f;
+            resolutionSlider.wholeNumbers = false;
+            resolutionSlider.onValueChanged.AddListener(OnResolutionSliderChanged);
+        }
 
         // Tự động tìm Toggle FPS nếu chưa gán
         if (showFPSToggle == null)
@@ -156,6 +169,11 @@ public class SettingsHUD : MonoBehaviour
             {
                 sensitivitySlider = s;
             }
+            else if ((sName.Contains("res") || sName.Contains("scale") || sName.Contains("quality")) && resolutionSlider == null)
+            {
+                resolutionSlider = s;
+                if (resolutionValueText == null) resolutionValueText = s.GetComponentInChildren<TextMeshProUGUI>();
+            }
         }
     }
 
@@ -205,11 +223,18 @@ public class SettingsHUD : MonoBehaviour
             // 1. Graphics & FPS
             currentPendingShowFPS = SettingsManager.Instance.ShowFPSOnScreen;
             currentPendingFPS = SettingsManager.Instance.TargetFPS;
+            currentPendingResolution = SettingsManager.Instance.RenderScale;
 
             if (showFPSToggle != null)
             {
                 showFPSToggle.SetIsOnWithoutNotify(currentPendingShowFPS);
             }
+
+            if (resolutionSlider != null)
+            {
+                resolutionSlider.SetValueWithoutNotify(currentPendingResolution);
+            }
+            UpdateResolutionDisplay(currentPendingResolution);
 
             if (fpsDropdown != null)
             {
@@ -284,6 +309,20 @@ public class SettingsHUD : MonoBehaviour
         }
     }
 
+    private void OnResolutionSliderChanged(float val)
+    {
+        currentPendingResolution = Mathf.Clamp(val, 0.3f, 1.0f);
+        UpdateResolutionDisplay(currentPendingResolution);
+    }
+
+    private void UpdateResolutionDisplay(float value)
+    {
+        if (resolutionValueText != null)
+        {
+            resolutionValueText.text = $"{Mathf.RoundToInt(value * 100f)}%";
+        }
+    }
+
     private void OnFPSToggleChanged(bool isOn)
     {
         currentPendingShowFPS = isOn;
@@ -340,8 +379,8 @@ public class SettingsHUD : MonoBehaviour
 
         if (SettingsManager.Instance != null)
         {
-            SettingsManager.Instance.SetAllSettings(currentPendingSensitivity, currentPendingFPS, currentPendingShowFPS, currentPendingBGM, currentPendingSFX);
-            Debug.Log($"[SettingsHUD] Đã lưu Settings: Sensitivity={currentPendingSensitivity}, FPS={currentPendingFPS}, BGM={currentPendingBGM}, SFX={currentPendingSFX}");
+            SettingsManager.Instance.SetAllSettings(currentPendingSensitivity, currentPendingFPS, currentPendingShowFPS, currentPendingBGM, currentPendingSFX, currentPendingResolution);
+            Debug.Log($"[SettingsHUD] Đã lưu Settings: Sensitivity={currentPendingSensitivity}, FPS={currentPendingFPS}, Resolution={Mathf.RoundToInt(currentPendingResolution * 100f)}%, BGM={currentPendingBGM}, SFX={currentPendingSFX}");
         }
 
         // Hiển thị 'Saved' trong 1 giây rồi quay lại 'Save'

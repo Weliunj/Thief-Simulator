@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 3555004089664329639}
   - component: {fileID: 6494734749000791098}
   - component: {fileID: 7355236579420131897}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Door_Wooden_Right (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 3688805633262965048}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.8491583}
+  m_LocalPosition: {x: -0.011, y: 0, z: -0.8491583}
   m_LocalScale: {x: 0.6, y: 0.9, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -102,7 +102,7 @@ GameObject:
   - component: {fileID: 3272794432146613645}
   - component: {fileID: 8617565981515753667}
   - component: {fileID: 4848531522359095698}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Door_Wooden_Left (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -118,7 +118,7 @@ Transform:
   m_GameObject: {fileID: 4376550378400561227}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.4549994, y: 0, z: -0.849}
+  m_LocalPosition: {x: 1.473, y: 0, z: -0.849}
   m_LocalScale: {x: 0.6, y: 0.9, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -195,7 +195,8 @@ GameObject:
   - component: {fileID: 4600008518616311603}
   - component: {fileID: 7245636411710432225}
   - component: {fileID: 2764822314836968065}
-  m_Layer: 9
+  - component: {fileID: 7879876029553962376}
+  m_Layer: 10
   m_Name: Wardrobe
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -210,7 +211,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4489832324665386818}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 7.235, y: 0, z: 3.0398417}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -225,7 +226,7 @@ Transform:
   - {fileID: 8213318378291124665}
   - {fileID: 1829539557491548428}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!114 &9031209664662449401
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -309,6 +310,26 @@ MonoBehaviour:
   _OccupantNetworkId:
     Raw: 0
   spotController: {fileID: 0}
+--- !u!114 &7879876029553962376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4489832324665386818}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 1
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 0
+  m_ApplyToChildren: 1
+  m_AffectedAgents: a98c17ecf46d2d58c3c0608d
 --- !u!1 &5194971957824144498
 GameObject:
   m_ObjectHideFlags: 0
@@ -318,7 +339,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1829539557491548428}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: ExitPoint
   m_TagString: Untagged
   m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
@@ -334,7 +355,7 @@ Transform:
   m_GameObject: {fileID: 5194971957824144498}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0.713, y: 0.117, z: -1.397}
+  m_LocalPosition: {x: 0.7350003, y: 0.117, z: -1.397}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -352,7 +373,7 @@ GameObject:
   - component: {fileID: 2400779599413311138}
   - component: {fileID: 5289825426560705901}
   - component: {fileID: 5350903978385172701}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Balcony (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -464,7 +485,7 @@ GameObject:
   - component: {fileID: 6691869527843216555}
   - component: {fileID: 7089298430875494412}
   - component: {fileID: 1855127131859867028}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Balcony (5)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -573,7 +594,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8213318378291124665}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: InsidePoint
   m_TagString: Untagged
   m_Icon: {fileID: -5442936267250999957, guid: 0000000000000000d000000000000000, type: 0}
@@ -589,7 +610,7 @@ Transform:
   m_GameObject: {fileID: 6981881755160584102}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 0.7129998, y: 0.1170001, z: -0.393}
+  m_LocalPosition: {x: 0.735, y: 0.1170001, z: -0.393}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -608,7 +629,7 @@ GameObject:
   - component: {fileID: 2843185473942772383}
   - component: {fileID: 2869801357403364606}
   - component: {fileID: 6360771766716191733}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Balcony (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -741,7 +762,7 @@ GameObject:
   - component: {fileID: 5077923625291564511}
   - component: {fileID: 7240194870143686313}
   - component: {fileID: 5637743689017246118}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Balcony (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -853,7 +874,7 @@ GameObject:
   - component: {fileID: 7892022102662498876}
   - component: {fileID: 1090232643849916007}
   - component: {fileID: 7938891871600070859}
-  m_Layer: 9
+  m_Layer: 10
   m_Name: Balcony (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
