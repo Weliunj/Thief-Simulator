@@ -400,7 +400,7 @@ public class AdultGuardNPC : NetworkBehaviour
                 {
                     var pc = col.GetComponent<PlayerController>()
                           ?? col.GetComponentInParent<PlayerController>();
-                    if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc)) continue;
+                    if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc) || pc.isHiding) continue;
 
                     if (IsCrouching(pc) && hits[h].distance > visionRange * crouchVisionMultiplier)
                         continue;
@@ -428,7 +428,7 @@ public class AdultGuardNPC : NetworkBehaviour
         for (int i = 0; i < all.Length; i++)
         {
             var pc = all[i];
-            if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc)) continue;
+            if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc) || pc.isHiding) continue;
 
             // ⭐ THÊM dòng này — tính khoảng cách trước
             float dist = Vector3.Distance(transform.position, pc.transform.position);
@@ -564,7 +564,7 @@ public class AdultGuardNPC : NetworkBehaviour
         Vector3 catchOrigin = transform.TransformPoint(catchOffset);
         Vector3 targetCenter = _target.transform.position + Vector3.up * 0.9f;
         float distTarget = Vector3.Distance(catchOrigin, targetCenter);
-        if (distTarget <= catchDistance || Vector3.Distance(transform.position, _target.transform.position) <= catchDistance)
+        if (!_target.isHiding && (distTarget <= catchDistance || Vector3.Distance(transform.position, _target.transform.position) <= catchDistance))
         {
             TryCatch(_target);
             return;
@@ -956,7 +956,7 @@ public class AdultGuardNPC : NetworkBehaviour
 
     void TryCatch(PlayerController target)
     {
-        if (target == null) return;
+        if (target == null || target.isHiding) return;
         if (Time.time - _lastCatchTime < catchCooldown) return;
         if (IsDead(target)) return;
 

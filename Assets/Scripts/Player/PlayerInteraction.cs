@@ -102,8 +102,8 @@ public class PlayerInteraction : MonoBehaviour
     /// </summary>
     private void PerformInteractionCheck()
     {
-        // Khi đang leo thang: Tắt toàn bộ HUD và nút Pickup / Interact để tránh nhặt nhầm thang đang bám
-        if (playerController != null && playerController.isClimbingLadder)
+        // Khi đang leo thang hoặc đang trốn trong tủ: Tắt toàn bộ HUD và nút Pickup / Interact
+        if (playerController != null && (playerController.isClimbingLadder || playerController.isHiding))
         {
             currentLootItem = null;
             currentSpecialInteractable = null;

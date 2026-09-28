@@ -382,6 +382,7 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
     }
 
     [Header("🏃 Networked Animation & HeadLook State")]
+    [Networked] public NetworkBool NetworkIsHiding { get; set; }
     [Networked] public float NetworkSpeed { get; set; }
     [Networked] public float NetworkMotionSpeed { get; set; }
     [Networked] public NetworkBool NetworkGrounded { get; set; }
@@ -840,6 +841,12 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
         }
     }
 
+    public void SetHiding(bool hiding)
+    {
+        if (Runner == null || !Runner.IsRunning || !IsLocalPlayer) return;
+        NetworkIsHiding = hiding;
+    }
+
     public void SetClimbing(bool climbing, float speed = 0f)
     {
         if (Runner == null || !Runner.IsRunning || !IsLocalPlayer) return;
@@ -859,6 +866,7 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
                 NetworkCrouch = playerController.Crouching;
                 NetworkIsCrouching = playerController.Crouching && (playerController._input != null && playerController._input.move.sqrMagnitude > 0.01f);
                 NetworkIsClimbing = playerController.isClimbingLadder;
+                NetworkIsHiding = playerController.isHiding;
             }
 
             var localHead = GetComponent<PlayerHeadLook>();

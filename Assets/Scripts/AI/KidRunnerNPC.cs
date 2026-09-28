@@ -320,7 +320,7 @@ public class KidRunnerNPC : NetworkBehaviour
                 {
                     var pc = col.GetComponent<PlayerController>()
                           ?? col.GetComponentInParent<PlayerController>();
-                    if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc)) continue;
+                    if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc) || pc.isHiding) continue;
 
                     if (IsCrouching(pc) && hits[h].distance > visionRange * crouchVisionMultiplier)
                         continue;
@@ -348,7 +348,7 @@ public class KidRunnerNPC : NetworkBehaviour
         for (int i = 0; i < all.Length; i++)
         {
             var pc = all[i];
-            if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc)) continue;
+            if (pc == null || !pc.gameObject.activeInHierarchy || IsDead(pc) || pc.isHiding) continue;
 
             float dist = Vector3.Distance(transform.position, pc.transform.position);
             float effectiveRange = IsCrouching(pc) ? (visionRange * crouchVisionMultiplier) : visionRange;

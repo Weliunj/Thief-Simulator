@@ -40,7 +40,20 @@ public class UI_Manager : MonoBehaviour
     [Header("🔑 Lockpick Minigame UI")]
     public LockpickMinigame lockpickMinigame;
 
-    // =========================================================================
+    public static UI_Manager Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            // Do not destroy if multiple UI_Managers exist across scene transitions, just update reference
+            Instance = this;
+        }
+    }
 
     void Start()
     {

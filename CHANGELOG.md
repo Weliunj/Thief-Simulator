@@ -1909,6 +1909,47 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Loại bỏ hoàn toàn lỗi spam âm thanh và giật khựng khi NPC nhìn thấy Player.
   - Hệ thống AI hoạt động ổn định, bắt người chơi chuẩn xác và quét tìm 9 hướng mượt mà.
 
+---
+
+### [2026-09-28 10:05] — feat(hiding): implement exclusive wardrobe hiding mechanic with fusion sync, locked camera, npc evasion and exit hud
+- **Tác vụ**:
+  - **Hệ thống Điểm Trốn Tủ Đồ (`HidingSpotController`)**:
+    - Triển khai interface [IInteractable.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Items/IInteractable.cs) cho điểm trốn (Tủ đồ / Wardrobe / Locker), cho phép tương tác bằng phím `E` qua HUD.
+    - Quản lý xoay hé 2 cánh cửa tủ (`±15°`) khi có người trốn bên trong và tự động đóng khít khi trống.
+    - Đưa Player vào vị trí `insidePoint`, tắt `CharacterController`, kích hoạt `Physics.SyncTransforms()` và cố định góc nhìn camera hướng thẳng ra khe cửa tủ.
+    - Đưa Player ra vị trí `exitPoint`, mở khóa di chuyển và khôi phục tự do góc nhìn 360°.
+    - Phát âm thanh cọt kẹt đóng/mở cửa chân thực (`3D Spatial Audio`).
+  - **Đồng bộ Online Độc Quyền Photon Fusion (`NetworkHidingSpotSync` & `NetworkPlayerSync`)**:
+    - Quản lý thuộc tính mạng `NetworkIsOccupied` và `OccupantNetworkId`, đảm bảo tại một thời điểm chỉ duy nhất 1 người chơi được trốn (người chơi khác đến gần sẽ nhận thông báo *"Tủ đang có người trốn!"*).
+    - Thao tác qua các RPC mạng `RpcRequestEnter`, `RpcConfirmEnter`, `RpcRequestExit`, `RpcConfirmExit` chống xung đột (Anti-Race condition).
+    - Gọi `NetworkTransform.Teleport(...)` cho cả `EnterHiding` và `ExitHiding` để triệt tiêu hiện tượng kéo giật vị trí (Snapback).
+    - Bổ sung trường `NetworkIsHiding` và phương thức `SetHiding(bool)` trong [NetworkPlayerSync.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/NetworkPlayerSync.cs) đồng bộ qua `FixedUpdateNetwork`.
+  - **Khóa Camera & Điều Khiển (`PlayerController`)**:
+    - Bổ sung cờ `isHiding` và hàm `SetHidingCameraFacing(float targetYaw)`.
+    - Khi đang trốn: Khóa cứng góc quay camera (`Pitch = 0`, `Yaw = _hidingBaseYaw`), bỏ qua input di chuyển/chuột.
+    - Cho phép nhấn phím nóng `E`, `Space` (Nút Nhảy), hoặc `F` để bước ra ngoài tủ tức thì.
+  - **Trí Tuệ Nhân Tạo & Né NPC Quét Xuyên (`AdultGuardNPC` & `KidRunnerNPC`)**:
+    - Cập nhật cả `RaycastDetect`, `DetectPlayer`, và `ProximityDetect` trên NPC bỏ qua người chơi có `isHiding == true`.
+    - Chặn `TryCatch` bắt người chơi khi đang trốn trong tủ.
+    - Khi đang rượt đuổi (`Chase`), nếu người chơi trốn vào tủ, NPC mất tầm nhìn sẽ chạy tới vị trí nhìn thấy lần cuối trước cửa tủ để tìm kiếm trước khi quay về trạng thái tuần tra.
+  - **Giao diện Nút Thoát & Tự Động Ẩn MainHUD (`HidingExitHUD` & `UI_Manager`)**:
+    - Tạo mới [HidingExitHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/HidingExitHUD.cs) hiển thị nút **[ RỜI KHỎI TỦ ]** trên màn hình cho người đang trốn, hỗ trợ cả chuột/chạm cảm ứng lẫn phím nóng bàn phím.
+    - Tự động ẩn toàn bộ [MainHUD.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/MainHUD.cs) (Stamina, Trọng lượng, Phím ảo Mobile) khi vào tủ để tạo không gian quan sát qua khe cửa và tự động bật lại khi bước ra.
+    - Tích hợp `PlayerInteraction.SetInteractionCooldown(0.5f)` và reset input khi ra/vào tủ để chống double-click và chống re-entry cùng frame.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Environment/HidingSpotController.cs` (New)
+  - `Assets/Scripts/Network/NetworkHidingSpotSync.cs` (New)
+  - `Assets/Scripts/UI/HidingExitHUD.cs` (New)
+  - `Assets/Scripts/Player/PlayerController.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+  - `Assets/Scripts/AI/AdultGuardNPC.cs` (Modified)
+  - `Assets/Scripts/AI/KidRunnerNPC.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Bổ sung hoàn chỉnh cơ chế ẩn nấp tương tác độc quyền tương thích toàn diện cả Offline lẫn Online Multiplayer Photon Fusion.
+  - Không ảnh hưởng tiêu cực đến các hệ thống vật phẩm hay cơ chế mở khóa cửa hiện tại.
+
 
 
 

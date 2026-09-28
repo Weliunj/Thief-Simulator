@@ -370,6 +370,20 @@ namespace StarterAssets
 
             HandleStamina(); // Gọi hàm xử lý Stamina
             LadderClimb(); if (isClimbingLadder) { return; }
+            if (isHiding)
+            {
+                // Cho phép người chơi nhấn nút Nhảy (Space) hoặc phím E / F để thoát khỏi tủ
+                bool exitInput = _input.jump || Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.F);
+                if (exitInput)
+                {
+                    _input.jump = false;
+                    if (currentHidingSpot != null)
+                    {
+                        currentHidingSpot.RequestExit(this);
+                    }
+                }
+                return;
+            }
             JumpAndGravity();
             GroundedCheck();
             Move();
@@ -491,6 +505,11 @@ namespace StarterAssets
         public float ladderYawClamp = 100.0f;
         private float _ladderBaseYaw = 0.0f;
 
+        [Header("📦 Hiding Spot Settings")]
+        [HideInInspector] public bool isHiding = false;
+        [HideInInspector] public HidingSpotController currentHidingSpot;
+        private float _hidingBaseYaw = 0.0f;
+
         /// <summary>
         /// Khóa góc nhìn camera hướng vào mặt thang và kích hoạt giới hạn góc quay trái/phải
         /// </summary>
@@ -498,6 +517,16 @@ namespace StarterAssets
         {
             _cinemachineTargetYaw = targetYaw;
             _ladderBaseYaw = targetYaw;
+            _cinemachineTargetPitch = 0.0f;
+        }
+
+        /// <summary>
+        /// Cố định hướng camera nhìn thẳng ra ngoài cửa tủ khi trốn (không cho quay)
+        /// </summary>
+        public void SetHidingCameraFacing(float targetYaw)
+        {
+            _cinemachineTargetYaw = targetYaw;
+            _hidingBaseYaw = targetYaw;
             _cinemachineTargetPitch = 0.0f;
         }
 
@@ -513,6 +542,15 @@ namespace StarterAssets
             }
 
             if (CinemachineCameraTarget == null) return;
+
+            // Khi đang trốn trong tủ: Khóa camera cố định thẳng theo hướng tủ, không nhận input quay chuột/look
+            if (isHiding)
+            {
+                _cinemachineTargetYaw = _hidingBaseYaw;
+                _cinemachineTargetPitch = 0.0f;
+                CinemachineCameraTarget.transform.rotation = Quaternion.Euler(CameraAngleOverride, _hidingBaseYaw, 0.0f);
+                return;
+            }
 
             // Xử lý góc xoay camera từ tín hiệu đầu vào mouse/look
             if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
@@ -531,13 +569,14 @@ namespace StarterAssets
             {
                 // Khi đang leo thang: Giới hạn góc quay camera trái/phải quanh hướng thang (không cho quay 360 độ ra sau)
                 _cinemachineTargetYaw = Mathf.Clamp(_cinemachineTargetYaw, _ladderBaseYaw - ladderYawClamp, _ladderBaseYaw + ladderYawClamp);
+                _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
             }
             else
             {
                 // Giới hạn góc xoay 360 độ thông thường cho Yaw
                 _cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
+                _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
             }
-            _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
             // Cập nhật góc xoay cho đối tượng theo dõi Cinemachine
             CinemachineCameraTarget.transform.rotation = Quaternion.Euler(
