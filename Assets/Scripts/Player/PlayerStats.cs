@@ -280,6 +280,15 @@ public class PlayerStats : MonoBehaviour
 
         moveSpeed = Mathf.Lerp(baseMove, minMoveSpeed, weightRatio);
         sprintSpeed = Mathf.Lerp(baseSprint, minSprintSpeed, weightRatio);
+
+        // Áp dụng hệ số nhân Buff tốc độ từ PlayerBuffManager nếu có
+        var buffManager = GetComponent<PlayerBuffManager>();
+        if (buffManager != null)
+        {
+            float buffMultiplier = buffManager.GetTotalSpeedMultiplier();
+            moveSpeed *= buffMultiplier;
+            sprintSpeed *= buffMultiplier;
+        }
     }
 
     /// <summary>

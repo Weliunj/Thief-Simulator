@@ -4,7 +4,7 @@
 
 **Thief Simulator 3D** là tựa game hành động lén lút (Stealth Action) và co-op thời gian thực trên nền tảng **Unity 6**. Người chơi hóa thân thành những tên trộm chuyên nghiệp, đột nhập vào các căn biệt thự được canh gác nghiêm ngặt để trộm các món đồ quý giá, bẻ khóa tủ/két sắt, trèo thang vượt tường, ẩn nấp trong tủ quần áo và thoát ra xe tẩu thoát an toàn trước khi bị NPC phát hiện hoặc hết giờ.
 
-Dự án hỗ trợ đầy đủ cả **Chơi đơn (Offline)** lẫn **Chơi nhiều người (Online Co-op qua Photon Fusion)** trên cả **PC (Windows)** và **Điện thoại di động (Android APK)**.
+Dự án thiết kế theo phong cách **Chơi nhiều người (Online Co-op qua Photon Fusion)** trên cả **PC (Windows)** và **Điện thoại di động (Android APK)**.
 
 ---
 

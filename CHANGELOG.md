@@ -1999,6 +1999,34 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Ảnh hưởng**:
   - Triệt tiêu hoàn toàn lỗi `Unable to load dynamic library 'nanosockets'` trên Android APK, cho phép Fusion mở raw socket và tạo phòng trực tuyến thành công trên điện thoại.
 
+---
+
+### [2026-09-30 23:50] — feat(items, buff): implement comprehensive Potion & Buff system with HUD countdown, overhead billboard, and 3D network audio sync
+- **Tác vụ**:
+  - **Tạo mới [PotionItemController.cs](file:///Assets/Scripts/Items/PotionItemController.cs)**:
+    - Triển khai giao diện [IHeldInteractable](file:///Assets/Scripts/Items/IHeldInteractable.cs) & [IInteractable](file:///Assets/Scripts/Items/Item.cs).
+    - Hỗ trợ sử dụng trực tiếp khi chọn trên Hotbar kèm dynamic prompt (`Drink Speed I`, `Drink Speed II`...).
+    - Tự động trừ trọng lượng túi đồ và tiêu hao/hủy GameObject vật phẩm sau khi sử dụng.
+  - **Tạo mới [PlayerBuffManager.cs](file:///Assets/Scripts/Player/PlayerBuffManager.cs)**:
+    - Quản lý hiệu ứng tập trung cho nhân vật (hỗ trợ `SpeedBoost`, `JumpBoost`, `NightVision`, `StaminaRecovery`, `Invisibility`...).
+    - Tích hợp 2 loại Prefab UI độc lập:
+      - `hudEffectItemPrefab` (`effectItem`): Hiển thị đầy đủ Icon + Tên (`Speed I`, `Speed II`) + Bộ đếm thời gian thực trên `effectStatusPanel` của HUD.
+      - `overheadEffectItemPrefab` (`localEffectItem`): Hiển thị icon tròn nhỏ gọn trên đầu (`LocalCanvas/Effect`), tự động xoay Billboard theo Camera và ẩn đối với bản thân (Local Player).
+    - Hiệu ứng nhấp nháy mượt mà với `CanvasGroup` trong 5 giây cuối trước khi hết hạn.
+    - Cho phép các cấp độ Buff (`Speed I` và `Speed II`) hoạt động độc lập và nhân dồn hệ số tốc độ ($\times 2.08$).
+  - **Cập nhật [PlayerStats.cs](file:///Assets/Scripts/Player/PlayerStats.cs)**:
+    - Tích hợp hệ số nhân tốc độ từ [PlayerBuffManager](file:///Assets/Scripts/Player/PlayerBuffManager.cs) vào hàm `CalculateWeightSpeedPenalty()` để không bị reset tốc độ mỗi frame khi di chuyển.
+  - **Đồng bộ Mạng Photon Fusion 2 (Shared Mode) trong [NetworkPlayerSync.cs](file:///Assets/Scripts/Network/NetworkPlayerSync.cs)**:
+    - Bổ sung `RpcApplyOverheadBuff` để đồng bộ icon trên đầu nhân vật cho tất cả người chơi khác trong phòng.
+    - Tích hợp phát âm thanh uống thuốc 3D Spatial Audio (`PlayDrinkAudio`) qua `AudioSource` kết nối AudioMixer SFX.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/PotionItemController.cs` (New)
+  - `Assets/Scripts/Player/PlayerBuffManager.cs` (New)
+  - `Assets/Scripts/Player/PlayerStats.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+- **Ảnh hưởng**:
+  - Mở rộng hệ thống gameplay cho phép người chơi sử dụng thuốc buff chỉ số mượt mà cả offline lẫn online co-op.
+
 
 
 

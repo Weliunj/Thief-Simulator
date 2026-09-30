@@ -246,7 +246,23 @@ public class NetworkPlayerSync : NetworkBehaviour
             {
                 ladder.ApplyClimbAudioState(isPlaying);
             }
+    }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcApplyOverheadBuff(int buffTypeInt, string effectName, string tier, float duration)
+    {
+        if (IsLocalPlayer) return;
+
+        var buffManager = GetComponent<PlayerBuffManager>();
+        if (buffManager == null)
+        {
+            buffManager = gameObject.AddComponent<PlayerBuffManager>();
         }
+
+        BuffType type = (BuffType)buffTypeInt;
+        buffManager.ApplyRemoteOverheadBuff(type, effectName, tier, duration, null);
+        buffManager.PlayDrinkAudio(); // Phát âm thanh 3D tại vị trí của người chơi uống thuốc
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]

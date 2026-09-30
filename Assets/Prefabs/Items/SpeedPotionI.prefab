@@ -45,6 +45,7 @@ GameObject:
   - component: {fileID: 6113357706338545589}
   - component: {fileID: 9102422556560068794}
   - component: {fileID: 9197608791141479145}
+  - component: {fileID: 7889054618421645395}
   m_Layer: 8
   m_Name: SpeedPotionI
   m_TagString: item
@@ -172,6 +173,25 @@ MonoBehaviour:
   audioSource: {fileID: 2824728265399605408}
   soundEffect: {fileID: 8300000, guid: 175c1713694d2294f84a013cad8e6c43, type: 3}
   soundVolume: 0.3
+--- !u!114 &7889054618421645395
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3931584663630242981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 382c88b3cab1b6e449947f211bcda4c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PotionItemController
+  potionType: 0
+  effectName: Speed
+  tier: I
+  duration: 5
+  statMultiplier: 1.2
+  effectIcon: {fileID: -1116573359, guid: 54151d66148720a4f8594c598ce5f1f5, type: 3}
+  drinkSound: {fileID: 8300000, guid: 88c4b6667a633354a8a32b664bc44eae, type: 3}
 --- !u!1 &4446279322919168961
 GameObject:
   m_ObjectHideFlags: 0
