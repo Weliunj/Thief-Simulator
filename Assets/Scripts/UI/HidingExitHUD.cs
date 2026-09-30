@@ -75,6 +75,10 @@ public class HidingExitHUD : MonoBehaviour
 
     private void Update()
     {
+        // ⭐ Chỉ nhận phím khi HUD đang thực sự hiển thị và cửa sổ game đang được focus
+        if (hudRoot != null && !hudRoot.activeInHierarchy && (exitButton == null || !exitButton.gameObject.activeInHierarchy)) return;
+        if (!Application.isFocused) return;
+
         // Hỗ trợ bấm phím nóng trên bàn phím (E, Space, F) để thoát nhanh
 #if ENABLE_INPUT_SYSTEM
         if (Keyboard.current != null)

@@ -40,12 +40,14 @@ public class AdultGuardNPC : NetworkBehaviour
     [Tooltip("Khoảng cách nghe tối đa của NPC này (mét)")]
     public float hearingRange = 20f;
 
-    [Header("🎯 Chase")]
+    [Header("🎯 Chase & Catch")]
     [Tooltip("Số giây mất dấu Player thì bỏ chase (reset mỗi frame khi còn thấy)")]
     public float loseSightGrace = 5f;
     public float catchDistance = 1.6f;
     public Vector3 catchOffset = new Vector3(0f, 1.0f, 0.4f);
     public float catchCooldown = 1.5f;
+    [Tooltip("Tên Trigger hoặc State Animation khi bắt Player (mặc định 'catch' hoặc 'attack')")]
+    public string catchAnimTrigger = "catch";
     public float callAdultRadius = 12f;
     public LayerMask adultNpcLayer;
 
@@ -229,6 +231,9 @@ public class AdultGuardNPC : NetworkBehaviour
 
         if (!HasAuthority) { RemoteTick(); return; }
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
+        // ─── 0. Always check Instant Catch Zone (Bất kể trạng thái nào nếu Player bước vào vùng catchDistance và không nấp) ───
+        CheckInstantCatchZone();
 
         // ─── 1. Detection ───
         PlayerController spotted = DetectPlayer();
@@ -509,7 +514,34 @@ public class AdultGuardNPC : NetworkBehaviour
 
         CallNearbyAdults(target);
     }
-    // ═══════════════════════ SYNC AUDIO RPCS ═══════════════════════
+    // ═══════════════════════ SYNC AUDIO & ANIMATION RPCS ═══════════════════════
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcPlayCatchAnim()
+    {
+        PlayCatchAnimLocal();
+    }
+
+    void PlayCatchAnimLocal()
+    {
+        if (animator == null) return;
+        if (!string.IsNullOrEmpty(catchAnimTrigger))
+        {
+            foreach (var p in animator.parameters)
+            {
+                if (p.name == catchAnimTrigger)
+                {
+                    if (p.type == AnimatorControllerParameterType.Trigger)
+                        animator.SetTrigger(catchAnimTrigger);
+                    else if (p.type == AnimatorControllerParameterType.Bool)
+                        animator.SetBool(catchAnimTrigger, true);
+                    return;
+                }
+            }
+            // Dự phòng: nếu không tìm thấy parameter, thử Play State trực tiếp
+            try { animator.Play(catchAnimTrigger); } catch { }
+        }
+    }
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     public void RpcPlayAlertSound()
     {
@@ -944,14 +976,38 @@ public class AdultGuardNPC : NetworkBehaviour
     }
 
     // ═══════════════════════ CATCH ═══════════════════════
+    void CheckInstantCatchZone()
+    {
+        Vector3 catchOrigin = transform.TransformPoint(catchOffset);
+        var all = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+        for (int i = 0; i < all.Length; i++)
+        {
+            var pc = all[i];
+            if (pc == null || !pc.gameObject.activeInHierarchy || pc.isHiding || IsDead(pc)) continue;
+
+            Vector3 targetCenter = pc.transform.position + Vector3.up * 0.9f;
+            float distOrigin = Vector3.Distance(catchOrigin, targetCenter);
+            float distBase = Vector3.Distance(transform.position, pc.transform.position);
+
+            if (distOrigin <= catchDistance || distBase <= catchDistance)
+            {
+                TryCatch(pc);
+                break;
+            }
+        }
+    }
+
     void OnTriggerEnter(Collider other)
     {
-        if (_state != AIState.Chase || other == null) return;
+        if (other == null) return;
         if (other.transform == transform || other.transform.IsChildOf(transform)) return;
 
         var pc = other.GetComponent<PlayerController>()
               ?? other.GetComponentInParent<PlayerController>();
-        if (pc != null && pc == _target) TryCatch(pc);
+        if (pc != null && !pc.isHiding)
+        {
+            TryCatch(pc);
+        }
     }
 
     void TryCatch(PlayerController target)
@@ -974,6 +1030,16 @@ public class AdultGuardNPC : NetworkBehaviour
         {
             _lastCatchTime = Time.time;
             if (target.stats != null) target.stats.isDied = true;
+        }
+
+        // ⭐ Phát Animation Catch (Đồng bộ qua Fusion RPC)
+        if (Object != null && Object.IsValid)
+        {
+            if (HasAuthority) RpcPlayCatchAnim();
+        }
+        else
+        {
+            PlayCatchAnimLocal();
         }
 
         PlayTalkSound();
