@@ -74,7 +74,7 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     /// <summary>
-    /// Lấy hoặc khởi tạo NetworkRunner
+    /// Lấy hoặc khởi tạo NetworkRunner mới sạch sẽ
     /// </summary>
     public NetworkRunner GetOrCreateRunner()
     {
@@ -105,6 +105,34 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
         }
 
         return currentRunner;
+    }
+
+    /// <summary>
+    /// Dọn dẹp sạch Runner cũ trước khi StartGame để tránh xung đột trạng thái Lobby trên Android IL2CPP
+    /// </summary>
+    private async Task EnsureCleanRunnerState()
+    {
+        if (currentRunner != null && currentRunner.IsRunning)
+        {
+            try
+            {
+                await currentRunner.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[FusionConnectionManager] Exception when shutting down previous runner: {ex.Message}");
+            }
+        }
+
+        if (currentRunner != null)
+        {
+            try
+            {
+                Destroy(currentRunner.gameObject);
+            }
+            catch { }
+            currentRunner = null;
+        }
     }
 
     /// <summary>
@@ -159,11 +187,13 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
         isConnecting = true;
         OnStatusMessageEvent?.Invoke($"Creating room '{sessionName}'...", false);
 
+        // Dọn dẹp trạng thái Lobby cũ trước khi tạo session gameplay để tương thích 100% trên mobile
+        await EnsureCleanRunnerState();
         NetworkRunner runner = GetOrCreateRunner();
 
         var sceneInfo = new NetworkSceneInfo();
         Scene currentScene = SceneManager.GetActiveScene();
-        if (currentScene.IsValid())
+        if (currentScene.IsValid() && currentScene.buildIndex >= 0)
         {
             sceneInfo.AddSceneRef(SceneRef.FromIndex(currentScene.buildIndex), LoadSceneMode.Single);
         }
@@ -178,18 +208,25 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
 
         try
         {
-            var result = await runner.StartGame(new StartGameArgs
+            var startGameArgs = new StartGameArgs
             {
                 GameMode = defaultGameMode,
                 SessionName = sessionName,
                 PlayerCount = maxPlayers,
                 IsVisible = !isPrivate,
                 IsOpen = true,
-                Scene = sceneInfo,
                 SceneManager = runner.GetComponent<INetworkSceneManager>(),
                 ObjectProvider = runner.GetComponent<INetworkObjectProvider>(),
                 SessionProperties = customProps
-            });
+            };
+
+            // Chỉ đính kèm Scene nếu sceneInfo có chứa scene hợp lệ
+            if (sceneInfo.SceneCount > 0)
+            {
+                startGameArgs.Scene = sceneInfo;
+            }
+
+            var result = await runner.StartGame(startGameArgs);
 
             isConnecting = false;
 
@@ -202,15 +239,20 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
             }
             else
             {
-                OnStatusMessageEvent?.Invoke($"Create room failed: {result.ShutdownReason}", true);
-                Debug.LogError($"[FusionConnectionManager] Lỗi tạo phòng: {result.ShutdownReason}");
+                string errorDetail = $"Create room failed: {result.ShutdownReason}";
+                if (!string.IsNullOrEmpty(result.ErrorMessage))
+                {
+                    errorDetail += $" ({result.ErrorMessage})";
+                }
+                OnStatusMessageEvent?.Invoke(errorDetail, true);
+                Debug.LogError($"[FusionConnectionManager] Lỗi tạo phòng: {result.ShutdownReason} | Message: {result.ErrorMessage}");
                 return false;
             }
         }
         catch (Exception ex)
         {
             isConnecting = false;
-            OnStatusMessageEvent?.Invoke($"Error creating room: {ex.Message}", true);
+            OnStatusMessageEvent?.Invoke($"Error creating room: {ex.GetType().Name} - {ex.Message}", true);
             Debug.LogError($"[FusionConnectionManager] Exception tạo phòng: {ex}");
             return false;
         }
@@ -231,6 +273,7 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
         isConnecting = true;
         OnStatusMessageEvent?.Invoke($"Joining room '{sessionName}'...", false);
 
+        await EnsureCleanRunnerState();
         NetworkRunner runner = GetOrCreateRunner();
 
         try
@@ -277,6 +320,7 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
         isConnecting = true;
         OnStatusMessageEvent?.Invoke("Finding a quick match...", false);
 
+        await EnsureCleanRunnerState();
         NetworkRunner runner = GetOrCreateRunner();
 
         try

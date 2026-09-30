@@ -399,7 +399,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: e5a4e0abbd347454fa34266376c5d5c0, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.4
+  m_Volume: 0.65
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -545,7 +545,7 @@ Transform:
   m_GameObject: {fileID: 5338970593590807005}
   serializedVersion: 2
   m_LocalRotation: {x: 0.82513, y: -0, z: -0, w: 0.56494284}
-  m_LocalPosition: {x: 0, y: 3.24, z: 0.82}
+  m_LocalPosition: {x: 0, y: 2.687, z: 0.606}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -883,6 +883,7 @@ MonoBehaviour:
   catchOffset: {x: 0, y: 0.9, z: 0.2}
   catchCooldown: 1.5
   catchAnimTrigger: JumpScare
+  catchFreezeDuration: 2
   callAdultRadius: 0
   adultNpcLayer:
     serializedVersion: 2
@@ -909,7 +910,7 @@ MonoBehaviour:
   footstepSource: {fileID: 4597004422043768348}
   footstepClips:
   - {fileID: 8300000, guid: e5a4e0abbd347454fa34266376c5d5c0, type: 3}
-  footstepVolume: 0.4
+  footstepVolume: 0.65
   talkSource: {fileID: 428466166734306466}
   talkClips:
   - {fileID: 8300000, guid: 691b29fe4ad817a458acd016a51317b4, type: 3}

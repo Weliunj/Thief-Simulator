@@ -344,6 +344,29 @@ public class LockedContainerController : MonoBehaviour, IInteractable, ILockpick
 
         if (pool == null || pool.Count == 0) return;
 
+        // 1.1. Khởi tạo Seed ngẫu nhiên đồng bộ (Deterministic) dựa theo Seed của phòng chơi và Vị trí của Rương
+        int baseSeed = 12345;
+        if (FusionConnectionManager.Instance != null &&
+            FusionConnectionManager.Instance.IsInGameplaySession &&
+            FusionConnectionManager.Instance.currentRunner != null &&
+            FusionConnectionManager.Instance.currentRunner.SessionInfo != null)
+        {
+            var session = FusionConnectionManager.Instance.currentRunner.SessionInfo;
+            if (session.Properties != null && session.Properties.TryGetValue("seed", out var seedProp))
+            {
+                baseSeed = (int)seedProp;
+            }
+        }
+        int containerPosSeed = Mathf.RoundToInt(transform.position.x * 100f) ^ (Mathf.RoundToInt(transform.position.z * 100f) << 8);
+        int containerSeed = baseSeed ^ containerPosSeed ^ name.GetHashCode();
+
+        // Lưu lại state Random cũ để tránh ảnh hưởng logic khác
+        Random.State oldState = Random.state;
+        Random.InitState(containerSeed);
+
+        // Sắp xếp pool cố định theo tên prefab để tránh thứ tự không đồng nhất giữa các máy
+        pool = pool.OrderBy(p => p.name).ToList();
+
         // 2. Phân loại item theo rarity
         Dictionary<ItemRarity, List<GameObject>> categorized = new Dictionary<ItemRarity, List<GameObject>>();
         foreach (ItemRarity r in System.Enum.GetValues(typeof(ItemRarity)))
@@ -359,8 +382,8 @@ public class LockedContainerController : MonoBehaviour, IInteractable, ILockpick
             categorized[r].Add(p);
         }
 
-        // 3. Chọn các điểm spawn theo ratio
-        List<Transform> validPoints = spawnPoints.Where(p => p != null).OrderBy(x => Random.value).ToList();
+        // 3. Lấy danh sách điểm spawn hợp lệ (giữ nguyên thứ tự danh sách điểm spawn để nhất quán trên mọi máy)
+        List<Transform> validPoints = spawnPoints.Where(p => p != null).ToList();
         int countToSpawn = Mathf.Clamp(Mathf.RoundToInt(validPoints.Count * Mathf.Clamp01(spawnRatio)), 1, validPoints.Count);
 
         for (int i = 0; i < countToSpawn; i++)
@@ -373,6 +396,7 @@ public class LockedContainerController : MonoBehaviour, IInteractable, ILockpick
                 Quaternion rot = pt.rotation * Quaternion.Euler(0f, Random.Range(-30f, 30f), 0f);
 
                 GameObject instance = Instantiate(prefab, pos, rot, transform);
+                // Đặt tên định danh duy nhất theo index điểm spawn và tên rương để mọi máy tìm thấy chính xác khi nhặt
                 instance.name = $"ContainerItem_{name}_{i}_{prefab.name}";
 
                 Item itemComp = instance.GetComponent<Item>();
@@ -391,6 +415,9 @@ public class LockedContainerController : MonoBehaviour, IInteractable, ILockpick
                 }
             }
         }
+
+        // Khôi phục lại Random State
+        Random.state = oldState;
     }
 
     private GameObject PickPrefab(List<GameObject> pool, Dictionary<ItemRarity, List<GameObject>> categorized)

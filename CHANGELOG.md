@@ -1979,6 +1979,26 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
     - Màn hình chuyển dần sang màu đen (`FadeToBlack`), giữ nguyên màn hình đen trong đúng 5 giây (`escapeBlackHoldDuration = 5.0f`) trước khi nạp Scene sảnh (`HomeMenu`), tạo cảm giác xe nổ máy và phóng đi chân thực.
     - **Quy đổi tiền thưởng (Cash Reward)**: Trong [UI_Manager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/UI/UI_Manager.cs), khi tẩu thoát thành công về sảnh, tự động lấy `currpoint / 2` (50% giá trị đồ cướp được) và cộng trực tiếp vào ví `Cash` của tài khoản qua [FirebaseDataService.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FirebaseDataService.cs), đồng bộ ngay lập tức lên Cloud.
 
+---
+
+### [2026-09-30 16:40] — fix(network, android): resolve nanosockets dynamic library load failure and il2cpp code stripping
+- **Tác vụ**:
+  - **Khắc phục lỗi `Unable to load dynamic library 'nanosockets'` trên Android APK**:
+    - **Nguyên nhân cốt lõi**: Các file thư viện C++ native socket `.so` của Photon Fusion (`libnanosockets.so` cho arm64-v8a, armeabi-v7a, x86_64) trong Git chỉ là các text con trỏ Git LFS (~130 bytes) do chưa được `git lfs pull` nhị phân thực tế, khiến Android OS không thể load native library `nanosockets`.
+    - **Khắc phục**: Đã thực thi `git lfs fetch` và `git lfs checkout` để khôi phục 100% file binary native `.so` hợp lệ vào thư mục `Assets/Photon/Fusion/Plugins/NanoSockets/Android/`.
+  - **Tạo mới [link.xml](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/link.xml)**: Bảo vệ các assembly Fusion và NanoSockets không bị Unity IL2CPP Managed Stripping loại bỏ.
+  - **Tối ưu hóa [FusionConnectionManager.cs](file:///c:/Users/Hi/Documents/Unity%20Project/Thief-Simulator/Assets/Scripts/Network/FusionConnectionManager.cs)**: Dọn dẹp trạng thái Runner và gán Scene mapping an toàn trong Shared Mode khi tạo phòng.
+- **Danh sách file thay đổi**:
+  - `Assets/Photon/Fusion/Plugins/NanoSockets/Android/arm64-v8a/libnanosockets.so` (Restored binary via Git LFS)
+  - `Assets/Photon/Fusion/Plugins/NanoSockets/Android/armeabi-v7a/libnanosockets.so` (Restored binary via Git LFS)
+  - `Assets/Photon/Fusion/Plugins/NanoSockets/Android/x86/libnanosockets.so` (Restored binary via Git LFS)
+  - `Assets/Photon/Fusion/Plugins/NanoSockets/Android/x86_64/libnanosockets.so` (Restored binary via Git LFS)
+  - `Assets/link.xml` (New)
+  - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
+  - `Assets/Photon/Fusion/Resources/PhotonAppSettings.asset` (Modified — FixedRegion: asia)
+- **Ảnh hưởng**:
+  - Triệt tiêu hoàn toàn lỗi `Unable to load dynamic library 'nanosockets'` trên Android APK, cho phép Fusion mở raw socket và tạo phòng trực tuyến thành công trên điện thoại.
+
 
 
 

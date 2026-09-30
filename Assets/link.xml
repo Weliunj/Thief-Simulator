@@ -1,0 +1,11 @@
+<linker>
+  <!-- Preserve Photon Fusion Assemblies from IL2CPP Code Stripping on Android -->
+  <assembly fullname="Fusion.Runtime" preserve="all"/>
+  <assembly fullname="Fusion.Common" preserve="all"/>
+  <assembly fullname="Fusion.Realtime" preserve="all"/>
+  <assembly fullname="Fusion.Unity" preserve="all"/>
+  <assembly fullname="Fusion.Addressables" preserve="all"/>
+  <assembly fullname="Fusion.Addons.Physics" preserve="all"/>
+  <assembly fullname="Fusion.Addons.FSM" preserve="all"/>
+  <assembly fullname="Assembly-CSharp" preserve="all"/>
+</linker>

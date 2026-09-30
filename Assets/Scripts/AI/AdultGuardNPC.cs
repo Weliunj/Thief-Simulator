@@ -48,6 +48,8 @@ public class AdultGuardNPC : NetworkBehaviour
     public float catchCooldown = 1.5f;
     [Tooltip("Tên Trigger hoặc State Animation khi bắt Player (mặc định 'catch' hoặc 'attack')")]
     public string catchAnimTrigger = "catch";
+    [Tooltip("Thời gian NPC tạm dừng di chuyển để diễn animation bắt (giây)")]
+    public float catchFreezeDuration = 1.2f;
     public float callAdultRadius = 12f;
     public LayerMask adultNpcLayer;
 
@@ -128,6 +130,7 @@ public class AdultGuardNPC : NetworkBehaviour
     private PlayerController _target;
     private float _chaseTimer;
     private float _lastCatchTime = -10f;
+    private float _catchFreezeUntil = 0f;
 
     private Coroutine _idleRoutine;
     private Coroutine _doorRoutine;
@@ -231,6 +234,19 @@ public class AdultGuardNPC : NetworkBehaviour
 
         if (!HasAuthority) { RemoteTick(); return; }
         if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
+        // ─── Tạm dừng di chuyển khi đang diễn Animation Catch ───
+        if (Time.time < _catchFreezeUntil)
+        {
+            if (agent.isOnNavMesh) agent.ResetPath();
+            if (Object != null && Object.IsValid)
+            {
+                NetworkIsChasing = (_state == AIState.Chase);
+                NetworkSpeed = 0f;
+            }
+            UpdateAnim(0f);
+            return;
+        }
 
         // ─── 0. Always check Instant Catch Zone (Bất kể trạng thái nào nếu Player bước vào vùng catchDistance và không nấp) ───
         CheckInstantCatchZone();
@@ -1030,6 +1046,19 @@ public class AdultGuardNPC : NetworkBehaviour
         {
             _lastCatchTime = Time.time;
             if (target.stats != null) target.stats.isDied = true;
+        }
+
+        // ⭐ Tạm dừng di chuyển và quay mặt về phía target để diễn Animation Catch
+        if (catchFreezeDuration > 0f)
+        {
+            _catchFreezeUntil = Time.time + catchFreezeDuration;
+            if (agent != null && agent.isOnNavMesh) agent.ResetPath();
+            Vector3 lookDir = target.transform.position - transform.position;
+            lookDir.y = 0f;
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                transform.rotation = Quaternion.LookRotation(lookDir);
+            }
         }
 
         // ⭐ Phát Animation Catch (Đồng bộ qua Fusion RPC)
