@@ -2083,6 +2083,9 @@ MonoBehaviour:
   overheadEffectContainer: {fileID: 8051665554220147967}
   audioSource: {fileID: 8484419761852421170}
   defaultDrinkSound: {fileID: 8300000, guid: 88c4b6667a633354a8a32b664bc44eae, type: 3}
+  directionalLight: {fileID: 0}
+  defaultDirectionalIntensity: 0.03
+  nightVisionDirectionalIntensity: 0.2
 --- !u!1 &7294466694148045961
 GameObject:
   m_ObjectHideFlags: 0

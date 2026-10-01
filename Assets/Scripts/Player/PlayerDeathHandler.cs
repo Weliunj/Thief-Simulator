@@ -232,7 +232,14 @@ public class PlayerDeathHandler : MonoBehaviour
             playerController.currentLadder = null;
         }
 
-        // 3. Thả toàn bộ vật phẩm đang cầm xuống đất kèm lực đẩy vật lý (Chỉ Local Player thực hiện để tránh lặp RPC)
+        // 3. Hủy sạch toàn bộ hiệu ứng Buff (Speed, Jump, NightVision...) và dọn dẹp UI khi chết
+        PlayerBuffManager buffManager = GetComponent<PlayerBuffManager>();
+        if (buffManager != null)
+        {
+            buffManager.ClearAllBuffsOnDeath();
+        }
+
+        // 4. Thả toàn bộ vật phẩm đang cầm xuống đất kèm lực đẩy vật lý (Chỉ Local Player thực hiện để tránh lặp RPC)
         if (isLocal)
         {
             PlayerInventory inv = GetComponent<PlayerInventory>();

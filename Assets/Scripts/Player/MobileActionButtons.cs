@@ -304,7 +304,7 @@ public class MobileActionButtons : MonoBehaviour
         {
             foreach (Transform child in btn.transform)
             {
-                if (child.name.ToLower().Contains("prompt"))
+                if (child.name.ToLower().Contains("prompt") || child.name.ToLower().Contains("text") || child.name.ToLower().Contains("label"))
                 {
                     promptChild = child;
                     break;
@@ -314,17 +314,25 @@ public class MobileActionButtons : MonoBehaviour
 
         Transform targetTransform = promptChild ?? btn.transform;
 
-        // 2. Gán text cho TextMeshProUGUI hoặc UI Text
-        var tmp = targetTransform.GetComponentInChildren<TMPro.TextMeshProUGUI>(true);
+        // Tự động kích hoạt GameObject Prompt nếu đang bị set Inactive trong Hierarchy
+        if (promptChild != null && !promptChild.gameObject.activeSelf)
+        {
+            promptChild.gameObject.SetActive(true);
+        }
+
+        // 2. Gán text cho TextMeshProUGUI hoặc UI Text (tìm trên target hoặc toàn bộ button)
+        var tmp = targetTransform.GetComponentInChildren<TMPro.TextMeshProUGUI>(true) ?? btn.GetComponentInChildren<TMPro.TextMeshProUGUI>(true);
         if (tmp != null)
         {
+            if (!tmp.gameObject.activeSelf) tmp.gameObject.SetActive(true);
             tmp.text = prompt;
             return;
         }
 
-        var txt = targetTransform.GetComponentInChildren<UnityEngine.UI.Text>(true);
+        var txt = targetTransform.GetComponentInChildren<UnityEngine.UI.Text>(true) ?? btn.GetComponentInChildren<UnityEngine.UI.Text>(true);
         if (txt != null)
         {
+            if (!txt.gameObject.activeSelf) txt.gameObject.SetActive(true);
             txt.text = prompt;
         }
     }

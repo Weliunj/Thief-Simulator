@@ -271,21 +271,33 @@ public class PlayerInteraction : MonoBehaviour
                         mobileActions.SetPickupPrompt(currentLootItem.GetActionPrompt());
                 }
 
-                // Nút Interact (tương tác đặc biệt: Thang, Cửa, v.v.)
+                // Nút Interact: Ưu tiên Special Interactable thế giới (Thang, Cửa, Rương). Nếu không có, hiển thị thao tác của Item đang cầm (Đèn pin, Thuốc...)
                 if (mobileActions.interactButton != null)
                 {
-                    bool showInteract = (currentSpecialInteractable != null && currentSpecialInteractable.CanInteract(playerController, out _));
+                    bool hasSpecial = (currentSpecialInteractable != null && currentSpecialInteractable.CanInteract(playerController, out _));
+                    bool hasHeldAction = (currentHeldInteractable != null && currentHeldInteractable.CanInteractWhileHeld());
+                    bool showInteract = hasSpecial || hasHeldAction;
+
                     if (mobileActions.interactButton.gameObject.activeSelf != showInteract)
                         mobileActions.interactButton.gameObject.SetActive(showInteract);
 
-                    if (showInteract && currentSpecialInteractable != null)
-                        mobileActions.SetInteractPrompt(currentSpecialInteractable.GetActionPrompt());
+                    if (showInteract)
+                    {
+                        if (hasSpecial)
+                        {
+                            mobileActions.SetInteractPrompt(currentSpecialInteractable.GetActionPrompt());
+                        }
+                        else if (hasHeldAction)
+                        {
+                            mobileActions.SetInteractPrompt(currentHeldInteractable.GetHeldActionPrompt());
+                        }
+                    }
                 }
             }
         }
         else if (currentHeldInteractable != null && currentHeldInteractable.CanInteractWhileHeld())
         {
-            // Không nhìn vào vật thể thế giới, nhưng ĐANG CẦM ITEM ĐẶC BIỆT TRÊN TAY (Đèn pin...) -> Bật nút Interact để Bật/Tắt!
+            // Không nhìn vào vật thể thế giới, nhưng ĐANG CẦM ITEM ĐẶC BIỆT TRÊN TAY (Đèn pin, Thuốc...) -> Bật nút Interact để Drink / Turn On / Off!
             if (itemInfoHUD != null)
             {
                 itemInfoHUD.Hide();

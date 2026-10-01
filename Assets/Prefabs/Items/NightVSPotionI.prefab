@@ -142,6 +142,7 @@ GameObject:
   - component: {fileID: 3468808098366097823}
   - component: {fileID: 8093450382051174288}
   - component: {fileID: 4838610869737291177}
+  - component: {fileID: 8242119456156710828}
   m_Layer: 8
   m_Name: NightVSPotionI
   m_TagString: item
@@ -269,6 +270,25 @@ MonoBehaviour:
   audioSource: {fileID: 377292727539511340}
   soundEffect: {fileID: 8300000, guid: 175c1713694d2294f84a013cad8e6c43, type: 3}
   soundVolume: 0.3
+--- !u!114 &8242119456156710828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5490591401178310364}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 382c88b3cab1b6e449947f211bcda4c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PotionItemController
+  potionType: 2
+  effectName: EyeSight
+  tier: I
+  duration: 60
+  statMultiplier: 0.2
+  effectIcon: {fileID: -48455409, guid: 9310373d7a2329c4f862b695206cc1c5, type: 3}
+  drinkSound: {fileID: 8300000, guid: 88c4b6667a633354a8a32b664bc44eae, type: 3}
 --- !u!1 &6940596941152157663
 GameObject:
   m_ObjectHideFlags: 0

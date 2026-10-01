@@ -2024,8 +2024,50 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/Player/PlayerBuffManager.cs` (New)
   - `Assets/Scripts/Player/PlayerStats.cs` (Modified)
   - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+---
+
+### [2026-10-01 09:47] — feat(buff): implement Night Vision via Directional Light (0.03 to 1.0) and JumpHeight physics multiplier
+- **Tác vụ**:
+  - **Tích hợp Night Vision ([PlayerBuffManager.cs](file:///Assets/Scripts/Player/PlayerBuffManager.cs))**:
+    - Tự động quét và liên kết `Directional Light` trong Scene.
+    - Chuyển đổi độ sáng cục bộ: Khi có buff Night Vision $\rightarrow$ tăng `intensity` lên `1.0f` (có thể tùy chỉnh).
+    - Khi hết thời gian đếm ngược $\rightarrow$ tự động khôi phục về độ sáng mặc định ban đầu `0.03f`.
+  - **Cải tiến tính toán Jump Height**:
+    - Thêm `GetTotalJumpMultiplier()` và `RecalculateCurrentJumpHeight()` đảm bảo tính toán đồng bộ từ `baseJumpHeight` của `PlayerSO` sang `PlayerController` và `PlayerStats`.
+---
+
+### [2026-10-01 09:51] — fix(buff, death): clear all active buffs and restore default stats/lighting on player death
+- **Tác vụ**:
+  - Thêm phương thức `ClearAllBuffsOnDeath()` vào [PlayerBuffManager.cs](file:///Assets/Scripts/Player/PlayerBuffManager.cs):
+    - Dừng toàn bộ coroutine đếm ngược đang chạy.
+    - Xóa sạch UI của tất cả các buff trên màn hình HUD (`effectStatusPanel`) và trên đầu (`LocalCanvas/Effect`).
+    - Khôi phục tốc độ di chuyển (`moveSpeed`, `sprintSpeed`), chiều cao nhảy (`JumpHeight`) và độ sáng `Directional Light` (`0.03f`) về mức gốc ngay lập tức.
+  - Tích hợp gọi `ClearAllBuffsOnDeath()` trong hàm `ExecuteDeath()` của [PlayerDeathHandler.cs](file:///Assets/Scripts/Player/PlayerDeathHandler.cs).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerBuffManager.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
 - **Ảnh hưởng**:
-  - Mở rộng hệ thống gameplay cho phép người chơi sử dụng thuốc buff chỉ số mượt mà cả offline lẫn online co-op.
+  - Đảm bảo khi nhân vật bị NPC bắt hoặc tử vong, mọi hiệu ứng thuốc đang dùng sẽ lập tức biến mất sạch sẽ, không bị kẹt hiệu ứng sang lượt chơi sau.
+
+---
+
+### [2026-10-01 10:15] — fix(interaction, ui): support dynamic held item action prompts (Drink, Turn On/Off) on Mobile Interact button
+- **Tác vụ**:
+  - **Tối ưu hóa [PlayerInteraction.cs](file:///Assets/Scripts/Player/PlayerInteraction.cs) & [HotbarManager.cs](file:///Assets/Scripts/UI/HotbarManager.cs)**:
+    - Cải tiến `GetHeldInteractable()`: Thêm cơ chế fallback lấy `IHeldInteractable` trực tiếp từ `activeSlot.itemObject` để đảm bảo luôn nhận diện được item dù model 3D đang khởi tạo.
+    - Khi người chơi cầm item hỗ trợ tương tác trên Hotbar (Đèn pin, Thuốc...), nút `InteractBtn` trên Mobile luôn được bật và hiển thị nhãn hành động tương ứng (`Drink`, `Turn On`, `Turn Off`).
+    - Ưu tiên hiển thị tương tác thế giới nếu rọi vào vật thể đặc biệt (Thang, Cửa, Rương), và fallback ngay lập tức về hành động của item cầm tay khi nhìn vào vật thể Loot hoặc khoảng trống.
+  - **Cải tiến [MobileActionButtons.cs](file:///Assets/Scripts/Player/MobileActionButtons.cs)**:
+    - Nâng cấp hàm `UpdateButtonText` để tìm kiếm đệ quy toàn bộ các component `TextMeshProUGUI` và `Text` (tìm theo tên `Prompt`, `Text`, `Label` hoặc component con) giúp nhãn nút luôn được cập nhật chính xác trên mọi prefab UI Mobile.
+    - Tự động gọi `SetActive(true)` cho GameObject `Prompt` và component Text nếu trước đó đang bị set Inactive trong Hierarchy.
+  - **Dọn dẹp log trong [HidingSpotController.cs](file:///Assets/Scripts/Environment/HidingSpotController.cs)**:
+    - Loại bỏ hoàn toàn dòng `Debug.Log` spam `[CanInteract] netOcc=...` mỗi frame khi rọi vào tủ trốn.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Environment/HidingSpotController.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInteraction.cs` (Modified)
+  - `Assets/Scripts/Player/MobileActionButtons.cs` (Modified)
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+  - `Assets/Scripts/Items/PotionItemController.cs` (Modified)
 
 
 

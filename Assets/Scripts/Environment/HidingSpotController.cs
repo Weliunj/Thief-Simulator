@@ -140,8 +140,6 @@ public class HidingSpotController : MonoBehaviour, IInteractable
             ? (bool)netSync.NetworkIsOccupied
             : isOccupied;
 
-        Debug.Log($"[CanInteract] netOcc={netSync?.NetworkIsOccupied}, localOcc={isOccupied}, effective={effectiveOccupied}");
-
         if (effectiveOccupied)
         {
             failReason = "Tủ đang có người trốn!";

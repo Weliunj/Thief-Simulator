@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 2806424397222973618}
   - component: {fileID: 7576313244205632468}
   - component: {fileID: 1721402321962548516}
+  - component: {fileID: 4275776110894481803}
   m_Layer: 8
   m_Name: JumpPotionII
   m_TagString: item
@@ -230,6 +231,25 @@ MonoBehaviour:
   audioSource: {fileID: 919938116004910771}
   soundEffect: {fileID: 8300000, guid: 175c1713694d2294f84a013cad8e6c43, type: 3}
   soundVolume: 0.3
+--- !u!114 &4275776110894481803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2475242742058497265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 382c88b3cab1b6e449947f211bcda4c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PotionItemController
+  potionType: 1
+  effectName: Jump
+  tier: II
+  duration: 30
+  statMultiplier: 4.5
+  effectIcon: {fileID: -1158290469, guid: 24c2a72ec4a218343919e58742bec21c, type: 3}
+  drinkSound: {fileID: 8300000, guid: 88c4b6667a633354a8a32b664bc44eae, type: 3}
 --- !u!1 &4786094064416559774
 GameObject:
   m_ObjectHideFlags: 0

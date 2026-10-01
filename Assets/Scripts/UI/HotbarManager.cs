@@ -414,8 +414,23 @@ public class HotbarManager : MonoBehaviour
     /// </summary>
     public IHeldInteractable GetHeldInteractable()
     {
-        if (currentHeldModel == null) return null;
-        return currentHeldModel.GetComponent<IHeldInteractable>() ?? currentHeldModel.GetComponentInChildren<IHeldInteractable>();
+        if (currentHeldModel != null)
+        {
+            var interactable = currentHeldModel.GetComponent<IHeldInteractable>() ?? currentHeldModel.GetComponentInChildren<IHeldInteractable>();
+            if (interactable != null) return interactable;
+        }
+
+        // Fallback: Nếu currentHeldModel chưa kịp gán nhưng có slot đang được chọn
+        if (currentSelectedIndex >= 0 && currentSelectedIndex < slots.Count)
+        {
+            HotbarSlot slot = slots[currentSelectedIndex];
+            if (slot != null && slot.itemObject != null)
+            {
+                return slot.itemObject.GetComponent<IHeldInteractable>() ?? slot.itemObject.GetComponentInChildren<IHeldInteractable>();
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

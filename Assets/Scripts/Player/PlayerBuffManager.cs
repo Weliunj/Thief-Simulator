@@ -48,6 +48,14 @@ public class PlayerBuffManager : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip defaultDrinkSound;
 
+    [Header("☀️ Night Vision Light Settings")]
+    [Tooltip("Directional Light của Scene (tự động tìm nếu để trống)")]
+    public Light directionalLight;
+    [Tooltip("Độ sáng Directional Light mặc định trong game")]
+    public float defaultDirectionalIntensity = 0.03f;
+    [Tooltip("Độ sáng Directional Light khi bật Night Vision")]
+    public float nightVisionDirectionalIntensity = 1.0f;
+
     private PlayerController _player;
     private PlayerStats _stats;
     private NetworkPlayerSync _netSync;
@@ -58,6 +66,7 @@ public class PlayerBuffManager : MonoBehaviour
     // Lưu các modifier tốc độ đang hoạt động theo BuffKey
     private readonly Dictionary<string, float> _speedMultipliers = new Dictionary<string, float>();
     private readonly Dictionary<string, float> _jumpMultipliers = new Dictionary<string, float>();
+    private readonly HashSet<string> _activeNightVisionKeys = new HashSet<string>();
 
     // Lưu GameObject UI cũ theo BuffKey để dọn dẹp khi refresh cùng 1 cấp
     private readonly Dictionary<string, GameObject> _activeHudUIs = new Dictionary<string, GameObject>();
@@ -70,7 +79,24 @@ public class PlayerBuffManager : MonoBehaviour
         _netSync = GetComponent<NetworkPlayerSync>();
 
         EnsureAudioSource();
+        EnsureDirectionalLight();
         LocateUIContainers();
+    }
+
+    private void EnsureDirectionalLight()
+    {
+        if (directionalLight == null)
+        {
+            var lights = FindObjectsByType<Light>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            foreach (var l in lights)
+            {
+                if (l != null && l.type == LightType.Directional)
+                {
+                    directionalLight = l;
+                    break;
+                }
+            }
+        }
     }
 
     private void EnsureAudioSource()
@@ -316,13 +342,12 @@ public class PlayerBuffManager : MonoBehaviour
 
             case BuffType.JumpBoost:
                 _jumpMultipliers[buffKey] = multiplier;
-                if (_player != null)
-                {
-                    _player.JumpHeight *= multiplier;
-                }
+                RecalculateCurrentJumpHeight();
                 break;
 
             case BuffType.NightVision:
+                _activeNightVisionKeys.Add(buffKey);
+                RecalculateNightVisionLight();
                 break;
         }
     }
@@ -337,18 +362,29 @@ public class PlayerBuffManager : MonoBehaviour
                 break;
 
             case BuffType.JumpBoost:
-                if (_jumpMultipliers.TryGetValue(buffKey, out float mult))
-                {
-                    if (_player != null && mult > 0.01f)
-                    {
-                        _player.JumpHeight /= mult;
-                    }
-                    _jumpMultipliers.Remove(buffKey);
-                }
+                _jumpMultipliers.Remove(buffKey);
+                RecalculateCurrentJumpHeight();
                 break;
 
             case BuffType.NightVision:
+                _activeNightVisionKeys.Remove(buffKey);
+                RecalculateNightVisionLight();
                 break;
+        }
+    }
+
+    private void RecalculateNightVisionLight()
+    {
+        EnsureDirectionalLight();
+        if (directionalLight == null) return;
+
+        if (_activeNightVisionKeys.Count > 0)
+        {
+            directionalLight.intensity = nightVisionDirectionalIntensity;
+        }
+        else
+        {
+            directionalLight.intensity = defaultDirectionalIntensity;
         }
     }
 
@@ -365,11 +401,48 @@ public class PlayerBuffManager : MonoBehaviour
         return totalSpeedMult;
     }
 
+    /// <summary>
+    /// Lấy tổng hệ số nhân chiều cao nhảy từ TẤT CẢ các Buff Jump đang hoạt động
+    /// </summary>
+    public float GetTotalJumpMultiplier()
+    {
+        float totalJumpMult = 1.0f;
+        foreach (var m in _jumpMultipliers.Values)
+        {
+            totalJumpMult *= m;
+        }
+        return totalJumpMult;
+    }
+
     private void RecalculateCurrentSpeeds()
     {
         if (_stats != null)
         {
             _stats.CalculateWeightSpeedPenalty();
+        }
+    }
+
+    private void RecalculateCurrentJumpHeight()
+    {
+        float baseJump = 1.2f;
+        if (_player != null && _player.playerData != null)
+        {
+            baseJump = _player.playerData.baseJumpHeight;
+        }
+        else if (_stats != null && _stats.characterData != null)
+        {
+            baseJump = _stats.characterData.baseJumpHeight;
+        }
+
+        float totalJump = baseJump * GetTotalJumpMultiplier();
+
+        if (_player != null)
+        {
+            _player.JumpHeight = totalJump;
+        }
+        if (_stats != null)
+        {
+            _stats.jumpHeight = totalJump;
         }
     }
 
@@ -455,5 +528,41 @@ public class PlayerBuffManager : MonoBehaviour
             targetImg.sprite = icon;
             targetImg.enabled = true;
         }
+    }
+
+    /// <summary>
+    /// Hủy toàn bộ hiệu ứng Buff, khôi phục chỉ số và xóa sạch UI trên HUD lẫn trên đầu khi Player tử vong
+    /// </summary>
+    public void ClearAllBuffsOnDeath()
+    {
+        // 1. Dừng toàn bộ coroutine đếm ngược đang chạy
+        foreach (var routine in _runningBuffCoroutines.Values)
+        {
+            if (routine != null) StopCoroutine(routine);
+        }
+        _runningBuffCoroutines.Clear();
+
+        // 2. Xóa toàn bộ UI trên HUD
+        foreach (var hudUI in _activeHudUIs.Values)
+        {
+            if (hudUI != null) Destroy(hudUI);
+        }
+        _activeHudUIs.Clear();
+
+        // 3. Xóa toàn bộ UI trên đầu
+        foreach (var overheadUI in _activeOverheadUIs.Values)
+        {
+            if (overheadUI != null) Destroy(overheadUI);
+        }
+        _activeOverheadUIs.Clear();
+
+        // 4. Xóa danh sách modifier và khôi phục chỉ số gốc
+        _speedMultipliers.Clear();
+        _jumpMultipliers.Clear();
+        _activeNightVisionKeys.Clear();
+
+        RecalculateCurrentSpeeds();
+        RecalculateCurrentJumpHeight();
+        RecalculateNightVisionLight();
     }
 }

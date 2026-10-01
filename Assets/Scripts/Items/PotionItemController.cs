@@ -47,7 +47,7 @@ public class PotionItemController : MonoBehaviour, IInteractable, IHeldInteracta
     //               KHI CẦM TRÊN HOTBAR (IHELDINTERACTABLE)
     // =========================================================================
 
-    public string GetHeldActionPrompt() => string.IsNullOrEmpty(tier) ? $"Drink {effectName}" : $"Drink {effectName} {tier}";
+    public string GetHeldActionPrompt() => "Drink";
 
     public Sprite GetHeldActionIcon() => effectIcon != null ? effectIcon : (_itemComp != null ? _itemComp.GetIcon() : null);
 
