@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b463cd9e911af274aae657fa6adf2507, type: 3}
+  m_Name: AlienGuitar
+  m_EditorClassIdentifier: Assembly-CSharp::ItemSO
+  itemName: Alien Guitar
+  rarity: 2
+  itemIcon: {fileID: 915562623, guid: 5022a5e5c5158ca4ca598bfcfd271285, type: 3}
+  description: Suitable for aliens
+  basePrice: 60
+  minPrice: 75
+  maxPrice: 80
+  baseKg: 3
+  minKg: 2
+  maxKg: 6

@@ -119,7 +119,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 0
   MinDistance: 0
-  MaxDistance: 45
+  MaxDistance: 60
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -279,7 +279,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 0
   MinDistance: 0
-  MaxDistance: 45
+  MaxDistance: 60
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -408,7 +408,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 0
   MinDistance: 0
-  MaxDistance: 45
+  MaxDistance: 60
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -877,7 +877,7 @@ MonoBehaviour:
   flashlightTransitionSpeed: 15
   canHear: 1
   canHearPlayer: 1
-  hearingRange: 45
+  hearingRange: 50
   loseSightGrace: 2.5
   catchDistance: 0.8
   catchOffset: {x: 0, y: 0.9, z: 0.2}
