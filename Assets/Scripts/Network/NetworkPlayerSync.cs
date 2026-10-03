@@ -655,6 +655,30 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
     }
 
     /// <summary>
+    /// Khi nhân vật bị Despawn (ngắt kết nối đột ngột, crash, thoát game), tự động rớt đồ ra sàn
+    /// </summary>
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        try
+        {
+            if (IsLocalPlayer)
+            {
+                var inv = GetComponent<PlayerInventory>() ?? GetComponentInChildren<PlayerInventory>();
+                if (inv != null && inv.heldItems != null && inv.heldItems.Count > 0)
+                {
+                    inv.DropAllItemsOnDisconnect();
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[NetworkPlayerSync] Lỗi rớt đồ khi Despawned: {ex.Message}");
+        }
+
+        base.Despawned(runner, hasState);
+    }
+
+    /// <summary>
     /// Bật/Tắt hiển thị bảng tên (bao gồm cả Canvas hoặc GameObject chứa Text)
     /// </summary>
     private void SetNameTagVisible(bool visible)

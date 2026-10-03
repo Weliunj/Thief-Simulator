@@ -2105,7 +2105,22 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Danh sách file thay đổi**:
   - `Assets/Scripts/Items/AlarmItemController.cs` (New)
   - `Assets/Scripts/Network/NetworkItemSync.cs` (Modified)
+---
+
+### [2026-10-03 20:50] — feat(inventory, network): auto-drop all held items on disconnect, crash, or room leave
+- **Tác vụ**:
+  - **Tích hợp cơ chế rớt đồ khi ngắt kết nối ([PlayerInventory.cs](file:///Assets/Scripts/Player/PlayerInventory.cs))**:
+    - Thêm phương thức `DropAllItemsOnDisconnect()` tách biệt logic rớt đồ khi rời phòng hoặc ngắt mạng, rải đều toàn bộ item trong Balo và Hotbar ra sàn xung quanh vị trí người chơi và đồng bộ RPC qua mạng.
+  - **Tự động rớt đồ trước khi rời phòng ([FusionConnectionManager.cs](file:///Assets/Scripts/Network/FusionConnectionManager.cs))**:
+    - Trong `LeaveSession()`, tự động tìm `PlayerInventory` của Local Player và kích hoạt rớt toàn bộ đồ ra map trước khi ngắt kết nối `Runner.Shutdown()`.
+  - **Bảo vệ chống mất đồ khi Crash / Disconnect đột ngột ([NetworkPlayerSync.cs](file:///Assets/Scripts/Network/NetworkPlayerSync.cs))**:
+    - Ghi đè `Despawned(runner, hasState)` để tự động xả toàn bộ item ra đất nếu nhân vật bị despawn do rớt mạng hoặc đóng ứng dụng.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerInventory.cs` (Modified)
+  - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
   - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
+- **Ảnh hưởng**:
+  - Tránh hoàn toàn tình trạng người chơi cầm item xịn (loot đắt tiền, chìa khóa, dụng cụ bẻ khóa) bị mất mạng/thoát game làm mất luôn item, cho phép đồng đội còn lại trong phòng nhặt lại và tiếp tục trận đấu.
 
 
 

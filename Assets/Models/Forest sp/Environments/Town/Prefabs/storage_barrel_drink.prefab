@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4123225469025258}
   - component: {fileID: 33710448722016228}
   - component: {fileID: 23738600527388090}
-  - component: {fileID: 64832263367558886}
+  - component: {fileID: 9110326115993360908}
   m_Layer: 0
   m_Name: storage_barrel_drink
   m_TagString: Untagged
@@ -89,9 +89,10 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &64832263367558886
-MeshCollider:
+--- !u!65 &9110326115993360908
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -108,7 +109,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300002, guid: 0ef75cd2a5351494ca0efda79cdb2dea, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.7915497, y: 0.8078613, z: 0.6413975}
+  m_Center: {x: 0, y: 0.40393066, z: 0.0000003874302}

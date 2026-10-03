@@ -355,10 +355,28 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
     }
 
     /// <summary>
-    /// Rời khỏi phòng hiện tại và ngắt kết nối an toàn
+    /// Rời khỏi phòng hiện tại và ngắt kết nối an toàn (Tự động rớt toàn bộ vật phẩm trong balo ra sàn trước khi thoát)
     /// </summary>
     public async Task LeaveSession()
     {
+        // 1. Tự động rớt toàn bộ đồ trên người ra đất để người khác trong phòng có thể nhặt lại
+        try
+        {
+            var localSync = NetworkItemSync.GetLocalPlayerSync();
+            if (localSync != null)
+            {
+                var inv = localSync.GetComponent<PlayerInventory>() ?? localSync.GetComponentInChildren<PlayerInventory>();
+                if (inv != null)
+                {
+                    inv.DropAllItemsOnDisconnect();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[FusionConnectionManager] Lỗi khi rớt đồ trước khi thoát: {ex.Message}");
+        }
+
         if (currentRunner != null && currentRunner.IsRunning)
         {
             OnStatusMessageEvent?.Invoke("Leaving room...", false);

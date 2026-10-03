@@ -266,9 +266,22 @@ public class PlayerInventory : MonoBehaviour
     }
 
     /// <summary>
-    /// Rớt toàn bộ vật phẩm đang giữ rải rác xung quanh vị trí thi thể khi Player tử vong
+    /// Rớt toàn bộ vật phẩm đang giữ rải rác xung quanh vị trí thi thể khi Player tử vong hoặc khi thoát phòng/mất kết nối
     /// </summary>
     public void DropAllItemsOnDeath()
+    {
+        DropAllItemsInternal("chết");
+    }
+
+    /// <summary>
+    /// Rớt toàn bộ vật phẩm ra đất khi người chơi chủ động rời phòng hoặc mất kết nối mạng
+    /// </summary>
+    public void DropAllItemsOnDisconnect()
+    {
+        DropAllItemsInternal("ngắt kết nối/rời phòng");
+    }
+
+    private void DropAllItemsInternal(string reason)
     {
         // Tách item đang cầm ra khỏi Socket của Player trước và không ẩn SetActive
         if (hotbarManager != null)
@@ -278,7 +291,7 @@ public class PlayerInventory : MonoBehaviour
 
         if (heldItems == null || heldItems.Count == 0)
         {
-            Debug.Log("[PlayerInventory] DropAllItemsOnDeath: Không có vật phẩm nào đang giữ.");
+            Debug.Log($"[PlayerInventory] Không có vật phẩm nào đang giữ khi {reason}.");
             return;
         }
 

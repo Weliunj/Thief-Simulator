@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4383257537441368}
   - component: {fileID: 33705878562771666}
   - component: {fileID: 23939022627177350}
-  - component: {fileID: 64633382600709856}
+  - component: {fileID: 4257813434776885448}
   m_Layer: 0
   m_Name: storage_barrel_fish
   m_TagString: Untagged
@@ -89,9 +89,10 @@ MeshRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &64633382600709856
-MeshCollider:
+--- !u!65 &4257813434776885448
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -108,7 +109,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4300002, guid: 20505291fcf8c0a43aa582b85fca009f, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.97650146, y: 1.0196781, z: 0.97649574}
+  m_Center: {x: 0, y: 0.50983906, z: -0.00000017881393}
