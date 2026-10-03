@@ -2069,6 +2069,29 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
   - `Assets/Scripts/Items/PotionItemController.cs` (Modified)
 
+---
+
+### [2026-10-03 08:45] — feat(death, ui): implement respawn countdown UI and timeout game-over give up mechanism
+- **Tác vụ**:
+  - **Cập nhật đếm ngược hồi sinh khi bị bắt ([PlayerDeathHandler.cs](file:///Assets/Scripts/Player/PlayerDeathHandler.cs))**:
+    - Thêm `respawnCountdownText` (`TextMeshProUGUI`) hiển thị đếm ngược thời gian hồi sinh theo từng giây (`Respawning in 10s...` -> `9s...` -> `1s...`) nổi bật trên màn hình.
+    - Hỗ trợ hàm tự động khởi tạo UI Text `RespawnCountdownText` trên Canvas nếu prefab chưa gán sẵn.
+    - Mở rộng hàm `ExecuteDeath(string caughtBy, bool isLocal, bool canRespawn = true)` cho phép tùy biến có hồi sinh hay không.
+  - **Cập nhật xử lý hết giờ trận đấu ([UI_Manager.cs](file:///Assets/Scripts/UI/UI_Manager.cs))**:
+    - Khi `currentTime <= 0.05f`: Kích hoạt trạng thái Thất bại (Game Over), gọi `ExecuteDeath("Time's Up!", true, canRespawn: false)` để nhân vật ngã gục và giữ nguyên màn hình (không hồi sinh).
+    - Mở giao diện Give Up và con trỏ chuột (`Cursor.visible = true`) để người chơi bấm nút về sảnh.
+  - **Giao diện Give Up và Thoát phòng độc lập ([MainHUD.cs](file:///Assets/Scripts/UI/MainHUD.cs))**:
+    - Thêm `giveUpButton`, `gameOverPanel`, `gameOverReasonText` và hàm `ShowGiveUpUI()`.
+    - Khi người chơi bấm nút **Give Up**: Gọi `UI_Manager.Instance.Menu()` -> Gọi `FusionConnectionManager.Instance.LeaveSession()` để người chơi đó thoát về Scene `HomeMenu` độc lập mà không ảnh hưởng tới những người chơi khác trong phòng (Shared Mode).
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/UI/MainHUD.cs` (Modified)
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+- **Ảnh hưởng**:
+  - Người chơi khi bị bắt có hiển thị trực quan số giây đếm ngược để hồi sinh.
+  - Khi hết giờ (Time = 0), nhân vật không thể hồi sinh lại nữa mà ở nguyên màn hình kèm nút Give Up.
+  - Hỗ trợ đầy đủ cho cả Singleplayer và Multiplayer Fusion Shared Mode.
+
 
 
 

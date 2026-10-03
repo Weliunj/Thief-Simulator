@@ -40,6 +40,14 @@ public class MainHUD : MonoBehaviour
     public TextMeshProUGUI timeText;
     public AudioSource alarmAudio;
 
+    [Header("🏳️ Give Up UI (Khi hết giờ / Chết)")]
+    [Tooltip("Nút Give Up / Thoát về sảnh")]
+    public Button giveUpButton;
+    [Tooltip("Panel thông báo thất bại / Hết giờ (tùy chọn)")]
+    public GameObject gameOverPanel;
+    [Tooltip("Text mô tả lý do Game Over")]
+    public TextMeshProUGUI gameOverReasonText;
+
     [Header("⏸️ Controls & Audio")]
     public Button pauseButton;
     public AudioSource clickAudioSource;
@@ -72,6 +80,18 @@ public class MainHUD : MonoBehaviour
             escapeButton.onClick.AddListener(OnEscapeButtonClicked);
             escapeButton.gameObject.SetActive(false);
         }
+
+        if (giveUpButton != null)
+        {
+            giveUpButton.onClick.RemoveListener(OnGiveUpButtonClicked);
+            giveUpButton.onClick.AddListener(OnGiveUpButtonClicked);
+            giveUpButton.gameObject.SetActive(false);
+        }
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
     }
 
     private void Start()
@@ -93,6 +113,41 @@ public class MainHUD : MonoBehaviour
         if (escapeButton != null && escapeButton.gameObject.activeSelf != active)
         {
             escapeButton.gameObject.SetActive(active);
+        }
+    }
+
+    /// <summary>
+    /// Hiển thị giao diện Give Up / Hết giờ (Chỉ trên máy Local)
+    /// </summary>
+    public void ShowGiveUpUI(string reason = "Time's Up!")
+    {
+        if (giveUpButton != null)
+        {
+            giveUpButton.gameObject.SetActive(true);
+        }
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+
+        if (gameOverReasonText != null)
+        {
+            gameOverReasonText.text = reason;
+        }
+
+        // Đảm bảo mở khóa con trỏ chuột để người chơi bấm nút
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void OnGiveUpButtonClicked()
+    {
+        PlayClickSound();
+        if (uiManager == null) uiManager = FindFirstObjectByType<UI_Manager>();
+        if (uiManager != null)
+        {
+            uiManager.Menu();
         }
     }
 
@@ -123,6 +178,26 @@ public class MainHUD : MonoBehaviour
                     if (bName.Contains("escape") || bName.Contains("exit") || bName.Contains("leave"))
                     {
                         escapeButton = b;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Tự động tìm Give Up Button
+        if (giveUpButton == null)
+        {
+            Transform gBtn = transform.Find("GiveUpBtn") ?? transform.Find("GiveUpButton") ?? transform.Find("SurrenderBtn");
+            if (gBtn != null) giveUpButton = gBtn.GetComponent<Button>();
+
+            if (giveUpButton == null)
+            {
+                foreach (var b in GetComponentsInChildren<Button>(true))
+                {
+                    string bName = b.gameObject.name.ToLower();
+                    if (bName.Contains("giveup") || bName.Contains("surrender"))
+                    {
+                        giveUpButton = b;
                         break;
                     }
                 }

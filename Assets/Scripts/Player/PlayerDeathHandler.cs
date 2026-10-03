@@ -37,6 +37,8 @@ public class PlayerDeathHandler : MonoBehaviour
     [Header("⏱️ Respawn Settings")]
     [Tooltip("Thời gian chờ đếm ngược để hồi sinh (mặc định 10 giây)")]
     public float respawnCooldown = 10.0f;
+    [Tooltip("Hiển thị text đếm ngược thời gian hồi sinh trên màn hình")]
+    public TMPro.TextMeshProUGUI respawnCountdownText;
 
     [Header("💡 Lights & Visuals")]
     [Tooltip("Đèn cảnh báo chết (dieLight / warningLight)")]
@@ -83,6 +85,16 @@ public class PlayerDeathHandler : MonoBehaviour
         if (cameraTarget != null)
         {
             originalCameraTargetLocalPos = cameraTarget.localPosition;
+        }
+
+        // Tự động tìm Text RespawnCountdownText nếu chưa gán
+        if (respawnCountdownText == null)
+        {
+            EnsureRespawnCountdownText();
+        }
+        if (respawnCountdownText != null)
+        {
+            respawnCountdownText.gameObject.SetActive(false);
         }
 
         // Lưu vị trí spawn ban đầu của Player
@@ -169,14 +181,14 @@ public class PlayerDeathHandler : MonoBehaviour
         }
         else
         {
-            ExecuteDeath(caughtBy, true);
+            ExecuteDeath(caughtBy, true, canRespawn: true);
         }
     }
 
     /// <summary>
     /// Thực thi cái chết trên từng máy (Được gọi từ RPC Mạng hoặc Cục bộ)
     /// </summary>
-    public void ExecuteDeath(string caughtBy, bool isLocal)
+    public void ExecuteDeath(string caughtBy, bool isLocal, bool canRespawn = true)
     {
         if (isDeadProcessed || IsInvulnerable) return;
         isDeadProcessed = true;
@@ -250,7 +262,7 @@ public class PlayerDeathHandler : MonoBehaviour
             }
         }
 
-        // 4. Phát thông báo Status trên màn hình ("Player got caught by ...")
+        // 5. Phát thông báo Status trên màn hình ("Player got caught by ...")
         string pName = "Player";
         if (netSync != null && netSync.Object != null && netSync.Object.IsValid && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
         {
@@ -265,10 +277,10 @@ public class PlayerDeathHandler : MonoBehaviour
             pName = PlayerPrefs.GetString("PlayerNickname", "Player");
         }
 
-        string deathNotice = $"{pName} got caught by {caughtBy}!";
+        string deathNotice = (caughtBy == "Time's Up!") ? $"{pName} ran out of time!" : $"{pName} got caught by {caughtBy}!";
         GameStatusHUD.Show(deathNotice);
 
-        // 5. Ẩn Main HUD và kéo lùi Camera ra đằng sau xa hơn (Chỉ cho chính người chết)
+        // 6. Ẩn Main HUD và kéo lùi Camera ra đằng sau xa hơn (Chỉ cho chính người chết)
         if (isLocal)
         {
             UI_Manager ui = FindFirstObjectByType<UI_Manager>(FindObjectsInactive.Include);
@@ -280,20 +292,36 @@ public class PlayerDeathHandler : MonoBehaviour
             StartCoroutine(SmoothDeathCameraPullbackRoutine());
         }
 
-        // 6. Bật đèn cảnh báo DieLight
+        // 7. Bật đèn cảnh báo DieLight
         SetDieLight(true);
 
-        // 7. Phát âm thanh 1 (Kêu khi chết)
+        // 8. Phát âm thanh 1 (Kêu khi chết)
         PlayDeathSound();
 
-        // 8. Tắt va chạm giữa Player và NPC
+        // 9. Tắt va chạm giữa Player và NPC
         Physics.IgnoreLayerCollision(LayerMask.NameToLayer("Player"), LayerMask.NameToLayer("Npc"), true);
 
-        // 9. Bắt đầu chuỗi đếm ngược 10s hồi sinh và còi cảnh sát từ giây thứ 5
+        // 10. Xử lý hồi sinh hoặc Không hồi sinh (khi hết giờ)
         if (_respawnCoroutine != null) StopCoroutine(_respawnCoroutine);
-        _respawnCoroutine = StartCoroutine(RespawnSequenceRoutine(isLocal));
-
-        Debug.Log($"[PlayerDeathHandler] {pName} đã bị bắt bởi {caughtBy}. Bắt đầu đếm ngược hồi sinh {respawnCooldown}s!");
+        
+        if (canRespawn)
+        {
+            _respawnCoroutine = StartCoroutine(RespawnSequenceRoutine(isLocal));
+            Debug.Log($"[PlayerDeathHandler] {pName} đã bị bắt bởi {caughtBy}. Bắt đầu đếm ngược hồi sinh {respawnCooldown}s!");
+        }
+        else
+        {
+            // Không hồi sinh (Hết giờ): Ở nguyên màn hình và hiện nút Give Up
+            if (isLocal)
+            {
+                UI_Manager ui = FindFirstObjectByType<UI_Manager>(FindObjectsInactive.Include);
+                if (ui != null && ui.mainHUD != null)
+                {
+                    ui.mainHUD.ShowGiveUpUI("Time's Up - Mission Failed!");
+                }
+            }
+            Debug.Log($"[PlayerDeathHandler] {pName} hết thời gian làm nhiệm vụ! Khóa màn hình tại vị trí ngã.");
+        }
     }
 
     /// <summary>
@@ -355,9 +383,10 @@ public class PlayerDeathHandler : MonoBehaviour
 
     /// <summary>
     /// Chuỗi đếm ngược 10 giây hồi sinh:
+    /// - Hiển thị Text đếm ngược 10, 9, 8... trên màn hình.
     /// - Từ 0s -> 3s: Player nằm gục, camera pull-back.
     /// - Từ giây thứ 3: Còi cảnh sát bắt đầu phát với Fade In (to dần) và kết thúc với Fade Out (nhỏ dần).
-    /// - Hết 10s: Tắt còi cảnh sát, tắt dieLight, hồi sinh đưa về Spawn Point.
+    /// - Hết 10s: Tắt còi cảnh sát, tắt dieLight, ẩn text đếm ngược, hồi sinh đưa về Spawn Point.
     /// </summary>
     private IEnumerator RespawnSequenceRoutine(bool isLocal)
     {
@@ -379,11 +408,34 @@ public class PlayerDeathHandler : MonoBehaviour
         }
 
         bool blackFadeStarted = false;
+        int lastDisplayedSecond = -1;
+
+        // Tìm hoặc tạo Text đếm ngược nếu chưa có
+        if (isLocal && respawnCountdownText == null)
+        {
+            EnsureRespawnCountdownText();
+        }
+
+        if (isLocal && respawnCountdownText != null)
+        {
+            respawnCountdownText.gameObject.SetActive(true);
+        }
 
         while (elapsed < totalDuration)
         {
             yield return null;
             elapsed += Time.deltaTime;
+
+            // Cập nhật text đếm ngược (10, 9, 8...)
+            if (isLocal && respawnCountdownText != null)
+            {
+                int remainingSec = Mathf.CeilToInt(totalDuration - elapsed);
+                if (remainingSec != lastDisplayedSecond)
+                {
+                    lastDisplayedSecond = remainingSec;
+                    respawnCountdownText.text = $"Respawning in {remainingSec}s...";
+                }
+            }
 
             // Bắt đầu còi cảnh sát từ giây thứ 3
             if (elapsed >= sirenStartTime && !sirenStarted)
@@ -414,13 +466,11 @@ public class PlayerDeathHandler : MonoBehaviour
             {
                 if (elapsed < sirenStartTime + sirenFadeInDuration)
                 {
-                    // Fade In: từ 5.0s -> 6.0s (0 -> baseVolume)
                     float progress = Mathf.Clamp01((elapsed - sirenStartTime) / sirenFadeInDuration);
                     sirenSource.volume = Mathf.Lerp(0f, baseVolume, progress);
                 }
                 else if (elapsed >= sirenEndTime - sirenFadeOutDuration)
                 {
-                    // Fade Out: từ 8.5s -> 10.0s (baseVolume -> 0)
                     float progress = Mathf.Clamp01((elapsed - (sirenEndTime - sirenFadeOutDuration)) / sirenFadeOutDuration);
                     sirenSource.volume = Mathf.Lerp(baseVolume, 0f, progress);
                 }
@@ -438,6 +488,12 @@ public class PlayerDeathHandler : MonoBehaviour
             }
         }
 
+        // Ẩn text đếm ngược khi hết giờ
+        if (isLocal && respawnCountdownText != null)
+        {
+            respawnCountdownText.gameObject.SetActive(false);
+        }
+
         // Tắt còi cảnh sát hoàn toàn
         if (sirenSource != null)
         {
@@ -450,7 +506,67 @@ public class PlayerDeathHandler : MonoBehaviour
 
         // Hồi sinh người chơi và đưa về điểm xuất phát
         RespawnPlayer(isLocal);
+    }
 
+    /// <summary>
+    /// Tự động tìm Text đếm ngược thời gian hồi sinh trên Canvas UI (Tìm trong PlayerUI -> GameStatusHUD -> RespawnCountdownText)
+    /// </summary>
+    private void EnsureRespawnCountdownText()
+    {
+        if (respawnCountdownText != null) return;
+
+        // 1. Quét tìm trong tất cả Canvas đang có trong Scene (kể cả inactive)
+        Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var canvas in allCanvases)
+        {
+            var allTMPs = canvas.GetComponentsInChildren<TMPro.TextMeshProUGUI>(true);
+            foreach (var tmp in allTMPs)
+            {
+                string n = tmp.gameObject.name.ToLower();
+                if (n == "respawncountdowntext" || n.Contains("respawncountdown") || n.Contains("respawntext"))
+                {
+                    respawnCountdownText = tmp;
+                    return;
+                }
+            }
+        }
+
+        // 2. Tìm qua GameStatusHUD
+        GameStatusHUD statusHUD = FindFirstObjectByType<GameStatusHUD>(FindObjectsInactive.Include);
+        if (statusHUD != null)
+        {
+            var tmp = statusHUD.transform.Find("RespawnCountdownText");
+            if (tmp != null)
+            {
+                respawnCountdownText = tmp.GetComponent<TMPro.TextMeshProUGUI>();
+                if (respawnCountdownText != null) return;
+            }
+        }
+
+        // 3. Nếu thực sự chưa có trên bất kỳ Canvas nào, mới tự động tạo mới
+        Canvas mainCanvas = FindFirstObjectByType<Canvas>();
+        if (mainCanvas != null)
+        {
+            GameObject txtObj = new GameObject("RespawnCountdownText");
+            txtObj.transform.SetParent(mainCanvas.transform, false);
+
+            RectTransform rect = txtObj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(0f, -120f);
+            rect.sizeDelta = new Vector2(500f, 60f);
+
+            respawnCountdownText = txtObj.AddComponent<TMPro.TextMeshProUGUI>();
+            respawnCountdownText.alignment = TMPro.TextAlignmentOptions.Center;
+            respawnCountdownText.fontSize = 28;
+            respawnCountdownText.fontStyle = TMPro.FontStyles.Bold;
+            respawnCountdownText.color = new Color(1f, 0.9f, 0.2f, 1f); // Màu vàng cam nổi bật
+            
+            var outline = txtObj.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = Color.black;
+            outline.effectDistance = new Vector2(2f, -2f);
+        }
     }
 
     /// <summary>

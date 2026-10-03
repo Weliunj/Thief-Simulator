@@ -189,10 +189,21 @@ public class UI_Manager : MonoBehaviour
         {
             playerStats.currentTime -= Time.deltaTime;
 
-            if (playerStats.currentTime <= 0.3f)
+            if (playerStats.currentTime <= 0.05f)
             {
                 playerStats.currentTime = 0f;
-                Debug.Log("HẾT THỜI GIAN! Game Over (tạm thời chỉ debug)");
+                Debug.Log("[UI_Manager] HẾT THỜI GIAN! Game Over - Kích hoạt trạng thái Thất bại.");
+
+                // Khi hết giờ: Kích hoạt chết nhưng KHÔNG hồi sinh (canRespawn = false)
+                PlayerDeathHandler deathHandler = playerStats.GetComponent<PlayerDeathHandler>();
+                if (deathHandler != null && !deathHandler.isDeadProcessed)
+                {
+                    deathHandler.ExecuteDeath("Time's Up!", true, canRespawn: false);
+                }
+                else if (mainHUD != null)
+                {
+                    mainHUD.ShowGiveUpUI("Time's Up!");
+                }
             }
         }
 
