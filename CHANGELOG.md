@@ -1,4 +1,4 @@
-# 📜 Changelog — Bullet Hell Project
+# 📜 Changelog — Thief Simulator Project
 
 All notable changes to this project will be documented in this file. This repository adheres to **Keep a Changelog** standards and maps directly to **Conventional Commits**.
 
@@ -2090,7 +2090,22 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
 - **Ảnh hưởng**:
   - Người chơi khi bị bắt có hiển thị trực quan số giây đếm ngược để hồi sinh.
   - Khi hết giờ (Time = 0), nhân vật không thể hồi sinh lại nữa mà ở nguyên màn hình kèm nút Give Up.
-  - Hỗ trợ đầy đủ cho cả Singleplayer và Multiplayer Fusion Shared Mode.
+---
+
+### [2026-10-03 13:00] — feat(items, distraction): implement Alarm Clock & Phone distraction controller with timed NPC lure and network audio sync
+- **Tác vụ**:
+  - **Tạo mới [AlarmItemController.cs](file:///Assets/Scripts/Items/AlarmItemController.cs)**:
+    - Triển khai [IInteractable](file:///Assets/Scripts/Items/Item.cs) & [IHeldInteractable](file:///Assets/Scripts/Items/IHeldInteractable.cs) cho các vật phẩm hẹn giờ/báo động (Đồng hồ báo thức, Điện thoại, Thiết bị đánh lạc hướng).
+    - **Thao tác Đặt (Place)**: Khi cầm trên tay, bấm nút `Interact` sẽ tự động tách item khỏi Hotbar/Inventory và đặt ngay ngắn xuống chân người chơi (bắn Raycast xuống sàn để căn chỉnh vị trí).
+    - **Cơ chế Hẹn giờ (Delay)**: Sau `delayToRing` (mặc định 10 giây) nếu không bị nhặt lên $\rightarrow$ Tự động kích hoạt chuông báo động (Alarm).
+    - **Kêu & Gọi NPC**: Chuông kêu liên tục trong `ringDuration` (10 giây) rồi tự tắt. Mỗi 1 giây gọi `NPCAlertSystem.EmitNoise()` để dụ cả Adult Guard NPC và Kid NPC xung quanh chạy lại kiểm tra.
+    - **Âm thanh độc lập & Tự động cấu hình**: Tách riêng 2 `AudioSource` độc lập (`tickingAudioSource` và `alarmAudioSource`) để tiếng tích tắc và tiếng chuông không bị đè/ngắt lẫn nhau, tự động cấu hình 3D Spatial Audio (`spatialBlend = 1.0f`). Loại bỏ `placeSound` để giữ giao diện Inspector gọn gàng.
+  - **Đồng bộ Mạng Photon Fusion (Shared Mode) trong [NetworkItemSync.cs](file:///Assets/Scripts/Network/NetworkItemSync.cs) & [NetworkPlayerSync.cs](file:///Assets/Scripts/Network/NetworkPlayerSync.cs)**:
+    - Bổ sung phương thức `SyncAlarmState` và RPC `RpcSetAlarmState` để đồng bộ trạng thái đếm ngược, bật/tắt chuông 3D Spatial Audio trên toàn bộ máy người chơi khác.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/AlarmItemController.cs` (New)
+  - `Assets/Scripts/Network/NetworkItemSync.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
 
 
 

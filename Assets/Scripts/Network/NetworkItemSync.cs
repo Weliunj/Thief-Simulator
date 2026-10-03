@@ -82,6 +82,21 @@ public class NetworkItemSync : MonoBehaviour
     }
 
     /// <summary>
+    /// Đồng bộ trạng thái báo thức / chuông gọi NPC của Đồng hồ / Điện thoại qua mạng
+    /// </summary>
+    public static void SyncAlarmState(GameObject itemObj, bool isArmed, bool isRinging)
+    {
+        if (itemObj == null) return;
+
+        NetworkPlayerSync localSync = GetLocalPlayerSync();
+        if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
+        {
+            string itemPath = GetGameObjectPath(itemObj);
+            localSync.RpcSetAlarmState(itemPath, isArmed, isRinging);
+        }
+    }
+
+    /// <summary>
     /// Đồng bộ trạng thái thang đang có người leo hay không (Khóa tương tác tránh 2 người leo cùng lúc)
     /// </summary>
     public static void SyncLadderOccupied(GameObject itemObj, bool isOccupied)

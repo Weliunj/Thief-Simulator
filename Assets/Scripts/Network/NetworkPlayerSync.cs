@@ -204,6 +204,22 @@ public class NetworkPlayerSync : NetworkBehaviour
     }
 
     [Rpc(RpcSources.All, RpcTargets.All)]
+    public void RpcSetAlarmState(string itemHierarchyPath, bool isArmed, bool isRinging)
+    {
+        if (string.IsNullOrEmpty(itemHierarchyPath)) return;
+
+        GameObject targetItem = NetworkItemSync.FindSceneObjectByPath(itemHierarchyPath);
+        if (targetItem != null)
+        {
+            AlarmItemController alarm = targetItem.GetComponent<AlarmItemController>() ?? targetItem.GetComponentInChildren<AlarmItemController>();
+            if (alarm != null)
+            {
+                alarm.ApplyNetworkAlarmState(isArmed, isRinging);
+            }
+        }
+    }
+
+    [Rpc(RpcSources.All, RpcTargets.All)]
     public void RpcBroadcastStatusMessage(string message)
     {
         GameStatusHUD.Show(message);
