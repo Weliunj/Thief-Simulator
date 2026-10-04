@@ -35,6 +35,7 @@ public class NetworkLobbyHUD : MonoBehaviour
     [Header("➕ Create Room Modal")]
     public TMP_InputField createRoomNameInput;
     public TMP_Dropdown maxPlayersDropdown;
+    public TMP_Dropdown difficultyDropdown; // Dropdown chọn Độ khó: 0 = Easy, 1 = Normal, 2 = Hard
     public TMP_Dropdown mapSelectDropdown; // Tùy chọn fallback
     public Button openMapSelectButton;     // Nút mở panel chọn Chapter
     public Image createRoomMapPreviewImage; // Ảnh preview Chapter được chọn
@@ -623,6 +624,11 @@ public class NetworkLobbyHUD : MonoBehaviour
 
         string selectedMap = GetMapSceneName(mapIndex);
 
+        if (difficultyDropdown != null)
+        {
+            GameSession.SelectedDifficulty = (GameDifficulty)Mathf.Clamp(difficultyDropdown.value, 0, 2);
+        }
+
         if (chapterList != null && mapIndex >= 0 && mapIndex < chapterList.Count)
         {
             GameSession.SelectedChapter = chapterList[mapIndex];
@@ -879,6 +885,18 @@ public class NetworkLobbyHUD : MonoBehaviour
 
     private void OnDisconnected(NetworkRunner runner, ShutdownReason reason)
     {
+        // Bỏ qua hiển thị lỗi nếu đang trong quá trình chuyển tiếp tạo phòng/vào phòng (isConnecting)
+        // hoặc nếu shutdown diễn ra bình thường (Ok)
+        if (FusionConnectionManager.Instance != null && FusionConnectionManager.Instance.isConnecting)
+        {
+            return;
+        }
+
+        if (reason == ShutdownReason.Ok)
+        {
+            return;
+        }
+
         ShowLobbyMain();
         ShowStatus($"Disconnected from room: {reason}", true);
     }

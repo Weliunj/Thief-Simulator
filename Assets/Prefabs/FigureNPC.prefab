@@ -751,9 +751,9 @@ NavMeshAgent:
   m_AgentTypeID: -1923039037
   m_Radius: 0.25
   m_Speed: 3.5
-  m_Acceleration: 8
-  avoidancePriority: 75
-  m_AngularSpeed: 120
+  m_Acceleration: 100000
+  avoidancePriority: 99
+  m_AngularSpeed: 100000
   m_StoppingDistance: 0
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
@@ -905,6 +905,8 @@ MonoBehaviour:
   doorLookPauseRange: {x: 1, y: 2.5}
   alertSource: {fileID: 9102682920654994924}
   alertSound: {fileID: 8300000, guid: 068e8bba02d936e42b52f71d1353a160, type: 3}
+  catchSound: {fileID: 8300000, guid: b6395b0e4ac6c744a9867d67c5a16a38, type: 3}
+  catchVolume: 1
   themeSource: {fileID: 0}
   chaseTheme: {fileID: 0}
   footstepSource: {fileID: 4597004422043768348}
@@ -947,13 +949,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8465728398418178164}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.38}
+  m_LocalRotation: {x: 0.043619405, y: 0, z: 0, w: 0.9990483}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5617611080554140076}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 5, y: 0, z: 0}
 --- !u!108 &881658361243640632
 Light:
   m_ObjectHideFlags: 0
@@ -965,7 +967,7 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 0.9019608, a: 1}
-  m_Intensity: 50
+  m_Intensity: 40
   m_Range: 5
   m_SpotAngle: 61.47487
   m_InnerSpotAngle: 36.2

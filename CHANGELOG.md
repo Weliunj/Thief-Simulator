@@ -2119,8 +2119,38 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/Player/PlayerInventory.cs` (Modified)
   - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
   - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
-- **Ảnh hưởng**:
-  - Tránh hoàn toàn tình trạng người chơi cầm item xịn (loot đắt tiền, chìa khóa, dụng cụ bẻ khóa) bị mất mạng/thoát game làm mất luôn item, cho phép đồng đội còn lại trong phòng nhặt lại và tiếp tục trận đấu.
+---
+
+### [2026-10-04 09:30] — feat(difficulty, level-design): implement Chapter Difficulty System (Easy, Normal, Hard) with custom item ratios, target points, time limits, and NPC presets
+- **Tác vụ**:
+  - **Nâng cấp [ChapterSO.cs](file:///Assets/Scripts/UI/ChapterSO.cs)**:
+    - Bổ sung cấu trúc `ChapterDifficultySetting` cho 3 cấp độ (`easyDifficulty`, `normalDifficulty`, `hardDifficulty`).
+    - Mỗi cấp độ cho phép tùy biến riêng biệt: `% Chỉ tiêu cần gom (targetPointPercentage)`, `% Điểm spawn xuất hiện đồ (itemSpawnRatio)`, `Thời gian màn chơi (maxTime)` và danh sách từ khóa NPC được kích hoạt (`activeNpcKeywords`).
+  - **Tạo mới [SceneNPCManager.cs](file:///Assets/Scripts/AI/SceneNPCManager.cs)**:
+    - Tinh gọn chỉ dùng 1 danh sách duy nhất `sceneNpcObjects`: Quản lý kích hoạt (`SetActive(true/false)`) NPC hoàn toàn qua từ khóa `activeNpcKeywords` của `ChapterSO`, loại bỏ `alwaysActiveNpcs` để Inspector gọn gàng và dễ thao tác.
+    - Các NPC không nằm trong danh sách quản lý `sceneNpcObjects` sẽ được giữ nguyên trạng thái tự nhiên trong Scene.
+    - Tự động đối chiếu từ khóa với **cả Tên GameObject (Hierarchy)** VÀ **Tên cấu hình `npcName` trong Inspector Component** (`AdultGuardNPC` / `KidRunnerNPC`) để bật/tắt chính xác. Không phân biệt chữ hoa/thường.
+  - **Tích hợp [SceneItemSpawner.cs](file:///Assets/Scripts/Items/SceneItemSpawner.cs) & [PlayerStats.cs](file:///Assets/Scripts/Player/PlayerStats.cs)**:
+    - Tự động áp dụng `% Spawn Item`, `% Target Points` và `MaxTime` tương ứng từ độ khó đang chọn vào game.
+  - **Đồng bộ Mạng Photon Fusion & UI Sảnh ([GameSession.cs](file:///Assets/Scripts/Utilities/GameSession.cs), [FusionConnectionManager.cs](file:///Assets/Scripts/Network/FusionConnectionManager.cs), [NetworkLobbyHUD.cs](file:///Assets/Scripts/UI/NetworkLobbyHUD.cs))**:
+    - Bổ sung Enum `GameDifficulty` và `GameSession.SelectedDifficulty`.
+  - **Bổ sung Âm thanh Catch / Kill cho Adult Guard ([AdultGuardNPC.cs](file:///Assets/Scripts/AI/AdultGuardNPC.cs))**:
+  - **Mở rộng phạm vi giảm Resolution / Render Scale ([SettingsManager.cs](file:///Assets/Scripts/Utilities/SettingsManager.cs), [SettingsHUD.cs](file:///Assets/Scripts/UI/SettingsHUD.cs))**:
+    - Giới hạn Render Scale tối thiểu được tinh chỉnh ở mức `20% (0.2f)` đến `100% (1.0f)` để vừa tối ưu FPS tối đa cho máy yếu vừa đảm bảo UI và hình ảnh nhìn rõ.
+  - **Hỗ trợ Quản lý Cụm GameObject Cha ([SceneNPCManager.cs](file:///Assets/Scripts/AI/SceneNPCManager.cs))**:
+    - Tự động nhận diện và quản lý toàn bộ Cụm Cha (Root Container như `SeekNPC_Easy` chứa `Seek`, `StationaryAnchor`, `WanderCenterObj`, `PatrolPoints`).
+    - Khi Bật/Tắt theo độ khó sẽ bật/tắt toàn bộ cả cụm cha, đồng thời đối chiếu từ khóa với cả tên Object Cha lẫn tên Object Con.
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/ChapterSO.cs` (Modified)
+  - `Assets/Scripts/AI/SceneNPCManager.cs` (New & Refactored)
+  - `Assets/Scripts/AI/AdultGuardNPC.cs` (Modified)
+  - `Assets/Scripts/Items/SceneItemSpawner.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerStats.cs` (Modified)
+  - `Assets/Scripts/Utilities/GameSession.cs` (Modified)
+  - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
+  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified)
+  - `Assets/Scripts/Utilities/SettingsManager.cs` (Modified)
+  - `Assets/Scripts/UI/SettingsHUD.cs` (Modified)
 
 
 

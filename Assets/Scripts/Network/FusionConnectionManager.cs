@@ -203,6 +203,9 @@ public class FusionConnectionManager : MonoBehaviour, INetworkRunnerCallbacks
         {
             customProps["map"] = mapName;
         }
+        // Đồng bộ Độ khó của ván chơi cho tất cả người chơi trong phòng
+        customProps["diff"] = (int)GameSession.SelectedDifficulty;
+
         // Tạo seed ngẫu nhiên cho ván chơi để mọi client đồng bộ Item giống nhau nhưng mỗi ván chơi sinh đồ khác nhau
         customProps["seed"] = (int)(System.Environment.TickCount ^ System.Guid.NewGuid().GetHashCode());
 

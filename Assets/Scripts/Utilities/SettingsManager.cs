@@ -253,7 +253,7 @@ public class SettingsManager : MonoBehaviour
         Application.targetFrameRate = settingsData.targetFPS;
 
         // 3. Render Scale / Độ phân giải 3D (Tác dụng ngay lập tức trong cả Play Mode lẫn Build EXE)
-        float targetScale = Mathf.Clamp(settingsData.renderScale, 0.3f, 1.0f);
+        float targetScale = Mathf.Clamp(settingsData.renderScale, 0.2f, 1.0f);
 
         // Hỗ trợ URP Render Scale trực tiếp (hoạt động 100% trong Editor PlayMode & Exe)
         var urpAsset = QualitySettings.renderPipeline as UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset
@@ -400,7 +400,7 @@ public class SettingsManager : MonoBehaviour
 
     public void SetRenderScale(float scale, bool save = true)
     {
-        settingsData.renderScale = Mathf.Clamp(scale, 0.3f, 1.0f);
+        settingsData.renderScale = Mathf.Clamp(scale, 0.2f, 1.0f);
         ApplyGraphicsSettings();
         if (save) SaveSettings();
     }

@@ -117,7 +117,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 30
+  MaxDistance: 25
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -309,7 +309,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 30
+  MaxDistance: 25
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -503,7 +503,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 0
-  MaxDistance: 30
+  MaxDistance: 25
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -781,13 +781,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2416869585193837370}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.38}
+  m_LocalRotation: {x: 0.043619405, y: 0, z: 0, w: 0.9990483}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4105309062844659797}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 5, y: 0, z: 0}
 --- !u!108 &2712711954418434011
 Light:
   m_ObjectHideFlags: 0
@@ -799,7 +799,7 @@ Light:
   serializedVersion: 12
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 0.9019608, a: 1}
-  m_Intensity: 50
+  m_Intensity: 40
   m_Range: 14
   m_SpotAngle: 61.47487
   m_InnerSpotAngle: 36.2
@@ -1238,7 +1238,7 @@ MonoBehaviour:
   m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Fusion.Runtime.dll::Fusion.NetworkObject
-  SortKey: 3010866750
+  SortKey: 3599550875
   ObjectInterest: 1
   Flags: 131073
   NestedObjects: []
@@ -1280,10 +1280,10 @@ MonoBehaviour:
   animator: {fileID: 6995279246443750879}
   movementMode: 2
   walkSpeed: 2
-  runSpeed: 6.5
+  runSpeed: 7
   returnSpeed: 2
   visionRange: 14
-  raycastAngle: 30
+  raycastAngle: 25
   crouchVisionMultiplier: 0.5
   eyeHeight: 0.8
   flashlight: {fileID: 2712711954418434011}
@@ -1291,14 +1291,14 @@ MonoBehaviour:
   flashlightTransitionSpeed: 15
   canHear: 1
   canHearPlayer: 0
-  hearingRange: 30
+  hearingRange: 20
   loseSightGrace: 5
   catchDistance: 0.6
   catchOffset: {x: 0, y: 0.9, z: 0.2}
   catchCooldown: 1
   catchAnimTrigger: 
   catchFreezeDuration: 1.2
-  callAdultRadius: 5
+  callAdultRadius: 4
   adultNpcLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -1321,6 +1321,8 @@ MonoBehaviour:
   doorLookPauseRange: {x: 1, y: 2.5}
   alertSource: {fileID: 6566549106111684495}
   alertSound: {fileID: 8300000, guid: fb23a8a3e6282cd44b7d8ce5e64ab9cf, type: 3}
+  catchSound: {fileID: 0}
+  catchVolume: 1
   themeSource: {fileID: 3661197151696175762}
   chaseTheme: {fileID: 8300000, guid: f4b4888fd8b56ea44ad7155c6381cf51, type: 3}
   footstepSource: {fileID: 1457288082860529523}

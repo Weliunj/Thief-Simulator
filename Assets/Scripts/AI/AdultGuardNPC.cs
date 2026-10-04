@@ -92,6 +92,9 @@ public class AdultGuardNPC : NetworkBehaviour
     [Header("🔊 Audio")]
     public AudioSource alertSource;
     public AudioClip alertSound;
+    [Tooltip("Âm thanh phát ra khi tóm được Player (Kill / Catch Audio)")]
+    public AudioClip catchSound;
+    [Range(0, 1)] public float catchVolume = 1f;
     public AudioSource themeSource;
     public AudioClip chaseTheme;
     public AudioSource footstepSource;
@@ -563,6 +566,23 @@ public class AdultGuardNPC : NetworkBehaviour
     {
         if (alertSource != null && alertSound != null && !alertSource.isPlaying)
             alertSource.PlayOneShot(alertSound);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RpcPlayCatchSound()
+    {
+        PlayCatchSoundLocal();
+    }
+
+    void PlayCatchSoundLocal()
+    {
+        if (catchSound == null) return;
+        AudioSource src = alertSource != null ? alertSource : talkSource;
+        if (src != null)
+        {
+            float vol = catchVolume > 0.01f ? catchVolume : 1f;
+            src.PlayOneShot(catchSound, vol);
+        }
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
@@ -1061,14 +1081,19 @@ public class AdultGuardNPC : NetworkBehaviour
             }
         }
 
-        // ⭐ Phát Animation Catch (Đồng bộ qua Fusion RPC)
+        // ⭐ Phát Animation Catch & Âm thanh Catch / Kill (Đồng bộ qua Fusion RPC)
         if (Object != null && Object.IsValid)
         {
-            if (HasAuthority) RpcPlayCatchAnim();
+            if (HasAuthority)
+            {
+                RpcPlayCatchAnim();
+                if (catchSound != null) RpcPlayCatchSound();
+            }
         }
         else
         {
             PlayCatchAnimLocal();
+            PlayCatchSoundLocal();
         }
 
         PlayTalkSound();

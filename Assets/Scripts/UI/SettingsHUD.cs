@@ -75,10 +75,10 @@ public class SettingsHUD : MonoBehaviour
         // Tự động tìm Sliders nếu chưa gán
         AutoFindAudioSliders();
 
-        // Cấu hình Resolution Slider (30% -> 100%)
+        // Cấu hình Resolution Slider (20% -> 100%)
         if (resolutionSlider != null)
         {
-            resolutionSlider.minValue = 0.3f;
+            resolutionSlider.minValue = 0.2f;
             resolutionSlider.maxValue = 1.0f;
             resolutionSlider.wholeNumbers = false;
             resolutionSlider.onValueChanged.AddListener(OnResolutionSliderChanged);
@@ -311,7 +311,7 @@ public class SettingsHUD : MonoBehaviour
 
     private void OnResolutionSliderChanged(float val)
     {
-        currentPendingResolution = Mathf.Clamp(val, 0.3f, 1.0f);
+        currentPendingResolution = Mathf.Clamp(val, 0.2f, 1.0f);
         UpdateResolutionDisplay(currentPendingResolution);
     }
 

@@ -18,7 +18,7 @@ MonoBehaviour:
   gameplaySceneName: Chapter1
   description: A quiet suburban town filled with valuable loot.
   isUnlocked: 1
-  isCompleted: 0
+  isCompleted: 1
   maxTime: 2400
   spawnableItems:
   - {fileID: 9197449888406383979, guid: 865ac0370fb5a864f86379a672b20bf0, type: 3}
@@ -62,3 +62,24 @@ MonoBehaviour:
   - {fileID: 5804160894944458208, guid: b2d40167f760c5d42a632dc8d6533253, type: 3}
   - {fileID: 2593608392830849456, guid: d35f618d4b879784a8c4363bd47a58e5, type: 3}
   - {fileID: 6518138517567661367, guid: 03eca3a976811924285696c3da1af079, type: 3}
+  easyDifficulty:
+    targetPointPercentage: 0.5
+    itemSpawnRatio: 0.4
+    maxTime: 1200
+    activeNpcKeywords:
+    - Easy
+  normalDifficulty:
+    targetPointPercentage: 0.7
+    itemSpawnRatio: 0.6
+    maxTime: 2100
+    activeNpcKeywords:
+    - Normal
+    - Easy
+  hardDifficulty:
+    targetPointPercentage: 0.8
+    itemSpawnRatio: 0.8
+    maxTime: 3000
+    activeNpcKeywords:
+    - Normal
+    - Easy
+    - Hard

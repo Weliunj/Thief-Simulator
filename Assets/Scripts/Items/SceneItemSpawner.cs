@@ -142,6 +142,31 @@ public class SceneItemSpawner : MonoBehaviour
             return;
         }
 
+        // 0. Đồng bộ Độ khó từ Fusion Session Properties (nếu đang trong phòng Online)
+        if (FusionConnectionManager.Instance != null &&
+            FusionConnectionManager.Instance.IsInGameplaySession &&
+            FusionConnectionManager.Instance.currentRunner != null &&
+            FusionConnectionManager.Instance.currentRunner.SessionInfo != null)
+        {
+            var session = FusionConnectionManager.Instance.currentRunner.SessionInfo;
+            if (session.Properties != null && session.Properties.TryGetValue("diff", out var diffProp))
+            {
+                GameSession.SelectedDifficulty = (GameDifficulty)(int)diffProp;
+            }
+        }
+
+        // 0.1 Áp dụng thông số Độ khó (Target Percentage & Spawn Ratio) từ ChapterSO
+        if (chapterData != null)
+        {
+            var diffSetting = chapterData.GetDifficultySetting(GameSession.SelectedDifficulty);
+            if (diffSetting != null)
+            {
+                targetPointPercentage = diffSetting.targetPointPercentage;
+                spawnRatio = diffSetting.itemSpawnRatio;
+                Debug.Log($"<color=yellow>[SceneItemSpawner] Áp dụng Độ khó [{GameSession.SelectedDifficulty}] cho '{chapterData.chapterTitle}': Spawn Ratio={spawnRatio * 100:0}%, Target%={targetPointPercentage * 100:0}%</color>");
+            }
+        }
+
         // 1. Đồng bộ Random Seed:
         // - Khi chơi Online: Lấy seed từ Session Properties (do Host tạo khi lập phòng) để mọi người chơi trong phòng thấy đồ giống nhau 100%.
         // - Khi test Play Mode / Offline: Tạo seed ngẫu nhiên mới mỗi lần bấm Play.

@@ -208,13 +208,14 @@ public class PlayerStats : MonoBehaviour
     }
 
     /// <summary>
-    /// Nạp dữ liệu mục tiêu màn chơi từ ChapterSO
+    /// Nạp dữ liệu mục tiêu màn chơi từ ChapterSO dựa theo độ khó được chọn
     /// </summary>
     public void InitializeChapter(ChapterSO chapter)
     {
         if (chapter != null)
         {
-            maxTime = chapter.maxTime;
+            var diffSetting = chapter.GetDifficultySetting(GameSession.SelectedDifficulty);
+            maxTime = (diffSetting != null && diffSetting.maxTime > 0) ? diffSetting.maxTime : chapter.maxTime;
         }
 
         if (SceneItemSpawner.LastCalculatedTargetPoint > 0)

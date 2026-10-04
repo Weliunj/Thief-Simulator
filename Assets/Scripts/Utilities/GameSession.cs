@@ -1,13 +1,24 @@
-using UnityEngine;
+public enum GameDifficulty
+{
+    Easy = 0,
+    Normal = 1,
+    Hard = 2
+}
 
 /// <summary>
 /// Quản lý dữ liệu phiên chơi (Game Session) truyền xuyên suốt qua các Scene:
 /// - Lưu Chapter được chọn từ Menu: GameSession.SelectedChapter
+/// - Lưu Độ khó được chọn: GameSession.SelectedDifficulty
 /// - Lưu Chapter tiếp theo: GameSession.NextChapter
 /// - Lưu Nhân vật được chọn: GameSession.SelectedPlayer
 /// </summary>
 public static class GameSession
 {
+    /// <summary>
+    /// Độ khó được chọn cho ván chơi (Easy, Normal, Hard)
+    /// </summary>
+    public static GameDifficulty SelectedDifficulty { get; set; } = GameDifficulty.Normal;
+
     /// <summary>
     /// Chapter đang được chọn để chơi trong trận
     /// </summary>
