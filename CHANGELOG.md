@@ -2137,16 +2137,37 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - **Bổ sung Âm thanh Catch / Kill cho Adult Guard ([AdultGuardNPC.cs](file:///Assets/Scripts/AI/AdultGuardNPC.cs))**:
   - **Mở rộng phạm vi giảm Resolution / Render Scale ([SettingsManager.cs](file:///Assets/Scripts/Utilities/SettingsManager.cs), [SettingsHUD.cs](file:///Assets/Scripts/UI/SettingsHUD.cs))**:
     - Giới hạn Render Scale tối thiểu được tinh chỉnh ở mức `20% (0.2f)` đến `100% (1.0f)` để vừa tối ưu FPS tối đa cho máy yếu vừa đảm bảo UI và hình ảnh nhìn rõ.
-  - **Hỗ trợ Quản lý Cụm GameObject Cha ([SceneNPCManager.cs](file:///Assets/Scripts/AI/SceneNPCManager.cs))**:
-    - Tự động nhận diện và quản lý toàn bộ Cụm Cha (Root Container như `SeekNPC_Easy` chứa `Seek`, `StationaryAnchor`, `WanderCenterObj`, `PatrolPoints`).
-    - Khi Bật/Tắt theo độ khó sẽ bật/tắt toàn bộ cả cụm cha, đồng thời đối chiếu từ khóa với cả tên Object Cha lẫn tên Object Con.
+  - **Tính năng Tùy chọn Bật/Tắt NPC Đặc Biệt (Special NPCs Toggle Option)**:
+    - Bổ sung `GameSession.EnableSpecialNPCs` và trường `specialNpcsToggle` trong Sảnh Tạo Phòng `NetworkLobbyHUD.cs`.
+    - Đồng bộ qua Fusion `SessionProperties["spec_npc"]` cho mọi người chơi trong phòng.
+  - **Tối ưu hóa Material & Đổi Skin Player bằng MaterialPropertyBlock ([PlayerStats.cs](file:///Assets/Scripts/Player/PlayerStats.cs))**:
+    - Chuyển đổi `ApplySkinToModel` sang sử dụng `MaterialPropertyBlock` thay vì `rend.material.mainTexture`.
+    - Cho phép Player và NPC **dùng chung duy nhất 1 Material gốc**, mỗi Player/NPC đổi Texture riêng biệt mà không nhân bản Material, đồng thời đồng bộ qua Photon Fusion (`NetworkPlayerSync`).
+  - **Hệ Thống Chọn Skin/Texture Nhân Vật & Đổi Vị Trí Model Khi Mở Bảng Chọn ([PlayerSO.cs](file:///Assets/Scripts/Player/PlayerSO.cs), [CharacterSelectionHUD.cs](file:///Assets/Scripts/UI/CharacterSelectionHUD.cs), [HomeScreen.cs](file:///Assets/Scripts/UI/HomeScreen.cs), [NetworkPlayerSync.cs](file:///Assets/Scripts/Network/NetworkPlayerSync.cs), [UserGameProfile.cs](file:///Assets/Scripts/Network/UserGameProfile.cs), [FirebaseDataService.cs](file:///Assets/Scripts/Network/FirebaseDataService.cs))**:
+    - **Điều hướng Skin bằng 2 nút mũi tên Lùi / Tiến (`skinPrevBtn`, `skinNextBtn`)**: Không cần dùng ảnh slot icon phụ, bấm nút lùi hoặc tiến sẽ duyệt qua danh sách `skinTextures` của `PlayerSO` đang chọn và hiển thị text số skin (`Skin 1/3`).
+    - **Xem trước Skin trong thời gian thực (Realtime Preview)**: Cập nhật ngay Texture mới lên 3D Model bằng `MaterialPropertyBlock` khi bấm nút chuyển skin.
+    - **Chuyển đổi Vị trí & Góc xoay Model 3D (`homeModelTransform` vs `characterSelectModelTransform`)**: Khi mở bảng chọn nhân vật `CharacterSelectPanel`, Model 3D ngoài sảnh tự động dịch chuyển và xoay đến vị trí của bảng chọn (`characterSelectModelTransform`) thay vì bị tắt ẩn; khi đóng bảng chọn, Model quay trở lại vị trí sảnh Home ban đầu (`homeModelTransform`).
+    - **Lưu trữ Ngoại hình Bền vững (Persistence)**: Lưu `selectedTextureIndex`, `selectedCharacterIndex`, `isMale` vào JSON (`character_save.json`), `PlayerPrefs` và đồng bộ Firebase Realtime Database. Khi tắt game mở lại, model vẫn giữ đúng Model + Texture Skin đã chọn.
+    - **Đồng bộ Mạng Photon Fusion (`NetworkTextureIndex`)**: Đồng bộ `[Networked]` biến `NetworkTextureIndex` trong `NetworkPlayerSync.cs` giúp hiển thị chính xác Skin của từng người chơi cho tất cả các máy khác trong phòng.
+  - **Tự động đóng Bảng Minigame Bẻ Khóa khi Bị Bắt / Tử Vong ([PlayerDeathHandler.cs](file:///Assets/Scripts/Player/PlayerDeathHandler.cs), [LockpickMinigame.cs](file:///Assets/Scripts/UI/LockpickMinigame.cs))**:
+    - Khi Player đang tương tác bẻ khóa ổ khóa (Door/Container) mà bị NPC tóm hoặc hết giờ, `ExecuteDeath` lập tức kích hoạt `UI_Manager.CancelLockpicking()` và `LockpickMinigame.CloseMinigame()` để đóng toàn bộ UI bẻ khóa, reset lại trạng thái cửa và trả góc nhìn quan sát tử vong mượt mà.
+    - Thêm kiểm tra phòng ngừa trong `LockpickMinigame.Update()` để tự động tắt bảng nếu phát hiện trạng thái `isDeadProcessed`.
 - **Danh sách file thay đổi**:
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/UI/LockpickMinigame.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerSO.cs` (Modified)
+  - `Assets/Scripts/UI/CharacterSelectionHUD.cs` (Modified)
+  - `Assets/Scripts/UI/HomeScreen.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerStats.cs` (Modified)
+  - `Assets/Scripts/Utilities/GameSession.cs` (Modified)
+  - `Assets/Scripts/Network/UserGameProfile.cs` (Modified)
+  - `Assets/Scripts/Network/FirebaseDataService.cs` (Modified)
+  - `Assets/Scripts/Network/NetworkPlayerSync.cs` (Modified)
   - `Assets/Scripts/UI/ChapterSO.cs` (Modified)
   - `Assets/Scripts/AI/SceneNPCManager.cs` (New & Refactored)
   - `Assets/Scripts/AI/AdultGuardNPC.cs` (Modified)
+  - `Assets/Scripts/AI/KidRunnerNPC.cs` (Modified)
   - `Assets/Scripts/Items/SceneItemSpawner.cs` (Modified)
-  - `Assets/Scripts/Player/PlayerStats.cs` (Modified)
-  - `Assets/Scripts/Utilities/GameSession.cs` (Modified)
   - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
   - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified)
   - `Assets/Scripts/Utilities/SettingsManager.cs` (Modified)

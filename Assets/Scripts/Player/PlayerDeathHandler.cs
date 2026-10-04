@@ -244,11 +244,25 @@ public class PlayerDeathHandler : MonoBehaviour
             playerController.currentLadder = null;
         }
 
-        // 3. Hủy sạch toàn bộ hiệu ứng Buff (Speed, Jump, NightVision...) và dọn dẹp UI khi chết
+        // 3. Hủy sạch toàn bộ hiệu ứng Buff (Speed, Jump, NightVision...), đóng minigame bẻ khóa (Lockpick) và dọn dẹp UI khi chết
         PlayerBuffManager buffManager = GetComponent<PlayerBuffManager>();
         if (buffManager != null)
         {
             buffManager.ClearAllBuffsOnDeath();
+        }
+
+        if (isLocal)
+        {
+            UI_Manager ui = FindFirstObjectByType<UI_Manager>(FindObjectsInactive.Include);
+            if (ui != null)
+            {
+                ui.CancelLockpicking();
+            }
+            else
+            {
+                LockpickMinigame minigame = FindFirstObjectByType<LockpickMinigame>(FindObjectsInactive.Include);
+                if (minigame != null) minigame.CloseMinigame();
+            }
         }
 
         // 4. Thả toàn bộ vật phẩm đang cầm xuống đất kèm lực đẩy vật lý (Chỉ Local Player thực hiện để tránh lặp RPC)

@@ -1387,8 +1387,8 @@ MonoBehaviour:
   - {fileID: 0}
   patrolRestTimeRange: {x: 2, y: 4}
   patrolLookAngle: 30
-  wanderCenterObject: {fileID: 840468002752905888}
-  wanderRadius: 50
+  wanderCenterObject: {fileID: 3530297002599864470}
+  wanderRadius: 45
   wanderRestTimeRange: {x: 2, y: 4}
   wanderLookAngle: 30
   wanderLookChance: 0.3
@@ -1411,10 +1411,41 @@ MonoBehaviour:
   talkClips: []
   talkVolume: 0.8
   talkCooldownRange: {x: 2.5, y: 5}
+  randomMeshes:
+  - {fileID: 4300000, guid: 1c19609be8f7cfc45bfba5d1fa696f05, type: 2}
+  - {fileID: 4300000, guid: 31fa6743ae2f1c34f873937824c4725f, type: 2}
+  - {fileID: 4300000, guid: 4ae2a53cbb1c4984fa79681d2d5cf215, type: 2}
+  - {fileID: 4300000, guid: 1bb78ba630b090742afddbf9dd300411, type: 2}
+  - {fileID: 4300000, guid: 7a0224eb44d835540856d3661c24efce, type: 2}
+  - {fileID: 4300000, guid: 8668ef7ccc19d1542b2c20c87a986105, type: 2}
+  - {fileID: 4300000, guid: 2f61417073545d64d95684bfd769baa1, type: 2}
+  - {fileID: 4300000, guid: 2bb6ae854329f6546b214b7b94b89f8c, type: 2}
+  - {fileID: 4300000, guid: 56123ba3e3c2827418106d7f722af185, type: 2}
+  - {fileID: 4300000, guid: ab82583a73fbab045b54cbc29635a6ab, type: 2}
+  - {fileID: 4300000, guid: aa64729550547044fafadfc8674ecf7c, type: 2}
+  - {fileID: 4300000, guid: aeb44ad8a7df0f944a380395f4bf8e5c, type: 2}
+  - {fileID: 4300000, guid: bf560778e8c9e3b40ba95d0cc63a3665, type: 2}
+  - {fileID: 4300000, guid: 039076ca34355b24ab73eec2514f950b, type: 2}
+  - {fileID: 4300000, guid: 7c30964f9889f5a4aba308c7c9c97082, type: 2}
+  - {fileID: 4300000, guid: b2c78190d09fe4b41a37a36872fc2985, type: 2}
+  - {fileID: 4300000, guid: bf66b274eb5a91e459dfe748ac0b131b, type: 2}
+  - {fileID: 4300000, guid: e56a878c59bc07743b5a23625912f489, type: 2}
+  randomSkins:
+  - {fileID: 2800000, guid: 6e5fe2e8aa76b804d8454a6b80be6830, type: 3}
+  - {fileID: 2800000, guid: 69a7e3dd8935eda44ac6bc53481c832c, type: 3}
+  - {fileID: 2800000, guid: 22e7fb9099c29e84091fb2ddc04f20da, type: 3}
+  - {fileID: 2800000, guid: 7370a890bdcb4884c95a7c3daeb52f55, type: 3}
+  - {fileID: 2800000, guid: 617148ea5cc07914b929af2dbb7f0d4c, type: 3}
+  - {fileID: 2800000, guid: 2db5d9445d5e4c54e996423ba1e3b480, type: 3}
+  - {fileID: 2800000, guid: 85ad6c94ce2dd5c4faa00487ac9c9e74, type: 3}
+  - {fileID: 2800000, guid: 8ff0119964e079b44a42b7a0b9a89800, type: 3}
+  - {fileID: 2800000, guid: da92eb1c9e114c247a97f3209eec16fc, type: 3}
   debugLog: 0
   _NetworkIsPanicking:
     _value: 0
   _NetworkSpeed: 0
+  _NetworkMeshIndex: -1
+  _NetworkSkinIndex: -1
   _state: 0
 --- !u!1 &6279400733027374247
 GameObject:

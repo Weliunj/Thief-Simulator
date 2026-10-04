@@ -117,7 +117,9 @@ public class PlayerStats : MonoBehaviour
             ApplyMeshToModel(gameObject, targetMesh);
         }
 
-        ApplySkinToModel(gameObject, data.characterMaterial, data.characterTexture);
+        int textureIdx = PlayerPrefs.GetInt("SelectedTextureIndex", GameSession.SelectedTextureIndex);
+        Texture2D chosenTexture = data.GetSkinTexture(textureIdx);
+        ApplySkinToModel(gameObject, data.characterMaterial, chosenTexture);
     }
 
     /// <summary>
@@ -127,82 +129,101 @@ public class PlayerStats : MonoBehaviour
     {
         if (modelRoot == null || targetMesh == null) return;
 
-        // Ưu tiên 1: Tìm đối tượng con tên "Base" (tránh thay nhầm Mesh của bục đứng / chỗ đứng)
-        Transform baseChild = null;
-        foreach (Transform t in modelRoot.GetComponentsInChildren<Transform>(true))
-        {
-            if (string.Equals(t.name, "Base", System.StringComparison.OrdinalIgnoreCase))
-            {
-                baseChild = t;
-                break;
-            }
-        }
-
-        GameObject targetObj = baseChild != null ? baseChild.gameObject : modelRoot;
-
-        SkinnedMeshRenderer smr = targetObj.GetComponentInChildren<SkinnedMeshRenderer>(true) ?? modelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
+        // Ưu tiên 1: Áp dụng trực tiếp lên SkinnedMeshRenderer của nhân vật (thân người 3D)
+        SkinnedMeshRenderer smr = modelRoot.GetComponentInChildren<SkinnedMeshRenderer>(true);
         if (smr != null)
         {
             smr.sharedMesh = targetMesh;
             return;
         }
 
-        MeshFilter mf = targetObj.GetComponentInChildren<MeshFilter>(true) ?? modelRoot.GetComponentInChildren<MeshFilter>(true);
-        if (mf != null)
+        // Ưu tiên 2: Duyệt MeshFilter nhưng bỏ qua các tấm đứng / bục đứng
+        MeshFilter[] mfs = modelRoot.GetComponentsInChildren<MeshFilter>(true);
+        foreach (var mf in mfs)
         {
+            if (mf == null) continue;
+            string objName = mf.gameObject.name.ToLower();
+            if (objName.Contains("stand") || objName.Contains("pedestal") || objName.Contains("platform") ||
+                objName.Contains("podium") || objName.Contains("ground") || objName.Contains("floor") ||
+                objName.Contains("plate") || objName.Contains("disc") || objName.Contains("circle") ||
+                objName.Contains("tamdung") || objName.Contains("buc"))
+            {
+                continue;
+            }
+
             mf.sharedMesh = targetMesh;
+            break;
         }
     }
 
     /// <summary>
-    /// Tiện ích tĩnh: Áp dụng Material / Texture lên Dummy Preview Model (tự động ưu tiên object con tên 'Base' để không đổi màu chỗ đứng)
+    /// Tiện ích tĩnh: Áp dụng Material / Texture lên Dummy Preview Model (tự động ưu tiên SkinnedMeshRenderer của nhân vật, bỏ qua bục đứng / tấm đứng)
     /// </summary>
     public static void ApplySkinToModel(GameObject modelRoot, Material characterMaterial, Texture2D characterTexture = null)
     {
         if (modelRoot == null) return;
         if (characterMaterial == null && characterTexture == null) return;
 
-        // Ưu tiên 1: Tìm đối tượng con tên "Base" (tránh đổi Material của bục đứng / chỗ đứng)
-        Transform baseChild = null;
-        foreach (Transform t in modelRoot.GetComponentsInChildren<Transform>(true))
+        // Ưu tiên 1: Đổi trực tiếp trên tất cả SkinnedMeshRenderer (đây là thân/trang phục của nhân vật 3D)
+        SkinnedMeshRenderer[] smrs = modelRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true);
+        if (smrs != null && smrs.Length > 0)
         {
-            if (string.Equals(t.name, "Base", System.StringComparison.OrdinalIgnoreCase))
+            foreach (var smr in smrs)
             {
-                baseChild = t;
-                break;
+                if (smr == null) continue;
+                if (smr.GetComponentInParent<Item>() != null) continue;
+                if (smr.GetComponentInParent<FlashlightController>() != null) continue;
+
+                if (characterMaterial != null && smr.sharedMaterial != characterMaterial)
+                {
+                    smr.material = characterMaterial;
+                }
+
+                if (characterTexture != null)
+                {
+                    MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+                    smr.GetPropertyBlock(propBlock);
+                    propBlock.SetTexture(Shader.PropertyToID("_BaseMap"), characterTexture);
+                    propBlock.SetTexture(Shader.PropertyToID("_MainTex"), characterTexture);
+                    smr.SetPropertyBlock(propBlock);
+                }
             }
+            return;
         }
 
-        GameObject targetObj = baseChild != null ? baseChild.gameObject : modelRoot;
-
-        Renderer[] renderers = targetObj.GetComponentsInChildren<Renderer>(true);
+        // Ưu tiên 2: Nếu không có SkinnedMeshRenderer, duyệt MeshRenderer nhưng bỏ qua các tấm đứng / bục đứng (Pedestal, Stand, Platform, Base, Ground, Floor)
+        Renderer[] renderers = modelRoot.GetComponentsInChildren<Renderer>(true);
         foreach (var rend in renderers)
         {
             if (rend == null) continue;
 
-            // Bỏ qua nếu là Item đang cầm trong Hotbar, Đèn pin, Particle, hoặc UI
+            // Bỏ qua Item đang cầm, Đèn pin, Particle, Trail, Line
             if (rend.GetComponentInParent<Item>() != null) continue;
             if (rend.GetComponentInParent<FlashlightController>() != null) continue;
             if (rend is ParticleSystemRenderer || rend is TrailRenderer || rend is LineRenderer) continue;
 
-            if (characterMaterial != null)
+            // Bỏ qua bục đứng, tấm đứng, sàn sảnh
+            string rName = rend.gameObject.name.ToLower();
+            if (rName.Contains("stand") || rName.Contains("pedestal") || rName.Contains("platform") ||
+                rName.Contains("podium") || rName.Contains("ground") || rName.Contains("floor") ||
+                rName.Contains("plate") || rName.Contains("disc") || rName.Contains("circle") ||
+                rName.Contains("tamdung") || rName.Contains("buc"))
+            {
+                continue;
+            }
+
+            if (characterMaterial != null && rend.sharedMaterial != characterMaterial)
             {
                 rend.material = characterMaterial;
             }
-            else if (characterTexture != null)
+
+            if (characterTexture != null)
             {
-                if (rend.material != null)
-                {
-                    rend.material.mainTexture = characterTexture;
-                    if (rend.material.HasProperty("_BaseMap"))
-                    {
-                        rend.material.SetTexture("_BaseMap", characterTexture);
-                    }
-                    if (rend.material.HasProperty("_MainTex"))
-                    {
-                        rend.material.SetTexture("_MainTex", characterTexture);
-                    }
-                }
+                MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+                rend.GetPropertyBlock(propBlock);
+                propBlock.SetTexture(Shader.PropertyToID("_BaseMap"), characterTexture);
+                propBlock.SetTexture(Shader.PropertyToID("_MainTex"), characterTexture);
+                rend.SetPropertyBlock(propBlock);
             }
         }
     }

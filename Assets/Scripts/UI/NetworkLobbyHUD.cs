@@ -36,6 +36,8 @@ public class NetworkLobbyHUD : MonoBehaviour
     public TMP_InputField createRoomNameInput;
     public TMP_Dropdown maxPlayersDropdown;
     public TMP_Dropdown difficultyDropdown; // Dropdown chọn Độ khó: 0 = Easy, 1 = Normal, 2 = Hard
+    [Tooltip("Toggle cho phép kích hoạt thêm các NPC đặc biệt (Special NPCs)")]
+    public Toggle specialNpcsToggle;
     public TMP_Dropdown mapSelectDropdown; // Tùy chọn fallback
     public Button openMapSelectButton;     // Nút mở panel chọn Chapter
     public Image createRoomMapPreviewImage; // Ảnh preview Chapter được chọn
@@ -627,6 +629,11 @@ public class NetworkLobbyHUD : MonoBehaviour
         if (difficultyDropdown != null)
         {
             GameSession.SelectedDifficulty = (GameDifficulty)Mathf.Clamp(difficultyDropdown.value, 0, 2);
+        }
+
+        if (specialNpcsToggle != null)
+        {
+            GameSession.EnableSpecialNPCs = specialNpcsToggle.isOn;
         }
 
         if (chapterList != null && mapIndex >= 0 && mapIndex < chapterList.Count)

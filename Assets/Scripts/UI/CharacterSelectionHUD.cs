@@ -13,6 +13,7 @@ public class CharacterSaveData
 {
     public string selectedCharacterId = "char_01";
     public int selectedCharacterIndex = 0;
+    public int selectedTextureIndex = 0;
     public bool isMale = true;
     public List<string> unlockedCharacterIds = new List<string>() { "char_01" };
 }
@@ -22,9 +23,10 @@ public class CharacterSaveData
 /// - Quản lý InfoPanel (Name, Desc, MoveSpeed, RunSpeed, Stamina, CarryWeight kèm Slider & Value).
 /// - Quản lý Tab Giới Tính (MaleBtn, FemaleBtn) đổi màu nút và chuyển đổi ContentMale / ContentFemale.
 /// - Quản lý các Slot nhân vật trong ScrollView (đổi màu Vàng khi chọn, cập nhật InfoPanel).
-/// - Lưu toàn bộ nhân vật đã mở khóa, nhân vật đang chọn, giới tính vào JSON (character_save.json).
+/// - Điều hướng Skin / Texture bằng 2 nút mũi tên (Lùi / Tiến) không cần ảnh icon.
+/// - Chuyển đổi vị trí Model 3D giữa sảnh chính (Home) và khi mở bảng chọn nhân vật (Character Select).
+/// - Lưu toàn bộ nhân vật đã mở khóa, nhân vật đang chọn, texture skin, giới tính vào JSON (character_save.json).
 /// - Tự động tải và gán trang phục cho 3D Model ngoài sảnh ngay khi vào game.
-/// - Tùy chọn ẩn model trong lúc mở bảng chọn để phục vụ sảnh Online sau này.
 /// </summary>
 public class CharacterSelectionHUD : MonoBehaviour
 {
@@ -41,6 +43,17 @@ public class CharacterSelectionHUD : MonoBehaviour
     public GameObject lobbyPlayerModel;
     [Tooltip("SkinnedMeshRenderer của model ngoài sảnh để đổi Mesh/Skin (nếu có)")]
     public SkinnedMeshRenderer lobbySkinnedMesh;
+
+    [Header("📍 3D Model Positions & Transforms")]
+    [Tooltip("Vị trí & Góc xoay của Model khi ở màn hình Home (để trống sẽ tự lưu vị trí ban đầu của Model)")]
+    public Transform homeModelTransform;
+    [Tooltip("Vị trí & Góc xoay của Model khi mở Bảng Chọn Nhân Vật Character Selection")]
+    public Transform characterSelectModelTransform;
+
+    private Vector3 defaultHomePosition;
+    private Quaternion defaultHomeRotation;
+    private Vector3 defaultHomeScale = Vector3.one;
+    private bool hasSavedDefaultHomeTransform = false;
 
     [Header("🔊 Audio / SFX Settings")]
     [Tooltip("AudioSource phát tiếng click chung cho toàn bộ nút và slot (tự động kết nối SFX Group)")]
@@ -76,7 +89,12 @@ public class CharacterSelectionHUD : MonoBehaviour
     public Button femaleBtn;
     public Image femaleBtnChildImage; // Image con của FemaleBtn đổi màu
 
-    public Button skinBtn;
+    [Header("🎨 Skin Selection (2 Nút Mũi Tên Lùi / Tiến)")]
+    public Button skinPrevBtn;
+    public Button skinNextBtn;
+    public TextMeshProUGUI skinIndexText;
+    public Button skinBtn; // Nút tổng hợp hoặc nút con nếu có
+
     public Button saveBtn;
     public TextMeshProUGUI saveBtnText;
     public Button closeBtn;
@@ -100,6 +118,7 @@ public class CharacterSelectionHUD : MonoBehaviour
     [Header("💾 Runtime State")]
     [SerializeField] private bool isMaleSelected = true;
     [SerializeField] private int selectedCharacterIndex = 0;
+    [SerializeField] private int selectedTextureIndex = 0;
 
     [Header("🗂️ Character Slots (Mỗi slot chứa Mesh & Avatar)")]
     public List<CharacterSlotItem> slotItems = new List<CharacterSlotItem>();
@@ -132,6 +151,7 @@ public class CharacterSelectionHUD : MonoBehaviour
     }
 
     private const string PREF_KEY_CHAR_INDEX = "SelectedCharIndex";
+    private const string PREF_KEY_TEXTURE_INDEX = "SelectedTextureIndex";
     private const string PREF_KEY_GENDER = "SelectedGender"; // 0 = Male, 1 = Female
 
     private void Awake()
@@ -197,14 +217,13 @@ public class CharacterSelectionHUD : MonoBehaviour
         LoadSavedSelection();
         SetupButtonListeners();
         RefreshUI();
+        ApplyLobbyModelVisuals();
     }
 
     private void OnDisable()
     {
         RemoveButtonListeners();
-
-        // Không tự động hiện lại model ở đây - trách nhiệm thuộc về HomeScreen (caller)
-        // Chỉ ẩn model để tránh phantom model khi panel bị disable
+        ApplyLobbyModelVisuals();
     }
 
     /// <summary>
@@ -239,7 +258,17 @@ public class CharacterSelectionHUD : MonoBehaviour
     /// </summary>
     public void FindLobbyModelInScene()
     {
-        if (lobbyPlayerModel != null) return;
+        if (lobbyPlayerModel != null)
+        {
+            if (!hasSavedDefaultHomeTransform)
+            {
+                defaultHomePosition = lobbyPlayerModel.transform.position;
+                defaultHomeRotation = lobbyPlayerModel.transform.rotation;
+                defaultHomeScale = lobbyPlayerModel.transform.localScale;
+                hasSavedDefaultHomeTransform = true;
+            }
+            return;
+        }
 
         var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
         if (activeScene.name != "HomeMenu" || !activeScene.isLoaded) return;
@@ -251,6 +280,13 @@ public class CharacterSelectionHUD : MonoBehaviour
             if (lobbySkinnedMesh == null && lobbyPlayerModel != null)
             {
                 lobbySkinnedMesh = lobbyPlayerModel.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            }
+            if (!hasSavedDefaultHomeTransform && lobbyPlayerModel != null)
+            {
+                defaultHomePosition = lobbyPlayerModel.transform.position;
+                defaultHomeRotation = lobbyPlayerModel.transform.rotation;
+                defaultHomeScale = lobbyPlayerModel.transform.localScale;
+                hasSavedDefaultHomeTransform = true;
             }
             return;
         }
@@ -281,14 +317,25 @@ public class CharacterSelectionHUD : MonoBehaviour
             if (lobbyPlayerModel != null) break;
         }
 
-        if (lobbyPlayerModel != null && lobbySkinnedMesh == null)
+        if (lobbyPlayerModel != null)
         {
-            lobbySkinnedMesh = lobbyPlayerModel.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            if (lobbySkinnedMesh == null)
+            {
+                lobbySkinnedMesh = lobbyPlayerModel.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            }
+            if (!hasSavedDefaultHomeTransform)
+            {
+                defaultHomePosition = lobbyPlayerModel.transform.position;
+                defaultHomeRotation = lobbyPlayerModel.transform.rotation;
+                defaultHomeScale = lobbyPlayerModel.transform.localScale;
+                hasSavedDefaultHomeTransform = true;
+            }
         }
     }
 
     /// <summary>
-    /// Áp dụng ngoại hình nhân vật đã chọn (Mesh, Skin/Material) lên 3D Model ngoài sảnh HomeMenu
+    /// Áp dụng ngoại hình nhân vật đã chọn (Mesh, Skin/Texture/Material) lên 3D Model ngoài sảnh HomeMenu,
+    /// đồng thời hoán đổi Transform giữa vị trí ngoài Home và vị trí khi mở Character Selection.
     /// </summary>
     public void ApplyLobbyModelVisuals()
     {
@@ -302,75 +349,72 @@ public class CharacterSelectionHUD : MonoBehaviour
         FindLobbyModelInScene();
         if (lobbyPlayerModel == null) return;
 
-        // Chỉ hiển thị Model nếu đã đăng nhập và đang ở màn hình chính MainMenuPanel (không mở các modal khác)
-        bool shouldShow = true;
-
-        if (FirebaseAuthService.Instance == null || !FirebaseAuthService.Instance.IsLoggedIn)
-        {
-            shouldShow = false;
-        }
-
-        AuthHUD auth = FindFirstObjectByType<AuthHUD>(FindObjectsInactive.Include);
-        if (auth != null && auth.gameObject.activeInHierarchy && (auth.authRootPanel == null || auth.authRootPanel.activeInHierarchy))
-        {
-            shouldShow = false;
-        }
+        bool isPanelOpen = gameObject.activeInHierarchy;
+        bool isOtherModalOpen = false;
 
         HomeScreen home = FindFirstObjectByType<HomeScreen>(FindObjectsInactive.Include);
         if (home != null)
         {
-            if ((home.characterSelectPanel != null && home.characterSelectPanel.activeSelf) ||
-                (home.multiplayerLobbyPanel != null && home.multiplayerLobbyPanel.activeSelf) ||
+            if ((home.multiplayerLobbyPanel != null && home.multiplayerLobbyPanel.activeSelf) ||
                 (home.settingPanel != null && home.settingPanel.activeSelf) ||
                 (home.infoPanel != null && home.infoPanel.activeSelf) ||
                 (home.authPanel != null && home.authPanel.activeSelf))
             {
-                shouldShow = false;
+                isOtherModalOpen = true;
             }
-        }
-        else if (gameObject.activeInHierarchy)
-        {
-            shouldShow = false;
         }
 
         ChapterSelectManager chMgr = FindFirstObjectByType<ChapterSelectManager>(FindObjectsInactive.Include);
         if (chMgr != null && ((chMgr.chapterSelectPanel != null && chMgr.chapterSelectPanel.activeSelf) || chMgr.gameObject.activeInHierarchy))
         {
-            shouldShow = false;
+            isOtherModalOpen = true;
         }
 
+        AuthHUD auth = FindFirstObjectByType<AuthHUD>(FindObjectsInactive.Include);
+        if (auth != null && auth.gameObject.activeInHierarchy && (auth.authRootPanel == null || auth.authRootPanel.activeInHierarchy))
+        {
+            isOtherModalOpen = true;
+        }
+
+        bool shouldShow = !isOtherModalOpen;
         lobbyPlayerModel.SetActive(shouldShow);
 
-        // Áp dụng Mesh & Skin lên Model ngoài sảnh theo PlayerSO đã chọn
+        if (!shouldShow) return;
+
+        // Hoán đổi Transform (Vị trí & Góc xoay) theo trạng thái mở bảng Character Select hoặc ngoài sảnh Home
+        if (isPanelOpen && characterSelectModelTransform != null)
+        {
+            lobbyPlayerModel.transform.position = characterSelectModelTransform.position;
+            lobbyPlayerModel.transform.rotation = characterSelectModelTransform.rotation;
+            lobbyPlayerModel.transform.localScale = characterSelectModelTransform.localScale;
+        }
+        else if (!isPanelOpen)
+        {
+            if (homeModelTransform != null)
+            {
+                lobbyPlayerModel.transform.position = homeModelTransform.position;
+                lobbyPlayerModel.transform.rotation = homeModelTransform.rotation;
+                lobbyPlayerModel.transform.localScale = homeModelTransform.localScale;
+            }
+            else if (hasSavedDefaultHomeTransform)
+            {
+                lobbyPlayerModel.transform.position = defaultHomePosition;
+                lobbyPlayerModel.transform.rotation = defaultHomeRotation;
+                lobbyPlayerModel.transform.localScale = defaultHomeScale;
+            }
+        }
+
+        // Áp dụng Mesh & Skin lên Model ngoài sảnh theo PlayerSO và Texture đã chọn
         if (characterList != null && characterList.Count > selectedCharacterIndex && selectedCharacterIndex >= 0)
         {
             PlayerSO so = characterList[selectedCharacterIndex];
             if (so != null)
             {
-                if (lobbySkinnedMesh == null)
-                {
-                    lobbySkinnedMesh = lobbyPlayerModel.GetComponentInChildren<SkinnedMeshRenderer>(true);
-                }
+                Texture2D chosenTexture = so.GetSkinTexture(selectedTextureIndex);
 
-                if (lobbySkinnedMesh != null)
-                {
-                    Mesh mesh = so.GetMesh(isMaleSelected);
-                    if (mesh != null) lobbySkinnedMesh.sharedMesh = mesh;
-
-                    if (so.characterMaterial != null)
-                    {
-                        lobbySkinnedMesh.material = so.characterMaterial;
-                    }
-                    else if (so.characterTexture != null && lobbySkinnedMesh.material != null)
-                    {
-                        lobbySkinnedMesh.material.mainTexture = so.characterTexture;
-                    }
-                }
-                else
-                {
-                    PlayerStats.ApplyMeshToModel(lobbyPlayerModel, so.GetMesh(isMaleSelected));
-                    PlayerStats.ApplySkinToModel(lobbyPlayerModel, so.characterMaterial, so.characterTexture);
-                }
+                Mesh mesh = so.GetMesh(isMaleSelected);
+                PlayerStats.ApplyMeshToModel(lobbyPlayerModel, mesh);
+                PlayerStats.ApplySkinToModel(lobbyPlayerModel, so.characterMaterial, chosenTexture);
             }
         }
     }
@@ -381,6 +425,18 @@ public class CharacterSelectionHUD : MonoBehaviour
     [ContextMenu("Auto Bind Hierarchy")]
     public void AutoBindHierarchy()
     {
+        // 0. Dò tìm Model Transforms nếu có trong scene
+        if (homeModelTransform == null)
+        {
+            var homePos = GameObject.Find("HomeModelTransform") ?? GameObject.Find("Home_ModelPos") ?? GameObject.Find("HomePos");
+            if (homePos != null) homeModelTransform = homePos.transform;
+        }
+        if (characterSelectModelTransform == null)
+        {
+            var charPos = GameObject.Find("CharacterModelTransform") ?? GameObject.Find("Character_ModelPos") ?? GameObject.Find("CharSelectPos");
+            if (charPos != null) characterSelectModelTransform = charPos.transform;
+        }
+
         // 1. Dò tìm InfoPanel
         Transform infoPanel = transform.Find("InfoPanel");
         if (infoPanel != null)
@@ -435,6 +491,22 @@ public class CharacterSelectionHUD : MonoBehaviour
                 Transform btnChild = femaleBtn.transform.Find("Button");
                 if (btnChild != null) femaleBtnChildImage = btnChild.GetComponent<Image>();
                 else femaleBtnChildImage = femaleBtn.GetComponent<Image>();
+            }
+
+            if (skinPrevBtn == null)
+            {
+                Transform prevT = bottomPanel.Find("SkinPrevBtn") ?? bottomPanel.Find("PrevSkinBtn") ?? bottomPanel.Find("SkinLeftBtn") ?? bottomPanel.Find("LeftArrowButton");
+                if (prevT != null) skinPrevBtn = prevT.GetComponent<Button>();
+            }
+            if (skinNextBtn == null)
+            {
+                Transform nextT = bottomPanel.Find("SkinNextBtn") ?? bottomPanel.Find("NextSkinBtn") ?? bottomPanel.Find("SkinRightBtn") ?? bottomPanel.Find("RightArrowButton");
+                if (nextT != null) skinNextBtn = nextT.GetComponent<Button>();
+            }
+            if (skinIndexText == null)
+            {
+                Transform txtT = bottomPanel.Find("SkinIndexText") ?? bottomPanel.Find("SkinText") ?? bottomPanel.Find("SkinNumText");
+                if (txtT != null) skinIndexText = txtT.GetComponent<TextMeshProUGUI>();
             }
 
             if (skinBtn == null) skinBtn = bottomPanel.Find("SkinBtn")?.GetComponent<Button>();
@@ -594,6 +666,9 @@ public class CharacterSelectionHUD : MonoBehaviour
 
         if (maleBtn != null) maleBtn.onClick.AddListener(OnMaleTabClicked);
         if (femaleBtn != null) femaleBtn.onClick.AddListener(OnFemaleTabClicked);
+        if (skinPrevBtn != null) skinPrevBtn.onClick.AddListener(OnSkinPrevClicked);
+        if (skinNextBtn != null) skinNextBtn.onClick.AddListener(OnSkinNextClicked);
+        if (skinBtn != null) skinBtn.onClick.AddListener(OnSkinNextClicked);
         if (saveBtn != null) saveBtn.onClick.AddListener(OnSaveButtonClicked);
         if (closeBtn != null) closeBtn.onClick.AddListener(OnCloseButtonClicked);
 
@@ -624,6 +699,9 @@ public class CharacterSelectionHUD : MonoBehaviour
     {
         if (maleBtn != null) maleBtn.onClick.RemoveListener(OnMaleTabClicked);
         if (femaleBtn != null) femaleBtn.onClick.RemoveListener(OnFemaleTabClicked);
+        if (skinPrevBtn != null) skinPrevBtn.onClick.RemoveListener(OnSkinPrevClicked);
+        if (skinNextBtn != null) skinNextBtn.onClick.RemoveListener(OnSkinNextClicked);
+        if (skinBtn != null) skinBtn.onClick.RemoveListener(OnSkinNextClicked);
         if (saveBtn != null) saveBtn.onClick.RemoveListener(OnSaveButtonClicked);
         if (closeBtn != null) closeBtn.onClick.RemoveListener(OnCloseButtonClicked);
 
@@ -672,6 +750,7 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             var fbProfile = FirebaseDataService.Instance.CurrentUserProfile;
             CurrentSaveData.selectedCharacterIndex = fbProfile.selectedCharacterIndex;
+            CurrentSaveData.selectedTextureIndex = fbProfile.selectedTextureIndex;
             CurrentSaveData.selectedCharacterId = fbProfile.selectedCharacterId;
             CurrentSaveData.isMale = fbProfile.isMale;
 
@@ -705,6 +784,7 @@ public class CharacterSelectionHUD : MonoBehaviour
         }
 
         selectedCharacterIndex = CurrentSaveData.selectedCharacterIndex;
+        selectedTextureIndex = CurrentSaveData.selectedTextureIndex;
         isMaleSelected = CurrentSaveData.isMale;
 
         if (selectedCharacterIndex < 0 || (characterList != null && selectedCharacterIndex >= characterList.Count))
@@ -730,7 +810,9 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             GameSession.SelectedPlayer = characterList[selectedCharacterIndex];
             GameSession.IsMale = isMaleSelected;
+            GameSession.SelectedTextureIndex = selectedTextureIndex;
             PlayerPrefs.SetInt(PREF_KEY_CHAR_INDEX, selectedCharacterIndex);
+            PlayerPrefs.SetInt(PREF_KEY_TEXTURE_INDEX, selectedTextureIndex);
             PlayerPrefs.SetInt(PREF_KEY_GENDER, isMaleSelected ? 0 : 1);
             PlayerPrefs.Save();
         }
@@ -744,6 +826,7 @@ public class CharacterSelectionHUD : MonoBehaviour
         try
         {
             CurrentSaveData.selectedCharacterIndex = selectedCharacterIndex;
+            CurrentSaveData.selectedTextureIndex = selectedTextureIndex;
             CurrentSaveData.isMale = isMaleSelected;
             if (characterList != null && characterList.Count > selectedCharacterIndex && selectedCharacterIndex >= 0)
             {
@@ -758,7 +841,7 @@ public class CharacterSelectionHUD : MonoBehaviour
             if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null)
             {
                 string charId = !string.IsNullOrEmpty(CurrentSaveData.selectedCharacterId) ? CurrentSaveData.selectedCharacterId : "char_01";
-                FirebaseDataService.Instance.SetSelectedCharacter(charId, selectedCharacterIndex, isMaleSelected);
+                FirebaseDataService.Instance.SetSelectedCharacter(charId, selectedCharacterIndex, isMaleSelected, selectedTextureIndex);
             }
         }
         catch (System.Exception ex)
@@ -768,13 +851,14 @@ public class CharacterSelectionHUD : MonoBehaviour
     }
 
     // =========================================================================
-    //                        XỬ LÝ TAB & SLOT CLICK
+    //                        XỬ LÝ TAB, SKIN & SLOT CLICK
     // =========================================================================
 
     public void OnMaleTabClicked()
     {
         isMaleSelected = true;
         PlayClickSound();
+        ApplyLobbyModelVisuals();
         RefreshUI();
     }
 
@@ -782,6 +866,47 @@ public class CharacterSelectionHUD : MonoBehaviour
     {
         isMaleSelected = false;
         PlayClickSound();
+        ApplyLobbyModelVisuals();
+        RefreshUI();
+    }
+
+    public void OnSkinPrevClicked()
+    {
+        if (characterList != null && selectedCharacterIndex >= 0 && selectedCharacterIndex < characterList.Count)
+        {
+            PlayerSO so = characterList[selectedCharacterIndex];
+            int count = (so != null) ? so.GetSkinCount() : 1;
+            if (count > 0)
+            {
+                selectedTextureIndex = (selectedTextureIndex - 1 + count) % count;
+            }
+            else
+            {
+                selectedTextureIndex = 0;
+            }
+        }
+        PlayClickSound();
+        ApplyLobbyModelVisuals();
+        RefreshUI();
+    }
+
+    public void OnSkinNextClicked()
+    {
+        if (characterList != null && selectedCharacterIndex >= 0 && selectedCharacterIndex < characterList.Count)
+        {
+            PlayerSO so = characterList[selectedCharacterIndex];
+            int count = (so != null) ? so.GetSkinCount() : 1;
+            if (count > 0)
+            {
+                selectedTextureIndex = (selectedTextureIndex + 1) % count;
+            }
+            else
+            {
+                selectedTextureIndex = 0;
+            }
+        }
+        PlayClickSound();
+        ApplyLobbyModelVisuals();
         RefreshUI();
     }
 
@@ -790,7 +915,9 @@ public class CharacterSelectionHUD : MonoBehaviour
         if (index >= 0 && index < characterList.Count)
         {
             selectedCharacterIndex = index;
+            selectedTextureIndex = 0; // Reset về skin đầu tiên khi đổi nhân vật khác
             PlayClickSound();
+            ApplyLobbyModelVisuals();
             RefreshUI();
         }
     }
@@ -844,7 +971,9 @@ public class CharacterSelectionHUD : MonoBehaviour
             }
 
             selectedCharacterIndex = index;
+            selectedTextureIndex = 0;
             PlayClickSound();
+            ApplyLobbyModelVisuals();
             RefreshUI();
         }
     }
@@ -858,9 +987,11 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             int defaultIndex = 0;
             selectedCharacterIndex = defaultIndex;
+            selectedTextureIndex = 0;
             SaveCharacterDataToJSON();
 
             PlayerPrefs.SetInt(PREF_KEY_CHAR_INDEX, defaultIndex);
+            PlayerPrefs.SetInt(PREF_KEY_TEXTURE_INDEX, 0);
             PlayerPrefs.SetInt(PREF_KEY_GENDER, isMaleSelected ? 0 : 1);
             PlayerPrefs.Save();
 
@@ -868,9 +999,11 @@ public class CharacterSelectionHUD : MonoBehaviour
             {
                 GameSession.SelectedPlayer = characterList[defaultIndex];
                 GameSession.IsMale = isMaleSelected;
+                GameSession.SelectedTextureIndex = 0;
             }
 
             PlayClickSound();
+            ApplyLobbyModelVisuals();
             Debug.Log($"<color=yellow>[CharacterSelectionHUD] Nhân vật {selectedSO.characterName} đang khóa. Đã lưu nhân vật mặc định (Slot 1): {GameSession.SelectedPlayer?.characterName} | Giới tính: {(isMaleSelected ? "Male" : "Female")}</color>");
 
             // Chữ Save vẫn giữ nguyên là "Save"
@@ -890,6 +1023,7 @@ public class CharacterSelectionHUD : MonoBehaviour
         SaveCharacterDataToJSON();
 
         PlayerPrefs.SetInt(PREF_KEY_CHAR_INDEX, selectedCharacterIndex);
+        PlayerPrefs.SetInt(PREF_KEY_TEXTURE_INDEX, selectedTextureIndex);
         PlayerPrefs.SetInt(PREF_KEY_GENDER, isMaleSelected ? 0 : 1);
         PlayerPrefs.Save();
 
@@ -897,10 +1031,12 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             GameSession.SelectedPlayer = characterList[selectedCharacterIndex];
             GameSession.IsMale = isMaleSelected;
+            GameSession.SelectedTextureIndex = selectedTextureIndex;
         }
 
         PlayClickSound();
-        Debug.Log($"<color=green>[CharacterSelectionHUD] Đã lưu nhân vật vào JSON: {GameSession.SelectedPlayer?.characterName} | Giới tính: {(isMaleSelected ? "Male" : "Female")}</color>");
+        ApplyLobbyModelVisuals();
+        Debug.Log($"<color=green>[CharacterSelectionHUD] Đã lưu nhân vật vào JSON: {GameSession.SelectedPlayer?.characterName} | Giới tính: {(isMaleSelected ? "Male" : "Female")} | Texture Skin: {selectedTextureIndex}</color>");
 
         if (saveFeedbackCoroutine != null) StopCoroutine(saveFeedbackCoroutine);
         saveFeedbackCoroutine = StartCoroutine(ShowSavedFeedbackRoutine());
@@ -1029,6 +1165,13 @@ public class CharacterSelectionHUD : MonoBehaviour
         {
             PlayerSO activeSO = characterList[selectedCharacterIndex];
             UpdateInfoPanel(activeSO);
+
+            // Cập nhật số hiển thị Skin (VD: "Skin 1 / 3")
+            if (skinIndexText != null)
+            {
+                int count = activeSO != null ? activeSO.GetSkinCount() : 1;
+                skinIndexText.text = $"Skin {selectedTextureIndex + 1}/{Mathf.Max(1, count)}";
+            }
         }
     }
 

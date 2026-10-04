@@ -18,6 +18,7 @@ public class UserGameProfile
     // Dữ liệu Nhân vật
     public string selectedCharacterId = "char_01";
     public int selectedCharacterIndex = 0;
+    public int selectedTextureIndex = 0;
     public bool isMale = true;
     public List<string> unlockedCharacterIds = new List<string>() { "char_01" };
 
@@ -45,6 +46,7 @@ public class UserGameProfile
         this.cash = 0;
         this.selectedCharacterId = "char_01";
         this.selectedCharacterIndex = 0;
+        this.selectedTextureIndex = 0;
         this.isMale = true;
         this.unlockedCharacterIds = new List<string>() { "char_01" };
         this.highestUnlockedChapter = 1;

@@ -410,10 +410,6 @@ public class HomeScreen : MonoBehaviour
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
 
         CharacterSelectionHUD hud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
-        if (hud != null)
-        {
-            hud.SetLobbyModelVisible(false);
-        }
 
         if (characterSelectPanel != null)
         {
@@ -421,6 +417,7 @@ public class HomeScreen : MonoBehaviour
             if (hud != null)
             {
                 hud.previousPanel = mainMenuPanel;
+                hud.ApplyLobbyModelVisuals();
             }
         }
     }

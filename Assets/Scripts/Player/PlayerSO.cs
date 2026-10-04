@@ -95,6 +95,31 @@ public class PlayerSO : ScriptableObject
     [Tooltip("Texture đại diện nếu chỉ muốn thay đổi Texture chính (_BaseMap / _MainTex) mà không cần tạo file Material riêng")]
     public Texture2D characterTexture;
 
+    [Tooltip("Danh sách các Skin / Texture có thể chọn")]
+    public List<Texture2D> skinTextures = new List<Texture2D>();
+
+    /// <summary>
+    /// Lấy Texture Skin theo Index
+    /// </summary>
+    public Texture2D GetSkinTexture(int index)
+    {
+        if (skinTextures != null && skinTextures.Count > 0)
+        {
+            int idx = Mathf.Clamp(index, 0, skinTextures.Count - 1);
+            return skinTextures[idx];
+        }
+        return characterTexture;
+    }
+
+    /// <summary>
+    /// Số lượng skin khả dụng
+    /// </summary>
+    public int GetSkinCount()
+    {
+        if (skinTextures != null && skinTextures.Count > 0) return skinTextures.Count;
+        return characterTexture != null ? 1 : 0;
+    }
+
     [Header("🏃 Base Movement Stats")]
     [Tooltip("Tốc độ di chuyển cơ bản khi đi bộ")]
     public float baseMoveSpeed = 2.0f;

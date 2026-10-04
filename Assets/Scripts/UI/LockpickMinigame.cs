@@ -228,6 +228,18 @@ public class LockpickMinigame : MonoBehaviour
     {
         if (!isPlaying || isWaitingNextStage) return;
 
+        // Tự động đóng Minigame nếu Player bị bắt / tử vong trong lúc đang mở Minigame
+        var localPlayer = GameObject.FindGameObjectWithTag("Player");
+        if (localPlayer != null)
+        {
+            var deathHandler = localPlayer.GetComponent<PlayerDeathHandler>() ?? localPlayer.GetComponentInChildren<PlayerDeathHandler>();
+            if (deathHandler != null && deathHandler.isDeadProcessed)
+            {
+                CloseMinigame();
+                return;
+            }
+        }
+
         // 1. Di chuyển thanh chạy qua lại
         MoveIndicator();
 

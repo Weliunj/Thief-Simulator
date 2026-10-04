@@ -18,6 +18,9 @@ public class NetworkPlayerSync : NetworkBehaviour
     public int CharacterSkinIndex { get; set; } = 0;
 
     [Networked, OnChangedRender(nameof(OnCharacterSkinChanged))]
+    public int NetworkTextureIndex { get; set; } = 0;
+
+    [Networked, OnChangedRender(nameof(OnCharacterSkinChanged))]
     public NetworkBool NetworkIsMale { get; set; } = true;
 
     [Networked, OnChangedRender(nameof(OnPlayerNameChanged))]
@@ -548,6 +551,7 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
             }
 
             CharacterSkinIndex = savedCharIndex;
+            NetworkTextureIndex = PlayerPrefs.GetInt("SelectedTextureIndex", GameSession.SelectedTextureIndex);
             NetworkIsMale = GameSession.IsMale;
 
             // Bảng tên của chính mình
@@ -778,12 +782,13 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
     private void ApplySkinFromGameSession()
     {
         int skinIndex = PlayerPrefs.GetInt("SelectedCharIndex", 0);
+        int textureIndex = PlayerPrefs.GetInt("SelectedTextureIndex", GameSession.SelectedTextureIndex);
         if (GameSession.SelectedPlayer != null && characterDatabase != null)
         {
             int idx = characterDatabase.IndexOf(GameSession.SelectedPlayer);
             if (idx >= 0) skinIndex = idx;
         }
-        ApplySkin(skinIndex, GameSession.IsMale);
+        ApplySkin(skinIndex, GameSession.IsMale, textureIndex);
     }
 
     private void OnPlayerNameChanged()
@@ -797,13 +802,13 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
 
     private void OnCharacterSkinChanged()
     {
-        ApplySkin(CharacterSkinIndex, NetworkIsMale);
+        ApplySkin(CharacterSkinIndex, NetworkIsMale, NetworkTextureIndex);
     }
 
     /// <summary>
-    /// Đồng bộ ngoại hình: hỗ trợ cả bật/tắt Model con lẫn đổi SkinnedMesh / Material tự động từ PlayerSO
+    /// Đồng bộ ngoại hình: hỗ trợ cả bật/tắt Model con lẫn đổi SkinnedMesh / Material / Texture tự động từ PlayerSO
     /// </summary>
-    private void ApplySkin(int skinIndex, bool isMale)
+    private void ApplySkin(int skinIndex, bool isMale, int textureIndex = 0)
     {
         // Cách 1: Bật/tắt GameObjects nếu danh sách characterModelObjects có phần tử
         if (characterModelObjects != null && characterModelObjects.Count > 0)
@@ -817,7 +822,7 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
             }
         }
 
-        // Cách 2: Tự động đổi Mesh 3D & Material trên SkinnedMeshRenderer từ PlayerSO
+        // Cách 2: Tự động đổi Mesh 3D & Material / Texture trên SkinnedMeshRenderer từ PlayerSO
         PlayerSO so = null;
         if (characterDatabase != null && skinIndex >= 0 && skinIndex < characterDatabase.Count)
         {
@@ -840,7 +845,8 @@ public Vector3 remoteHoldPosition = new Vector3(0f, 1.2f, 0.5f);
                 PlayerStats.ApplyMeshToModel(gameObject, targetMesh);
             }
 
-            PlayerStats.ApplySkinToModel(gameObject, so.characterMaterial, so.characterTexture);
+            Texture2D chosenTexture = so.GetSkinTexture(textureIndex);
+            PlayerStats.ApplySkinToModel(gameObject, so.characterMaterial, chosenTexture);
         }
 
         // Đảm bảo trạng thái ẩn/hiện mesh của bản thân (FPS) vẫn được giữ đúng sau khi đổi skin

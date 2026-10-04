@@ -20,7 +20,7 @@ MonoBehaviour:
     sprint speed, high stamina, and supreme carry capacity.
   characterPrefab: {fileID: 7253182190317101987, guid: f30c7c3162e2a3a42910fbef17538701, type: 3}
   isUnlockedByDefault: 0
-  unlockPrice: 9000
+  unlockPrice: 3000
   maleMesh: {fileID: 4300000, guid: bf560778e8c9e3b40ba95d0cc63a3665, type: 2}
   femaleMesh: {fileID: 4300000, guid: b2c78190d09fe4b41a37a36872fc2985, type: 2}
   maleMeshes:
@@ -33,6 +33,16 @@ MonoBehaviour:
   - {fileID: 4300000, guid: e56a878c59bc07743b5a23625912f489, type: 2}
   characterMaterial: {fileID: 2100000, guid: b5196b4ed11c46f4eadd08cb98b4aba3, type: 2}
   characterTexture: {fileID: 2800000, guid: 6e5fe2e8aa76b804d8454a6b80be6830, type: 3}
+  skinTextures:
+  - {fileID: 2800000, guid: 6e5fe2e8aa76b804d8454a6b80be6830, type: 3}
+  - {fileID: 2800000, guid: 69a7e3dd8935eda44ac6bc53481c832c, type: 3}
+  - {fileID: 2800000, guid: 22e7fb9099c29e84091fb2ddc04f20da, type: 3}
+  - {fileID: 2800000, guid: 7370a890bdcb4884c95a7c3daeb52f55, type: 3}
+  - {fileID: 2800000, guid: 617148ea5cc07914b929af2dbb7f0d4c, type: 3}
+  - {fileID: 2800000, guid: 2db5d9445d5e4c54e996423ba1e3b480, type: 3}
+  - {fileID: 2800000, guid: 85ad6c94ce2dd5c4faa00487ac9c9e74, type: 3}
+  - {fileID: 2800000, guid: 8ff0119964e079b44a42b7a0b9a89800, type: 3}
+  - {fileID: 2800000, guid: da92eb1c9e114c247a97f3209eec16fc, type: 3}
   baseMoveSpeed: 2.3
   baseSprintSpeed: 8
   baseCrouchSpeed: 1.5

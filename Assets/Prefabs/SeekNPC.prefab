@@ -485,8 +485,8 @@ MonoBehaviour:
   walkSpeed: 2
   runSpeed: 7.5
   returnSpeed: 2
-  visionRange: 17
-  raycastAngle: 20
+  visionRange: 2
+  raycastAngle: 15
   crouchVisionMultiplier: 0.5
   eyeHeight: 0.8
   flashlight: {fileID: 7934280563282319390}
@@ -538,10 +538,14 @@ MonoBehaviour:
   talkClips: []
   talkVolume: 0.8
   talkCooldownRange: {x: 3, y: 6}
+  randomMeshes: []
+  randomSkins: []
   debugLog: 0
   _NetworkIsChasing:
     _value: 0
   _NetworkSpeed: 0
+  _NetworkMeshIndex: -1
+  _NetworkSkinIndex: -1
   _state: 0
 --- !u!1 &4943328813177227100
 GameObject:

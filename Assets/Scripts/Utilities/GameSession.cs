@@ -20,6 +20,11 @@ public static class GameSession
     public static GameDifficulty SelectedDifficulty { get; set; } = GameDifficulty.Normal;
 
     /// <summary>
+    /// Cho phép kích hoạt thêm các NPC đặc biệt (Special NPCs) bất kể độ khó
+    /// </summary>
+    public static bool EnableSpecialNPCs { get; set; } = true;
+
+    /// <summary>
     /// Chapter đang được chọn để chơi trong trận
     /// </summary>
     public static ChapterSO SelectedChapter { get; set; }
@@ -38,6 +43,11 @@ public static class GameSession
     /// Giới tính của nhân vật đang chọn (true = Male, false = Female)
     /// </summary>
     public static bool IsMale { get; set; } = true;
+
+    /// <summary>
+    /// Index của Skin / Texture đang chọn
+    /// </summary>
+    public static int SelectedTextureIndex { get; set; } = 0;
 
     /// <summary>
     /// Thiết lập nhanh dữ liệu phiên chơi

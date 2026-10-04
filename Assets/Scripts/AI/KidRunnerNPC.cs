@@ -87,11 +87,20 @@ public class KidRunnerNPC : NetworkBehaviour
     [Tooltip("Khoảng thời gian cooldown ngẫu nhiên (Min, Max) tính từ lúc câu nói trước KẾT THÚC")]
     public Vector2 talkCooldownRange = new Vector2(2.5f, 5f);
 
+    [Header("🎨 Random Mesh & Skin (Không cần gom cặp)")]
+    [Tooltip("Danh sách Mesh ngẫu nhiên (chọn ngẫu nhiên 1 Mesh từ danh sách này)")]
+    public Mesh[] randomMeshes;
+
+    [Tooltip("Danh sách Texture Skin ngẫu nhiên (chọn ngẫu nhiên 1 Texture từ danh sách này)")]
+    public Texture2D[] randomSkins;
+
     [Header("🛠️ Debug")]
     public bool debugLog = false;
 
     [Networked] public NetworkBool NetworkIsPanicking { get; set; }
     [Networked] public float NetworkSpeed { get; set; }
+    [Networked, OnChangedRender(nameof(OnAppearanceChanged))] public int NetworkMeshIndex { get; set; } = -1;
+    [Networked, OnChangedRender(nameof(OnAppearanceChanged))] public int NetworkSkinIndex { get; set; } = -1;
 
     // ═══════════ RUNTIME ═══════════
     [SerializeField] private AIState _state = AIState.Idle;
@@ -184,6 +193,92 @@ public class KidRunnerNPC : NetworkBehaviour
 
         if (talkSource == null) talkSource = alertSource;
         if (talkSource != null) talkSource.spatialBlend = 1f;
+    }
+
+    void Start()
+    {
+        InitializeSkin();
+    }
+
+    private static readonly int BaseMapProp = Shader.PropertyToID("_BaseMap");
+    private static readonly int MainTexProp = Shader.PropertyToID("_MainTex");
+
+    void InitializeSkin()
+    {
+        bool hasMeshes = (randomMeshes != null && randomMeshes.Length > 0);
+        bool hasSkins = (randomSkins != null && randomSkins.Length > 0);
+
+        if (!hasMeshes && !hasSkins) return;
+
+        // Nếu là Online Session và là Host/Authority -> Random Mesh & Skin độc lập và sync qua Fusion
+        if (Object != null && Object.IsValid)
+        {
+            if (HasAuthority)
+            {
+                if (hasMeshes) NetworkMeshIndex = Random.Range(0, randomMeshes.Length);
+                if (hasSkins) NetworkSkinIndex = Random.Range(0, randomSkins.Length);
+                ApplyAppearance(NetworkMeshIndex, NetworkSkinIndex);
+            }
+            else
+            {
+                ApplyAppearance(NetworkMeshIndex, NetworkSkinIndex);
+            }
+        }
+        else
+        {
+            // Offline / PlayMode test
+            int meshIdx = hasMeshes ? Random.Range(0, randomMeshes.Length) : -1;
+            int skinIdx = hasSkins ? Random.Range(0, randomSkins.Length) : -1;
+            ApplyAppearance(meshIdx, skinIdx);
+        }
+    }
+
+    public void OnAppearanceChanged()
+    {
+        ApplyAppearance(NetworkMeshIndex, NetworkSkinIndex);
+    }
+
+    public void ApplyAppearance(int meshIndex, int skinIndex)
+    {
+        // 1. Random Mesh (nếu có cấu hình danh sách randomMeshes)
+        if (randomMeshes != null && meshIndex >= 0 && meshIndex < randomMeshes.Length)
+        {
+            Mesh targetMesh = randomMeshes[meshIndex];
+            if (targetMesh != null)
+            {
+                var smr = GetComponentInChildren<SkinnedMeshRenderer>(true);
+                if (smr != null)
+                {
+                    smr.sharedMesh = targetMesh;
+                }
+                else
+                {
+                    var mf = GetComponentInChildren<MeshFilter>(true);
+                    if (mf != null) mf.sharedMesh = targetMesh;
+                }
+            }
+        }
+
+        // 2. Random Texture/Skin (nếu có cấu hình danh sách randomSkins)
+        if (randomSkins != null && skinIndex >= 0 && skinIndex < randomSkins.Length)
+        {
+            Texture2D targetTexture = randomSkins[skinIndex];
+            if (targetTexture != null)
+            {
+                MaterialPropertyBlock propBlock = new MaterialPropertyBlock();
+                Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+                foreach (var rend in renderers)
+                {
+                    if (rend == null) continue;
+                    if (rend is ParticleSystemRenderer || rend is TrailRenderer || rend is LineRenderer) continue;
+
+                    rend.GetPropertyBlock(propBlock);
+                    propBlock.SetTexture(BaseMapProp, targetTexture);
+                    propBlock.SetTexture(MainTexProp, targetTexture);
+                    rend.SetPropertyBlock(propBlock);
+                }
+            }
+        }
     }
 
     // ═══════════════════════ MAIN UPDATE ═══════════════════════

@@ -63,21 +63,21 @@ MonoBehaviour:
   - {fileID: 2593608392830849456, guid: d35f618d4b879784a8c4363bd47a58e5, type: 3}
   - {fileID: 6518138517567661367, guid: 03eca3a976811924285696c3da1af079, type: 3}
   easyDifficulty:
-    targetPointPercentage: 0.5
-    itemSpawnRatio: 0.4
+    targetPointPercentage: 0.4
+    itemSpawnRatio: 0.5
     maxTime: 1200
     activeNpcKeywords:
     - Easy
   normalDifficulty:
-    targetPointPercentage: 0.7
+    targetPointPercentage: 0.5
     itemSpawnRatio: 0.6
     maxTime: 2100
     activeNpcKeywords:
     - Normal
     - Easy
   hardDifficulty:
-    targetPointPercentage: 0.8
-    itemSpawnRatio: 0.8
+    targetPointPercentage: 0.6
+    itemSpawnRatio: 0.7
     maxTime: 3000
     activeNpcKeywords:
     - Normal

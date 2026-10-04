@@ -718,15 +718,16 @@ public class FirebaseDataService : MonoBehaviour
     }
 
     /// <summary>
-    /// Đổi nhân vật và giới tính đang chọn
+    /// Đổi nhân vật, texture skin và giới tính đang chọn
     /// </summary>
-    public async void SetSelectedCharacter(string characterId, int index, bool isMale)
+    public async void SetSelectedCharacter(string characterId, int index, bool isMale, int textureIndex = 0)
     {
         if (CurrentUserProfile == null) return;
 
         CurrentUserProfile.selectedCharacterId = characterId;
         CurrentUserProfile.selectedCharacterIndex = index;
         CurrentUserProfile.isMale = isMale;
+        CurrentUserProfile.selectedTextureIndex = textureIndex;
 
         await SaveUserProfileAsync();
     }
@@ -827,6 +828,7 @@ public class FirebaseDataService : MonoBehaviour
             {
                 selectedCharacterId = profile.selectedCharacterId,
                 selectedCharacterIndex = profile.selectedCharacterIndex,
+                selectedTextureIndex = profile.selectedTextureIndex,
                 isMale = profile.isMale,
                 unlockedCharacterIds = profile.unlockedCharacterIds ?? new System.Collections.Generic.List<string>() { "char_01" }
             };
