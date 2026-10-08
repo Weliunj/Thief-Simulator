@@ -3029,7 +3029,7 @@ GameObject:
   m_Component:
   - component: {fileID: 112372191}
   m_Layer: 0
-  m_Name: START_ITEM
+  m_Name: START_ITEMs
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11294,10 +11294,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: VirtualCamera
       objectReference: {fileID: 0}
-    - target: {fileID: 8762286023885395077, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.3139058
@@ -11337,10 +11333,6 @@ PrefabInstance:
     - target: {fileID: 8762286023885395322, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8762286023885395323, guid: 9c489a8547f4d9e4387da15a4ff82c81, type: 3}
-      propertyPath: m_Lens.NearClipPlane
-      value: 0.01
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -25971,7 +25963,7 @@ MonoBehaviour:
       selectionMode: 1
       activeCount: 0
       activeRatio: 0.4
-  applyOnStart: 1
+  applyOnAwake: 1
   invertSelection: 0
 --- !u!4 &913218614
 Transform:
@@ -31538,7 +31530,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1130460818}
   m_Layer: 0
-  m_Name: NPCS
+  m_Name: NPCs
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

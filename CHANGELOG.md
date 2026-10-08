@@ -2197,10 +2197,33 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/Utilities/SceneObjectRandomizer.cs` (New)
   - `CHANGELOG.md` (Modified)
 
+
+---
+
+### [2026-10-09 00:30] — feat(chapter, items): configure chapter 2 data, improve ladder ground alignment, ceiling height check, and jump launch fix
+
+- **Tác vụ**:
+  - **Cấu hình Dữ Liệu Chapter 2 ([Chapter2.asset](file:///Assets/Data/Chapters/Chapter2.asset), [UI_Manager.cs](file:///Assets/Scripts/UI/UI_Manager.cs))**:
+    - Xác nhận và kết nối cơ chế tự động mở khóa Chapter 2 (`nextChapter.isUnlocked = true`) khi gom đủ điểm chỉ tiêu và hoàn thành thoát màn qua `EscapeZone` (`EscapeToHome()`).
+    - Chuẩn bị cấu hình mô tả (Description) chủ đề Nhà tù / Prison Block (`High-security Prison`) cho Chapter 2.
+  - **Tối Ưu Vị Trí Đặt Thang & Tiếp Đất Ngay Lập Tức ([HotbarManager.cs](file:///Assets/Scripts/UI/HotbarManager.cs), [PlayerInventory.cs](file:///Assets/Scripts/Player/PlayerInventory.cs))**:
+    - Khi đặt thang (Place) vào tường, tự động căn chỉnh độ cao chân thang ngang mặt đất người chơi (`groundY + 0.1m`) kèm Raycast phụ dò mặt sàn, loại bỏ hoàn toàn hiện tượng thang bị dính lơ lửng trên cao đợi trọng lực rơi.
+  - **Khắc Phục Lỗi Nhảy Bị Phóng Lên Đỉnh Thang ([HotbarManager.cs](file:///Assets/Scripts/UI/HotbarManager.cs), [PlayerInventory.cs](file:///Assets/Scripts/Player/PlayerInventory.cs))**:
+    - Luôn kích hoạt `IgnoreCollisionWithAllPlayers` khi thả thang, ngăn chặn `CharacterController` của người chơi đạp lên Collider của thang gây phóng vọt gia tốc lên trời.
+  - **Kiểm Tra Chiều Cao Trần Nhà Bằng Raycast (Ceiling Clearance Check) ([HotbarManager.cs](file:///Assets/Scripts/UI/HotbarManager.cs))**:
+    - Tự động bắn tia Raycast thẳng đứng (`Vector3.up`) kiểm tra không gian trần nhà trước khi cho phép dựng đứng thang.
+    - Nếu ở trong nhà có trần thấp (< chiều cao thang ~3.5m), nút tương tác tự động chuyển sang chế độ Ném/Thả tự do (Drop), ngăn chặn xuyên thủng trần và hiển thị cảnh báo `Cannot place ladder indoors! (Ceiling too low)`.
+
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/HotbarManager.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerInventory.cs` (Modified)
+  - `Assets/Data/Chapters/Chapter2.asset` (Referenced)
+  - `CHANGELOG.md` (Modified)
+
 - **Ảnh hưởng**:
-  - Prefab Zipper Lighter / Flashlight hoạt động ổn định, giữ nguyên góc chiếu sáng và âm thanh chuẩn xác.
-  - Người chơi nhận được cảnh báo trực quan khi bị Kid NPC phát hiện.
-  - Map game sinh động và có tính chơi lại cao hơn nhờ số lượng rương, tủ trốn thay đổi ngẫu nhiên theo độ khó mà không bị lệch đồng bộ Multiplayer.
+  - Hệ thống thang hoạt động chân thực, đặt mượt mà, không bị kẹt va chạm hay vướng trần nhà hẹp.
+  - Tiến trình mở khóa Chapter 2 hoàn thiện và mượt mà sau khi hoàn thành Chapter 1.
+
 
 
 

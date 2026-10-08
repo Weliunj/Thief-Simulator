@@ -298,8 +298,30 @@ public class HotbarManager : MonoBehaviour
                 break;
             }
 
+            // Nếu là Thang (Ladder), kiểm tra thêm chiều cao trần nhà (Ceiling Check): nếu trần nhà quá thấp thì không cho ở trạng thái Đặt (Place)
+            if (foundObstacle && currentItem != null && (currentItem.GetComponent<LadderController>() != null || currentItem.GetComponentInChildren<LadderController>() != null))
+            {
+                LadderController ladderComp = currentItem.GetComponent<LadderController>() ?? currentItem.GetComponentInChildren<LadderController>();
+                float reqHeight = 3.5f;
+                if (ladderComp != null && ladderComp.pointA != null && ladderComp.pointB != null)
+                {
+                    reqHeight = Mathf.Abs(ladderComp.pointB.position.y - ladderComp.pointA.position.y);
+                    if (reqHeight < 1f) reqHeight = 3.5f;
+                }
+
+                float groundY = (playerController != null) ? playerController.transform.position.y : origin.y - 1.2f;
+                Vector3 checkBasePos = new Vector3(validHit.point.x + validHit.normal.x * 0.15f, groundY + 0.3f, validHit.point.z + validHit.normal.z * 0.15f);
+
+                if (Physics.Raycast(checkBasePos, Vector3.up, out RaycastHit ceilingHit, reqHeight, obstacleLayerMask, QueryTriggerInteraction.Ignore))
+                {
+                    // Vướng trần nhà -> Chuyển về trạng thái Ném/Thả tự do (Drop), không hiện icon Đặt (Place)
+                    foundObstacle = false;
+                }
+            }
+
             lastFoundObstacle = foundObstacle;
             lastValidHit = validHit;
+
 
             // Cập nhật icon nút Drop (Đặt vs Ném)
             UpdateDropButtonVisual(foundObstacle);
@@ -897,26 +919,84 @@ public class HotbarManager : MonoBehaviour
             if (lastFoundObstacle && lastValidHit.collider != null)
             {
                 // Hành động ĐẶT (PLACE)
-                dropPos = lastValidHit.point + (lastValidHit.normal * 0.1f);
-                dropRot = Quaternion.Euler(0f, cam.eulerAngles.y, 0f);
                 isLadderPlaced = true;
-                if (ladder != null)
+                dropRot = Quaternion.Euler(0f, cam.eulerAngles.y, 0f);
+
+                if (isLadder)
                 {
-                    ladder.SetPlaced(true);
+                    // Đối với thang: Đặt ngang tầm chân người chơi (+0.1m) và vị trí XZ tại điểm chạm tường
+                    float groundY = (playerController != null) ? playerController.transform.position.y : cam.position.y - 1.2f;
+                    Vector3 targetPos = lastValidHit.point + (lastValidHit.normal * 0.15f);
+
+                    // 1. Bắn raycast phụ xuống sàn để tìm chính xác mặt đất dưới chân thang
+                    if (Physics.Raycast(targetPos + Vector3.up * 0.5f, Vector3.down, out RaycastHit groundHit, 3f, obstacleLayerMask, QueryTriggerInteraction.Ignore))
+                    {
+                        groundY = groundHit.point.y;
+                    }
+
+                    Vector3 ladderBasePos = new Vector3(targetPos.x, groundY + 0.1f, targetPos.z);
+
+                    // 2. ⭐ KIỂM TRA ĐỘ CAO TRẦN NHÀ (Height Clearance Check):
+                    // Bắn tia từ chân thang thẳng đứng lên trên. Nếu bị vướng trần nhà (khoảng cách trần < chiều cao thang) thì không cho dựng đứng
+                    float requiredLadderHeight = 3.5f;
+                    if (ladder != null && ladder.pointA != null && ladder.pointB != null)
+                    {
+                        requiredLadderHeight = Mathf.Abs(ladder.pointB.position.y - ladder.pointA.position.y);
+                        if (requiredLadderHeight < 1f) requiredLadderHeight = 3.5f;
+                    }
+
+                    bool hasCeilingObstacle = Physics.Raycast(ladderBasePos + Vector3.up * 0.2f, Vector3.up, out RaycastHit ceilingHit, requiredLadderHeight, obstacleLayerMask, QueryTriggerInteraction.Ignore);
+
+                    if (hasCeilingObstacle)
+                    {
+                        // Bị vướng trần nhà trong phòng -> Không thể dựng thang
+                        isLadderPlaced = false;
+                        dropPos = ladderBasePos;
+                        if (ladder != null) ladder.SetPlaced(false);
+
+                        var hud = FindFirstObjectByType<ItemInfoHUD>(FindObjectsInactive.Include);
+                        if (hud != null) hud.ShowWarning("Cannot place ladder indoors! (Ceiling too low)");
+                    }
+                    else
+                    {
+                        // Không gian thoáng -> Cho phép dựng thang đứng
+                        dropPos = ladderBasePos;
+                        if (ladder != null)
+                        {
+                            ladder.SetPlaced(true);
+                        }
+                    }
+                }
+                else
+                {
+                    dropPos = lastValidHit.point + (lastValidHit.normal * 0.1f);
                 }
             }
             else
             {
                 // Hành động NÉM / THẢ (THROW / DROP)
-                dropPos = cam.position + (cam.forward * 0.8f);
                 dropRot = Quaternion.Euler(0f, cam.eulerAngles.y, 0f);
                 isLadderPlaced = false;
-                if (ladder != null)
+
+                if (isLadder)
                 {
-                    ladder.SetPlaced(false);
+                    float groundY = (playerController != null) ? playerController.transform.position.y : cam.position.y - 1.2f;
+                    Vector3 forwardPos = cam.position + (cam.forward * 0.8f);
+                    dropPos = new Vector3(forwardPos.x, groundY + 0.1f, forwardPos.z);
+                    if (ladder != null)
+                    {
+                        ladder.SetPlaced(false);
+                    }
                 }
+                else
+                {
+                    dropPos = cam.position + (cam.forward * 0.8f);
+                }
+
                 IgnoreCollisionWithAllPlayers(itemObj, true);
             }
+
+
 
             itemObj.transform.position = dropPos;
             itemObj.transform.rotation = dropRot;
@@ -944,8 +1024,13 @@ public class HotbarManager : MonoBehaviour
                 }
             }
 
+            // Luôn bỏ qua va chạm vật lý giữa vật phẩm/thang với Player ngay khi vừa thả để tránh CharacterController đạp lên Collider của thang gây phóng văng lên trời
+            IgnoreCollisionWithAllPlayers(itemObj, true);
+
             // Đồng bộ thả/đặt item qua mạng
             NetworkItemSync.SyncDropItem(itemObj, dropPos, dropRot, throwVelocity, throwAngularVel, isLadder, isLadderPlaced);
+
+
             // Trừ khối lượng balo & xóa khỏi danh sách inventory của Player
             EnsureLocalPlayerController();
             if (playerController != null)

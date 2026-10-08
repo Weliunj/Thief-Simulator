@@ -213,12 +213,12 @@ public class PlayerInventory : MonoBehaviour
                 UpdateWeight();
             }
 
-            itemToDrop.transform.SetParent(null);
-            itemToDrop.transform.position = transform.position + transform.forward * 1f + Vector3.up * 0.5f;
-
             bool isLadder = itemToDrop.GetComponent<LadderController>() != null || itemToDrop.GetComponentInChildren<LadderController>() != null;
+            Vector3 dropPos = transform.position + transform.forward * 1f + Vector3.up * 0.5f;
+
             if (isLadder)
             {
+                dropPos = transform.position + transform.forward * 0.8f + Vector3.up * 0.1f;
                 itemToDrop.transform.rotation = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
             }
             else
@@ -226,9 +226,14 @@ public class PlayerInventory : MonoBehaviour
                 itemToDrop.transform.rotation = Quaternion.identity;
             }
 
+            itemToDrop.transform.position = dropPos;
             itemToDrop.SetActive(true);
 
+            // Bỏ qua va chạm vật lý giữa item vừa thả với Player để chống CharacterController dẫm lên gây bắn văng lên trời
+            HotbarManager.IgnoreCollisionWithAllPlayers(itemToDrop, true);
+
             Rigidbody rbDrop = itemToDrop.GetComponent<Rigidbody>();
+
             Vector3 linVel = Vector3.zero;
             Vector3 angVel = Vector3.zero;
             if (rbDrop != null)
