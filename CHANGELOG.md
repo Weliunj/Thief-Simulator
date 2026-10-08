@@ -2167,11 +2167,41 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - `Assets/Scripts/AI/SceneNPCManager.cs` (New & Refactored)
   - `Assets/Scripts/AI/AdultGuardNPC.cs` (Modified)
   - `Assets/Scripts/AI/KidRunnerNPC.cs` (Modified)
-  - `Assets/Scripts/Items/SceneItemSpawner.cs` (Modified)
-  - `Assets/Scripts/Network/FusionConnectionManager.cs` (Modified)
-  - `Assets/Scripts/UI/NetworkLobbyHUD.cs` (Modified)
-  - `Assets/Scripts/Utilities/SettingsManager.cs` (Modified)
-  - `Assets/Scripts/UI/SettingsHUD.cs` (Modified)
+
+---
+
+### [2026-10-08 16:15] — feat(items, ai, environment): support zipper lighter, kid detection status HUD, and scene object randomizer
+
+- **Tác vụ**:
+  - **Nâng cấp Đèn Cầm Tay ([FlashlightController.cs](file:///Assets/Scripts/Items/FlashlightController.cs))**:
+    - Tái cấu trúc script để dùng chung cho cả Đèn Pin (Flashlight), Bật Lửa (Zipper Lighter) và Đèn Lồng (Lantern).
+    - Hỗ trợ cả **Spot Light**, **Point Light** và mảng danh sách nhiều nguồn sáng con `additionalLights`.
+    - Thêm cờ `overrideLightProperties` (mặc định = false): Giữ nguyên 100% thiết lập Range, Color, Spot Angle, Intensity và Transform gốc của Prefab.
+    - Xử lý âm thanh thông minh: Chỉ phát âm thanh On/Off khi AudioClip tương ứng được gán (nếu Zipper Lighter chỉ có âm On thì khi tắt sẽ im lặng, không bị phát lặp lại).
+    - Thêm Cooldown Debounce (0.2s) và kiểm tra `stateChanged` để loại bỏ hoàn toàn hiện tượng bấm nút bị phát đè 2 lần âm thanh.
+    - Bỏ ép buộc `followCameraPitch = true` trong code, tôn trọng thiết lập của component [Item.cs](file:///Assets/Scripts/Items/Item.cs).
+  - **Thông Báo Status HUD Khi Kid NPC Phát Hiện Player ([KidRunnerNPC.cs](file:///Assets/Scripts/AI/KidRunnerNPC.cs))**:
+    - Khi Kid nhìn thấy người chơi và bắt đầu hoảng loạn (Panic), kích hoạt thông báo Status HUD chuẩn tiếng Anh: `"Alert! {kName} saw {pName}!"`.
+    - Tự động lấy tên hiển thị từ Photon Network / Firebase Profile / Nickname.
+    - Đồng bộ thông báo cho tất cả người chơi trong phòng thông qua RPC `RpcBroadcastStatusMessage`.
+    - Thêm cooldown `DETECTION_NOTICE_COOLDOWN = 5s` chống spam thông báo liên tục.
+  - **Hệ Thống Bật/Tắt Ngẫu Nhiên Đối Tượng Theo Độ Khó & Seed Mạng ([SceneObjectRandomizer.cs](file:///Assets/Scripts/Utilities/SceneObjectRandomizer.cs))**:
+    - Tạo mới script `SceneObjectRandomizer` để quản lý Bật/Tắt ngẫu nhiên các nhóm GameObject (Rương `Chests`, Điểm trốn `Wardrobes`/`HideSpots`, Thang `Ladders`, Két sắt `Safes`...).
+    - Hỗ trợ 2 chế độ chọn: **FixedCount** (Số lượng cố định) và **Percentage** (Tỉ lệ phần trăm theo Slider 0.0 - 1.0) cho từng độ khó `Easy`, `Normal`, `Hard`.
+    - Thuật toán xáo trộn Fisher-Yates kết hợp **Random Seed** đồng bộ qua Photon Fusion Session Properties, đảm bảo tất cả người chơi trong phòng thấy cùng tập hợp rương/tủ được bật.
+    - Thực thi sớm trong `Awake()` kèm Debug Log rõ ràng (`Đã BẬT x/n, TẮT y/n`).
+
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Items/FlashlightController.cs` (Modified)
+  - `Assets/Scripts/AI/KidRunnerNPC.cs` (Modified)
+  - `Assets/Scripts/Utilities/SceneObjectRandomizer.cs` (New)
+  - `CHANGELOG.md` (Modified)
+
+- **Ảnh hưởng**:
+  - Prefab Zipper Lighter / Flashlight hoạt động ổn định, giữ nguyên góc chiếu sáng và âm thanh chuẩn xác.
+  - Người chơi nhận được cảnh báo trực quan khi bị Kid NPC phát hiện.
+  - Map game sinh động và có tính chơi lại cao hơn nhờ số lượng rương, tủ trốn thay đổi ngẫu nhiên theo độ khó mà không bị lệch đồng bộ Multiplayer.
+
 
 
 
