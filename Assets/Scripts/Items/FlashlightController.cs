@@ -1,18 +1,26 @@
+using System.Collections.Generic;
 using StarterAssets;
 using UnityEngine;
 
 /// <summary>
-/// Quản lý Đèn pin (Flashlight):
+/// Quản lý Đèn pin / Bật lửa / Đèn cầm tay (Flashlight / Zipper Light):
 /// - Là Special Item trong túi đồ / Hotbar
-/// - Khi cầm trên tay: Bấm nút Interact (hoặc phím F) để Bật/Tắt đèn pin
-/// - Trang bị 3D Spatial Audio chuẩn hóa (Turn On Sound, Turn Off Sound), sẵn sàng cho Multiplayer/RPC
+/// - Khi cầm trên tay: Bấm nút Interact (hoặc phím F) để Bật/Tắt đèn
+/// - Hỗ trợ cả Spot Light, Point Light hoặc danh sách nhiều Light con
+/// - Chỉ phát âm thanh nếu AudioClip tương ứng được gán (không bị phát nhầm khi thiếu Turn Off)
 /// - Tự động thiết lập góc ngửa lên / cúi xuống bám theo Camera (followCameraPitch)
 /// </summary>
 public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteractable
 {
-    [Header("🔦 Flashlight Light Settings")]
-    [Tooltip("Component Light phát sáng (tự động tìm trong children nếu để trống)")]
+    [Header("🔦 Light Sources Settings")]
+    [Tooltip("Component Light chính (để trống sẽ tự tìm trong children hoặc mảng lights)")]
     public Light flashlightLight;
+
+    [Tooltip("Danh sách các Light con cần bật/tắt đồng thời (hỗ trợ nhiều Spot/Point Light)")]
+    public Light[] additionalLights;
+
+    [Tooltip("Nếu tích chọn, code sẽ tự động ghi đè Range, Angle, Color theo cài đặt bên dưới. Nếu bỏ chọn, giữ nguyên thiết lập có sẵn trên Prefab.")]
+    public bool overrideLightProperties = false;
 
     [Tooltip("Cường độ ánh sáng khi bật (Intensity)")]
     public float lightIntensity = 2.5f;
@@ -20,32 +28,30 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
     [Tooltip("Khoảng cách chiếu xa (Range)")]
     public float lightRange = 25f;
 
-    [Tooltip("Góc chiếu tỏa của chùm sáng (Spot Angle)")]
+    [Tooltip("Góc chiếu tỏa của chùm sáng (Spot Angle - chỉ áp dụng cho Spot Light)")]
     public float spotAngle = 55f;
 
     [Tooltip("Màu sắc của ánh sáng")]
-    public Color lightColor = new Color(1f, 0.98f, 0.92f); // Ánh sáng vàng nhạt tự nhiên
+    public Color lightColor = new Color(1f, 0.98f, 0.92f);
 
     [Tooltip("Trạng thái bật/tắt ban đầu")]
     public bool isOn = false;
 
-    [Header("📐 Light Orientation & Offsets (Hướng chiếu sáng)")]
-    [Tooltip("Vị trí tương đối của điểm phát sáng so với đèn pin")]
+    [Header("📐 Light Transform Overrides (Chỉ dùng nếu tự tạo Light mới khi thiếu)")]
     public Vector3 lightLocalOffset = new Vector3(0f, 0f, 0.2f);
-
-    [Tooltip("Góc xoay điều chỉnh chùm sáng (Ví dụ: (90,0,0) nếu nòng 3D Model bị ngửa lên trục Y)")]
     public Vector3 lightLocalRotation = Vector3.zero;
 
-    [Header("🔊 3D Spatial Audio (Âm thanh phát tại đèn pin)")]
+    [Header("🔊 3D Spatial Audio (Âm thanh phát tại vật phẩm)")]
     public AudioSource audioSource;
 
-    [Tooltip("Âm thanh khi BẬT đèn pin (Click On)")]
+    [Tooltip("Âm thanh khi BẬT (Click On / Quẹt lửa). Để trống nếu không dùng.")]
     public AudioClip turnOnSound;
 
-    [Tooltip("Âm thanh khi TẮT đèn pin (Click Off)")]
+    [Tooltip("Âm thanh khi TẮT (Click Off / Dập lửa). Để trống nếu không dùng.")]
     public AudioClip turnOffSound;
 
     private Item itemComp;
+    private readonly List<Light> allManagedLights = new List<Light>();
 
     void Awake()
     {
@@ -62,38 +68,60 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
     {
         if (itemComp == null) itemComp = GetComponent<Item>();
 
-        // 1. Tự động tìm / tạo Light child
+        allManagedLights.Clear();
+
+        // 1. Tìm hoặc thu thập tất cả Light có sẵn
         if (flashlightLight == null)
         {
             flashlightLight = GetComponentInChildren<Light>(true);
-            if (flashlightLight == null)
+        }
+
+        if (flashlightLight != null && !allManagedLights.Contains(flashlightLight))
+        {
+            allManagedLights.Add(flashlightLight);
+        }
+
+        if (additionalLights != null)
+        {
+            foreach (var l in additionalLights)
             {
-                GameObject lightObj = new GameObject("FlashlightLight");
-                lightObj.transform.SetParent(transform, false);
-                lightObj.transform.localPosition = lightLocalOffset;
-                lightObj.transform.localRotation = Quaternion.Euler(lightLocalRotation);
-                flashlightLight = lightObj.AddComponent<Light>();
+                if (l != null && !allManagedLights.Contains(l))
+                {
+                    allManagedLights.Add(l);
+                }
             }
         }
 
-        if (flashlightLight != null)
+        // Nếu hoàn toàn không có Light nào, tự tạo 1 Spot Light mặc định
+        if (allManagedLights.Count == 0)
         {
+            GameObject lightObj = new GameObject("FlashlightLight");
+            lightObj.transform.SetParent(transform, false);
+            lightObj.transform.localPosition = lightLocalOffset;
+            lightObj.transform.localRotation = Quaternion.Euler(lightLocalRotation);
+            flashlightLight = lightObj.AddComponent<Light>();
             flashlightLight.type = LightType.Spot;
-            flashlightLight.range = lightRange;
-            flashlightLight.spotAngle = spotAngle;
-            flashlightLight.color = lightColor;
+            allManagedLights.Add(flashlightLight);
+        }
 
-            // Đảm bảo offset và góc xoay hướng chiếu được áp dụng đúng
-            if (flashlightLight.transform != transform)
+        // Tùy chỉnh thuộc tính nếu được yêu cầu
+        if (overrideLightProperties)
+        {
+            foreach (var l in allManagedLights)
             {
-                flashlightLight.transform.localPosition = lightLocalOffset;
-                flashlightLight.transform.localRotation = Quaternion.Euler(lightLocalRotation);
+                if (l == null) continue;
+                l.range = lightRange;
+                l.color = lightColor;
+                if (l.type == LightType.Spot)
+                {
+                    l.spotAngle = spotAngle;
+                }
             }
         }
 
         // 2. Tự động thiết lập AudioSource 3D
         if (audioSource == null) audioSource = GetComponent<AudioSource>();
-        if (audioSource == null)
+        if (audioSource == null && (turnOnSound != null || turnOffSound != null))
         {
             audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.spatialBlend = 1.0f; // 3D Spatial Sound
@@ -106,19 +134,23 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
         {
             audioSource.outputAudioMixerGroup = SettingsManager.Instance.sfxGroup;
         }
-
-        // 3. Đảm bảo Item component tự động bật followCameraPitch
-        if (itemComp != null)
-        {
-            itemComp.followCameraPitch = true;
-        }
     }
 
+
+    private float lastToggleTime = -1f;
+    private const float TOGGLE_COOLDOWN = 0.2f;
+
     /// <summary>
-    /// Chuyển đổi trạng thái Bật / Tắt đèn pin
+    /// Chuyển đổi trạng thái Bật / Tắt đèn
     /// </summary>
     public void ToggleFlashlight()
     {
+        if (Time.time - lastToggleTime < TOGGLE_COOLDOWN)
+        {
+            return; // Chặn spam click / gọi 2 lần trong cùng frame
+        }
+        lastToggleTime = Time.time;
+
         SetFlashlightState(!isOn);
     }
 
@@ -127,7 +159,7 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
     /// </summary>
     public void SetFlashlightState(bool enable)
     {
-        // 1. Luôn áp dụng ngay trên máy cục bộ để phản hồi tức thì
+        // 1. Áp dụng ngay trên máy cục bộ
         ApplyFlashlightVisualAndAudio(enable);
 
         // 2. Nếu đang trong phòng Online, gửi RPC đồng bộ cho những người chơi khác
@@ -143,37 +175,37 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
     /// </summary>
     public void ApplyFlashlightVisualAndAudio(bool enable)
     {
+        bool stateChanged = (isOn != enable);
         isOn = enable;
         UpdateLightState();
 
-        // Phát âm thanh 3D tại vị trí Đèn pin
-        AudioClip clipToPlay = isOn ? turnOnSound : turnOffSound;
-        if (clipToPlay == null) clipToPlay = turnOnSound ?? turnOffSound;
-
-        if (clipToPlay != null && audioSource != null)
+        // Chỉ phát âm thanh nếu trạng thái thực sự thay đổi và clip tương ứng được gán
+        if (stateChanged)
         {
-            audioSource.PlayOneShot(clipToPlay);
+            AudioClip clipToPlay = isOn ? turnOnSound : turnOffSound;
+            if (clipToPlay != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(clipToPlay);
+            }
         }
     }
 
+
     private void UpdateLightState()
     {
-        if (flashlightLight == null)
+        if (allManagedLights.Count == 0)
         {
-            flashlightLight = GetComponentInChildren<Light>(true);
-            if (flashlightLight != null)
-            {
-                flashlightLight.type = LightType.Spot;
-                flashlightLight.range = lightRange;
-                flashlightLight.spotAngle = spotAngle;
-                flashlightLight.color = lightColor;
-            }
+            InitializeComponents();
         }
 
-        if (flashlightLight != null)
+        foreach (var l in allManagedLights)
         {
-            flashlightLight.enabled = isOn;
-            flashlightLight.intensity = isOn ? lightIntensity : 0f;
+            if (l == null) continue;
+            l.enabled = isOn;
+            if (overrideLightProperties)
+            {
+                l.intensity = isOn ? lightIntensity : 0f;
+            }
         }
     }
 
@@ -196,12 +228,12 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
     //                    IINTERACTABLE IMPLEMENTATION (Khi dưới đất)
     // =========================================================================
 
-    public string GetInteractableName() => (itemComp != null) ? itemComp.GetInteractableName() : "Flashlight";
-    public string GetActionPrompt() => "Take Flashlight";
+    public string GetInteractableName() => (itemComp != null) ? itemComp.GetInteractableName() : "Light Item";
+    public string GetActionPrompt() => "Take " + GetInteractableName();
     public int GetPrice() => (itemComp != null) ? itemComp.GetPrice() : 50;
     public int GetWeight() => (itemComp != null) ? itemComp.GetWeight() : 1;
     public bool IsLootItem() => true;
-    public string GetDescription() => (itemComp != null) ? itemComp.GetDescription() : "A portable flashlight to illuminate dark areas.";
+    public string GetDescription() => (itemComp != null) ? itemComp.GetDescription() : "A portable light source.";
     public Sprite GetIcon() => (itemComp != null) ? itemComp.GetIcon() : null;
     public ItemRarity GetRarity() => (itemComp != null) ? itemComp.GetRarity() : ItemRarity.Common;
 
@@ -220,3 +252,4 @@ public class FlashlightController : MonoBehaviour, IInteractable, IHeldInteracta
         }
     }
 }
+

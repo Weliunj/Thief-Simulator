@@ -510,6 +510,9 @@ public class KidRunnerNPC : NetworkBehaviour
         EnterPanicInternal(null, doorPos, fromChain);
     }
 
+    private float _lastDetectionNoticeTime = -10f;
+    private const float DETECTION_NOTICE_COOLDOWN = 5f;
+
     void EnterPanicInternal(PlayerController fromPlayer, Vector3 fleeFromPos, bool fromChain)
     {
         if (_state == AIState.Panic) return;
@@ -522,6 +525,25 @@ public class KidRunnerNPC : NetworkBehaviour
         PlayAlert();
         PlayTalkSound();
         if (Object != null && Object.IsValid) NetworkIsPanicking = true;
+
+        // ⭐ Thông báo Status HUD: Alert! [tên kid] saw [player]!
+        if (fromPlayer != null && Time.time - _lastDetectionNoticeTime > DETECTION_NOTICE_COOLDOWN)
+        {
+            _lastDetectionNoticeTime = Time.time;
+            string pName = GetPlayerDisplayName(fromPlayer);
+            string kName = !string.IsNullOrEmpty(npcName) ? npcName : "Kid";
+            string msg = $"Alert! {kName} saw {pName}!";
+
+            GameStatusHUD.Show(msg, 3f);
+
+            // Đồng bộ thông báo cho tất cả người chơi trong phòng nếu đang Online
+            var localSync = NetworkItemSync.GetLocalPlayerSync();
+            if (localSync != null && localSync.Runner != null && localSync.Runner.IsRunning)
+            {
+                localSync.RpcBroadcastStatusMessage(msg);
+            }
+        }
+
 
         if (debugLog) Debug.Log($"[{npcName}] PANIC from {fleeFromPos}");
 
@@ -538,6 +560,22 @@ public class KidRunnerNPC : NetworkBehaviour
         // Gọi Adult
         CallAdults(fromPlayer, fleeFromPos);
     }
+
+    private string GetPlayerDisplayName(PlayerController pc)
+    {
+        if (pc == null) return "Player";
+        var netSync = pc.GetComponent<NetworkPlayerSync>();
+        if (netSync != null && netSync.Object != null && netSync.Object.IsValid && !string.IsNullOrEmpty(netSync.NetworkPlayerName.ToString()))
+        {
+            return netSync.NetworkPlayerName.ToString();
+        }
+        if (FirebaseDataService.Instance != null && FirebaseDataService.Instance.CurrentUserProfile != null && !string.IsNullOrEmpty(FirebaseDataService.Instance.CurrentUserProfile.username))
+        {
+            return FirebaseDataService.Instance.CurrentUserProfile.username;
+        }
+        return PlayerPrefs.GetString("PlayerNickname", "Player");
+    }
+
 
     void PanicTick(PlayerController spotted)
     {
