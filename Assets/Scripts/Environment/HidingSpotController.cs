@@ -279,11 +279,27 @@ public class HidingSpotController : MonoBehaviour, IInteractable
         Debug.Log($"[ExitHiding] ENTER player={player?.name}, isHiding={player?.isHiding}, currentHidingPlayer={currentHidingPlayer?.name}");
         if (player == null) player = currentHidingPlayer;
         if (player == null) { Debug.LogWarning("[ExitHiding] ABORT - player null!"); return; }
-        Debug.Log($"[ExitHiding] Moving to {exitPoint.position}, isLocalPlayer={IsLocalPlayer(player)}");
+
+        // Nếu player đã chết hoặc không còn đang nấp, chỉ dọn dẹp biến tủ và không dịch chuyển vị trí
+        bool isDead = (player.stats != null && player.stats.isDied) || 
+                      (player.deathHandler != null && player.deathHandler.isDeadProcessed);
 
         isOccupied = false;
         currentHidingPlayer = null;
         player.currentHidingSpot = null;
+        player.isHiding = false;
+
+        if (isDead)
+        {
+            Debug.Log($"[ExitHiding] Player {player.name} is dead. Aborting position teleport to exitPoint.");
+            if (IsLocalPlayer(player))
+            {
+                HidingExitHUD.Instance?.Hide();
+            }
+            return;
+        }
+
+        Debug.Log($"[ExitHiding] Moving to {exitPoint.position}, isLocalPlayer={IsLocalPlayer(player)}");
 
         // Phát âm thanh đóng cửa
         PlaySound(doorCloseCreakClip);
@@ -311,9 +327,6 @@ public class HidingSpotController : MonoBehaviour, IInteractable
             }
             catch { }
         }
-
-        // Tắt trạng thái Hiding
-        player.isHiding = false;
 
         // ⭐ CHẶN RE-ENTRY CÙNG FRAME: block PlayerInteraction trong 0.5s
         PlayerInteraction.SetInteractionCooldown(0.5f);
@@ -355,6 +368,13 @@ public class HidingSpotController : MonoBehaviour, IInteractable
     {
         Debug.Log($"[RequestExit] player={player?.name}, currentHidingPlayer={currentHidingPlayer?.name}, netSync={netSync}, IsNetSpawned={netSync?.IsNetworkSpawned}");
         if (player == null) player = currentHidingPlayer;
+
+        // Nếu player đã chết hoặc không còn ở trạng thái nấp, đóng UI và hủy request
+        if (player != null && ((player.stats != null && player.stats.isDied) || (player.deathHandler != null && player.deathHandler.isDeadProcessed) || !player.isHiding))
+        {
+            HidingExitHUD.Instance?.Hide();
+            return;
+        }
 
         if (netSync != null && netSync.IsNetworkSpawned)
         {

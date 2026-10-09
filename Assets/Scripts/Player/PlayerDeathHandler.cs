@@ -244,6 +244,23 @@ public class PlayerDeathHandler : MonoBehaviour
             playerController.currentLadder = null;
         }
 
+        // Thoát khỏi tủ trốn (Hiding Spot) nếu chết khi đang nấp trong tủ
+        if (playerController != null && (playerController.isHiding || playerController.currentHidingSpot != null))
+        {
+            if (playerController.currentHidingSpot != null)
+            {
+                playerController.currentHidingSpot.isOccupied = false;
+                playerController.currentHidingSpot.currentHidingPlayer = null;
+                playerController.currentHidingSpot = null;
+            }
+            playerController.isHiding = false;
+        }
+
+        if (HidingExitHUD.Instance != null)
+        {
+            HidingExitHUD.Instance.Hide();
+        }
+
         // 3. Hủy sạch toàn bộ hiệu ứng Buff (Speed, Jump, NightVision...), đóng minigame bẻ khóa (Lockpick) và dọn dẹp UI khi chết
         PlayerBuffManager buffManager = GetComponent<PlayerBuffManager>();
         if (buffManager != null)

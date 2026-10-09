@@ -382,7 +382,7 @@ MonoBehaviour:
   movingPart: {fileID: 997078266832654786}
   openRotationOffset: {x: -75, y: 0, z: 0}
   openPositionOffset: {x: 0, y: 0, z: 0}
-  openSpeed: 3
+  openSpeed: 1
   smoothOpen: 1
   disableLidColliderWhenOpen: 1
   customContainerItems: []
@@ -390,19 +390,22 @@ MonoBehaviour:
   - {fileID: 8671721210334051493}
   - {fileID: 4848736233844053152}
   - {fileID: 1145136479301087431}
-  spawnRatio: 1
+  - {fileID: 400831482750734689}
+  - {fileID: 3822791908589333157}
+  minItemCount: 1
+  maxItemCount: 4
   spawnOffset: {x: 0, y: 0.07, z: 0}
   rarityWeights:
   - rarity: 1
     weight: 15
   - rarity: 2
-    weight: 30
+    weight: 20
   - rarity: 3
-    weight: 30
+    weight: 15
   - rarity: 4
-    weight: 25
-  - rarity: 5
     weight: 10
+  - rarity: 5
+    weight: 5
   audioSource: {fileID: 5073743730254450844}
   hitSound: {fileID: 8300000, guid: 1cc422dbe6ec25246a5b0638e58424f9, type: 3}
   missSound: {fileID: 8300000, guid: ed1bd3a22e501f34bb5c8e7aebd7be37, type: 3}

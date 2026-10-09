@@ -405,11 +405,13 @@ public class NetworkLobbyHUD : MonoBehaviour
     public void ShowCreateModal()
     {
         PlayClickSound();
+        if (lobbyMainPanel != null) lobbyMainPanel.SetActive(true);
         if (createRoomModal != null) createRoomModal.SetActive(true);
         if (chapterSelectManager != null && chapterSelectManager.chapterSelectPanel != null)
         {
             chapterSelectManager.chapterSelectPanel.SetActive(false);
         }
+
 
         if (createRoomNameInput != null)
         {
@@ -435,9 +437,11 @@ public class NetworkLobbyHUD : MonoBehaviour
         if (chapterSelectManager != null)
         {
             if (createRoomModal != null) createRoomModal.SetActive(false);
+            if (lobbyMainPanel != null) lobbyMainPanel.SetActive(false); // Ẩn toàn bộ LobbyMainPanel
             chapterSelectManager.OpenForRoomCreation(this, selectedMapIndex);
         }
     }
+
 
     public void OnChapterSelectedFromPanel(int index)
     {

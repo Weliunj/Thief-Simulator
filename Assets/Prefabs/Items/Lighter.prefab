@@ -5503,10 +5503,10 @@ MonoBehaviour:
   MinKg: 1
   MaxKg: 10
   followCameraPitch: 0
-  useCustomHoldOffset: 0
-  customHoldOffset: {x: 0, y: 0, z: 0}
+  useCustomHoldOffset: 1
+  customHoldOffset: {x: 0.2, y: 0, z: 0}
   useCustomHoldRotation: 1
-  customHoldRotation: {x: 0, y: -90, z: 0}
+  customHoldRotation: {x: 0, y: -93, z: 0}
 --- !u!114 &7020762861102869846
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5523,7 +5523,7 @@ MonoBehaviour:
   additionalLights: []
   overrideLightProperties: 1
   lightIntensity: 10
-  lightRange: 6
+  lightRange: 7.5
   spotAngle: 0
   lightColor: {r: 1, g: 0.7647059, b: 0.24705882, a: 1}
   isOn: 0

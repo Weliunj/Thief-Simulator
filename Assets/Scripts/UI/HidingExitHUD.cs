@@ -172,6 +172,19 @@ public class HidingExitHUD : MonoBehaviour
             }
         }
 
+        // Kiểm tra hợp lệ: Chỉ thực hiện thoát nếu player còn sống và đang nấp
+        if (player != null)
+        {
+            bool isDead = (player.stats != null && player.stats.isDied) || 
+                          (player.deathHandler != null && player.deathHandler.isDeadProcessed);
+            if (isDead || !player.isHiding)
+            {
+                Debug.LogWarning("[HUD] Player đã chết hoặc không còn nấp tủ -> Không trigger RequestExit.");
+                Hide();
+                return;
+            }
+        }
+
         if (spot != null)
         {
             spot.RequestExit(player);

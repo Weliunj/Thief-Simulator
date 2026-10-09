@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a3b79ee08280f84dbe70ae0e060f69a, type: 3}
   m_Name: Chapter2
   m_EditorClassIdentifier: Assembly-CSharp::ChapterSO
-  chapterTitle: Chapter 2
+  chapterTitle: Dungeon
   chapterImage: {fileID: 1664575024, guid: 5ae173f6b5e08974da7c44a1796db1e6, type: 3}
   sceneName: Chapter2
   gameplaySceneName: Chapter2
@@ -65,21 +65,21 @@ MonoBehaviour:
   - {fileID: 6518138517567661367, guid: 03eca3a976811924285696c3da1af079, type: 3}
   - {fileID: 5318516629371249759, guid: 38c35a20b161f6944b57a4442364cebf, type: 3}
   easyDifficulty:
-    targetPointPercentage: 0.4
-    itemSpawnRatio: 0.5
+    targetPointPercentage: 0.5
+    itemSpawnRatio: 0.7
     maxTime: 1400
     activeNpcKeywords:
     - Easy
   normalDifficulty:
-    targetPointPercentage: 0.5
-    itemSpawnRatio: 0.6
+    targetPointPercentage: 0.6
+    itemSpawnRatio: 0.8
     maxTime: 2300
     activeNpcKeywords:
     - Normal
     - Easy
   hardDifficulty:
-    targetPointPercentage: 0.6
-    itemSpawnRatio: 0.7
+    targetPointPercentage: 0.7
+    itemSpawnRatio: 0.9
     maxTime: 3200
     activeNpcKeywords:
     - Normal

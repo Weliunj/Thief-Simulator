@@ -58,9 +58,14 @@ public class LockedContainerController : MonoBehaviour, IInteractable, ILockpick
     [Tooltip("Danh sách các vị trí Transform bên trong rương/tủ để spawn item")]
     public List<Transform> spawnPoints = new List<Transform>();
 
-    [Range(0.05f, 1f)]
-    [Tooltip("Tỉ lệ % số điểm spawn trong rương sẽ xuất hiện đồ (1 = 100% full mọi điểm)")]
-    public float spawnRatio = 1f;
+    [Header("🎲 Random Spawn Count")]
+    [Tooltip("Số lượng item tối thiểu sẽ xuất hiện khi mở rương")]
+    [Range(1, 10)]
+    public int minItemCount = 2;
+
+    [Tooltip("Số lượng item tối đa sẽ xuất hiện khi mở rương")]
+    [Range(1, 10)]
+    public int maxItemCount = 4;
 
     [Tooltip("Độ lệch vị trí nhỏ khi spawn")]
     public Vector3 spawnOffset = new Vector3(0f, 0.02f, 0f);
@@ -382,21 +387,51 @@ public class LockedContainerController : MonoBehaviour, IInteractable, ILockpick
             categorized[r].Add(p);
         }
 
-        // 3. Lấy danh sách điểm spawn hợp lệ (giữ nguyên thứ tự danh sách điểm spawn để nhất quán trên mọi máy)
+        // 3. Lấy danh sách điểm spawn hợp lệ
         List<Transform> validPoints = spawnPoints.Where(p => p != null).ToList();
-        int countToSpawn = Mathf.Clamp(Mathf.RoundToInt(validPoints.Count * Mathf.Clamp01(spawnRatio)), 1, validPoints.Count);
+        if (validPoints.Count == 0)
+        {
+            Random.state = oldState;
+            return;
+        }
+
+        // Tính toán số lượng item cần spawn (ngẫu nhiên trong khoảng min - max)
+        int min = Mathf.Min(minItemCount, maxItemCount);
+        int max = Mathf.Max(minItemCount, maxItemCount);
+        int countToSpawn = Random.Range(min, max + 1);
+
+        // Xáo trộn ngẫu nhiên danh sách điểm spawn (Deterministic theo seed của rương)
+        List<int> pointIndices = Enumerable.Range(0, validPoints.Count).ToList();
+        for (int i = 0; i < pointIndices.Count; i++)
+        {
+            int randIdx = Random.Range(i, pointIndices.Count);
+            int temp = pointIndices[i];
+            pointIndices[i] = pointIndices[randIdx];
+            pointIndices[randIdx] = temp;
+        }
 
         for (int i = 0; i < countToSpawn; i++)
         {
-            Transform pt = validPoints[i];
+            // Nếu số lượng item cần spawn nhiều hơn số điểm spawn, lặp lại điểm spawn và tự động phân tán vị trí nhỏ
+            int pointIdx = pointIndices[i % pointIndices.Count];
+            Transform pt = validPoints[pointIdx];
             GameObject prefab = PickPrefab(pool, categorized);
             if (prefab != null)
             {
-                Vector3 pos = pt.position + spawnOffset;
+                // Nếu nhiều item dùng chung 1 điểm spawn (hoặc chỉ có 1 điểm spawn duy nhất), tự động xếp lệch nhau ra xung quanh
+                Vector3 jitter = Vector3.zero;
+                if (countToSpawn > 1 && validPoints.Count < countToSpawn)
+                {
+                    float angle = (i * (360f / countToSpawn)) * Mathf.Deg2Rad;
+                    float radius = 0.12f;
+                    jitter = pt.right * (Mathf.Cos(angle) * radius) + pt.forward * (Mathf.Sin(angle) * radius);
+                }
+
+                Vector3 pos = pt.position + spawnOffset + jitter;
                 Quaternion rot = pt.rotation * Quaternion.Euler(0f, Random.Range(-30f, 30f), 0f);
 
                 GameObject instance = Instantiate(prefab, pos, rot, transform);
-                // Đặt tên định danh duy nhất theo index điểm spawn và tên rương để mọi máy tìm thấy chính xác khi nhặt
+                // Đặt tên định danh duy nhất theo index món đồ và tên rương để mọi máy tìm thấy chính xác khi nhặt
                 instance.name = $"ContainerItem_{name}_{i}_{prefab.name}";
 
                 Item itemComp = instance.GetComponent<Item>();

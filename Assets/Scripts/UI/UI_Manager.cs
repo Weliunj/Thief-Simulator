@@ -318,8 +318,18 @@ public class UI_Manager : MonoBehaviour
             settingPanel.SetActive(false);
         }
 
-        // Chỉ bật lại Main HUD nếu không ở trong Minigame
-        if (!isSolving)
+        // Chỉ bật lại Main HUD nếu không ở trong Minigame và không đang nấp trong tủ
+        bool isPlayerHiding = false;
+        StarterAssets.PlayerController localPlayer = playerStats != null 
+            ? playerStats.GetComponent<StarterAssets.PlayerController>() 
+            : FindFirstObjectByType<StarterAssets.PlayerController>();
+
+        if (localPlayer != null && localPlayer.isHiding)
+        {
+            isPlayerHiding = true;
+        }
+
+        if (!isSolving && !isPlayerHiding)
         {
             SetMainHUDActive(true);
             Cursor.lockState = CursorLockMode.None;

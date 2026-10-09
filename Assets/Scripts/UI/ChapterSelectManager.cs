@@ -85,6 +85,10 @@ public class ChapterSelectManager : MonoBehaviour
         else gameObject.SetActive(true);
 
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (networkLobbyHUD != null && networkLobbyHUD.lobbyMainPanel != null)
+        {
+            networkLobbyHUD.lobbyMainPanel.SetActive(false);
+        }
 
         // Ẩn 3D model ngoài sảnh khi vào màn hình chọn Chapter
         CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
@@ -103,6 +107,10 @@ public class ChapterSelectManager : MonoBehaviour
         else gameObject.SetActive(true);
 
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (networkLobbyHUD != null && networkLobbyHUD.lobbyMainPanel != null)
+        {
+            networkLobbyHUD.lobbyMainPanel.SetActive(false);
+        }
 
         CharacterSelectionHUD charHud = FindFirstObjectByType<CharacterSelectionHUD>(FindObjectsInactive.Include);
         if (charHud != null)
@@ -112,6 +120,7 @@ public class ChapterSelectManager : MonoBehaviour
 
         UpdateChapterUI();
     }
+
 
     public void OnBackButtonClicked()
     {

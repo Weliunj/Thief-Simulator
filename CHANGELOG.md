@@ -2224,6 +2224,61 @@ Khi hoàn thành bất kỳ tính năng (`feat`), sửa lỗi (`fix`), tái cấ
   - Hệ thống thang hoạt động chân thực, đặt mượt mà, không bị kẹt va chạm hay vướng trần nhà hẹp.
   - Tiến trình mở khóa Chapter 2 hoàn thiện và mượt mà sau khi hoàn thành Chapter 1.
 
+---
+
+### [2026-10-09 19:05] — feat(chest, environment): add min-max random loot item count for locked containers
+
+- **Tác vụ**:
+  - **Hỗ trợ Random số lượng Item trong Rương/Tủ có khóa ([LockedContainerController.cs](file:///Assets/Scripts/Environment/LockedContainerController.cs))**:
+    - Bổ sung tùy chọn `useRandomItemCount` (mặc định: `true`), `minItemCount = 2`, `maxItemCount = 4` có thể tùy chỉnh trực tiếp trên Inspector cho từng rương/tủ.
+    - Áp dụng thuật toán xáo trộn ngẫu nhiên điểm spawn (Deterministic Shuffle theo seed của phòng chơi và tọa độ rương) để phân bố đều item vào các vị trí khác nhau trong rương, đồng bộ 100% giữa Host và Client khi chơi Online qua Photon Fusion.
+
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Environment/LockedContainerController.cs` (Modified)
+  - `CHANGELOG.md` (Modified)
+
+- **Ảnh hưởng**:
+  - Khi bẻ khóa rương/két sắt/tủ, số lượng vật phẩm bên trong sẽ xuất hiện ngẫu nhiên trong khoảng (VD: 2 đến 4 món) thay vì luôn xuất hiện cố định.
+
+---
+
+### [2026-10-09 16:00] — fix(door, ai): support KidRunnerNPC auto trigger door opening
+
+- **Tác vụ**:
+  - **Hỗ trợ Kid tự động mở cửa khi đến gần ([DoorController.cs](file:///Assets/Scripts/Environment/DoorController.cs))**:
+    - Bổ sung quét `KidRunnerNPC`, tag `kid` và fallback khoảng cách (`FindObjectsByType<KidRunnerNPC>`) tương tự như `AdultGuardNPC` vào `CheckNearbyEntities()` và `IsAnyNpcInHits()`.
+    - Đảm bảo Kid có thể kích hoạt mở cửa tự động cả ở chế độ Offline và Online qua Photon Fusion.
+
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/Environment/DoorController.cs` (Modified)
+  - `CHANGELOG.md` (Modified)
+
+- **Ảnh hưởng**:
+  - Kid khi đi tuần tra (Patrol/Wander) hoặc khi hoảng loạn bỏ chạy (Panic/Flee) sẽ tự động kích hoạt mở cửa mượt mà mà không bị kẹt lại trước cửa.
+
+---
+
+### [2026-10-09 15:45] — fix(hiding, ui, death): fix Main HUD showing on resume while hiding and prevent respawn teleport to hiding spot
+
+- **Tác vụ**:
+  - **Khắc phục lỗi hiển thị Main HUD khi Resume game lúc đang nấp ([UI_Manager.cs](file:///Assets/Scripts/UI/UI_Manager.cs))**:
+    - Bổ sung kiểm tra `localPlayer.isHiding` trong hàm `ResumeGame()`. Khi đang trốn trong tủ, giao diện chính (Main HUD) vẫn được giữ ẩn và nút thoát tủ ([HidingExitHUD.cs](file:///Assets/Scripts/UI/HidingExitHUD.cs)) tiếp tục hoạt động bình thường, tránh che khuất tầm nhìn qua khe cửa.
+  - **Dọn dẹp trạng thái tủ trốn khi Player tử vong ([PlayerDeathHandler.cs](file:///Assets/Scripts/Player/PlayerDeathHandler.cs))**:
+    - Trong hàm `ExecuteDeath()`, giải phóng hoàn toàn tủ trốn (`isOccupied = false`, `currentHidingPlayer = null`, `currentHidingSpot = null`, `isHiding = false`) và ẩn ngay [HidingExitHUD.cs](file:///Assets/Scripts/UI/HidingExitHUD.cs).
+  - **Chặn dịch chuyển / tốc biến về tủ cũ sau khi hồi sinh ([HidingSpotController.cs](file:///Assets/Scripts/Environment/HidingSpotController.cs), [HidingExitHUD.cs](file:///Assets/Scripts/UI/HidingExitHUD.cs))**:
+    - Trong `ExitHiding()` và `RequestExit()` của `HidingSpotController`, thêm kiểm tra nếu Player đã tử vong (`isDied == true` hoặc `isDeadProcessed == true`) hoặc không còn ở trong tủ thì hủy bỏ hoàn toàn việc dịch chuyển vị trí (`Teleport` / `transform.position = exitPoint.position`), chỉ dọn dẹp biến tủ.
+    - Trong `HidingExitHUD.OnExitButtonClicked()`, kiểm tra tình trạng sống/chết và trạng thái nấp trước khi gửi yêu cầu thoát, ngăn ngừa việc bấm phím Space / E / nút Exit sau khi hồi sinh làm tốc biến về tủ nơi vừa bị tiêu diệt.
+
+- **Danh sách file thay đổi**:
+  - `Assets/Scripts/UI/UI_Manager.cs` (Modified)
+  - `Assets/Scripts/Player/PlayerDeathHandler.cs` (Modified)
+  - `Assets/Scripts/Environment/HidingSpotController.cs` (Modified)
+  - `Assets/Scripts/UI/HidingExitHUD.cs` (Modified)
+  - `CHANGELOG.md` (Modified)
+
+- **Ảnh hưởng**:
+  - Trải nghiệm nấp tủ hoàn chỉnh, không bị lộ HUD khi Resume và không còn hiện tượng dịch chuyển sai vị trí sau khi chết và hồi sinh.
+
 
 
 

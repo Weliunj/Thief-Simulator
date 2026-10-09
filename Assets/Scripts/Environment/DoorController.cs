@@ -121,7 +121,10 @@ public class DoorController : MonoBehaviour, IInteractable, ILockpickable
             {
                 isPlayerNearby = true;
             }
-            else if (col.GetComponentInParent<AdultGuardNPC>() != null || col.CompareTag("adult") || col.gameObject.layer == LayerMask.NameToLayer("Npc"))
+            else if (col.GetComponentInParent<AdultGuardNPC>() != null || col.GetComponentInParent<KidRunnerNPC>() != null || 
+                     col.CompareTag("adult") || col.CompareTag("Adult") ||
+                     col.CompareTag("kid") || col.CompareTag("Kid") || 
+                     col.gameObject.layer == LayerMask.NameToLayer("Npc"))
             {
                 isNpcNearby = true;
             }
@@ -144,7 +147,7 @@ public class DoorController : MonoBehaviour, IInteractable, ILockpickable
             }
         }
 
-        // Bổ sung kiểm tra khoảng cách trực tiếp tới NPC (Đảm bảo 100% mở cửa cho NPC không phụ thuộc Collider)
+        // Bổ sung kiểm tra khoảng cách trực tiếp tới NPC Adult & Kid (Đảm bảo 100% mở cửa cho NPC không phụ thuộc Collider)
         if (!isNpcNearby)
         {
             AdultGuardNPC[] allAdults = FindObjectsByType<AdultGuardNPC>(FindObjectsSortMode.None);
@@ -156,6 +159,22 @@ public class DoorController : MonoBehaviour, IInteractable, ILockpickable
                     {
                         isNpcNearby = true;
                         break;
+                    }
+                }
+            }
+
+            if (!isNpcNearby)
+            {
+                KidRunnerNPC[] allKids = FindObjectsByType<KidRunnerNPC>(FindObjectsSortMode.None);
+                for (int i = 0; i < allKids.Length; i++)
+                {
+                    if (allKids[i] != null && allKids[i].gameObject.activeInHierarchy)
+                    {
+                        if (Vector3.Distance(allKids[i].transform.position, centerPos) <= currentRadius + 0.8f)
+                        {
+                            isNpcNearby = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -251,7 +270,13 @@ public class DoorController : MonoBehaviour, IInteractable, ILockpickable
         for (int i = 0; i < count; i++)
         {
             if (overlapBuffer[i] == null) continue;
-            if (overlapBuffer[i].GetComponentInParent<AdultGuardNPC>() != null || overlapBuffer[i].gameObject.layer == LayerMask.NameToLayer("Npc")) return true;
+            if (overlapBuffer[i].GetComponentInParent<AdultGuardNPC>() != null || 
+                overlapBuffer[i].GetComponentInParent<KidRunnerNPC>() != null ||
+                overlapBuffer[i].CompareTag("adult") ||
+                overlapBuffer[i].CompareTag("Adult") ||
+                overlapBuffer[i].CompareTag("kid") ||
+                overlapBuffer[i].CompareTag("Kid") ||
+                overlapBuffer[i].gameObject.layer == LayerMask.NameToLayer("Npc")) return true;
         }
         return false;
     }

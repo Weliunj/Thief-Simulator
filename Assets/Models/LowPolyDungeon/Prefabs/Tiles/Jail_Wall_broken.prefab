@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 5834462085153432042}
   - component: {fileID: 7974227592198846137}
   - component: {fileID: 780503427602247991}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: Jail_Wall_broken
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -35,7 +35,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &3261374397564369558
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -154,5 +154,5 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.1358832, y: 1.7568011, z: 0.20656005}
-  m_Center: {x: -0.329737, y: 2.2452967, z: 0.0067105144}
+  m_Size: {x: 1.1358832, y: 1.4693708, z: 0.20656005}
+  m_Center: {x: -0.329737, y: 2.3890119, z: 0.0067105144}
